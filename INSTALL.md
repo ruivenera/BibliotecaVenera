@@ -54,20 +54,17 @@ Abre `http://localhost:8787`, cola a chave `chave-app`. Traz cinco edições de 
 git init -b main
 git add .
 git commit -m "Venera: biblioteca de estudo"
-```
-
-Com o GitHub CLI:
-
-```bash
-gh repo create venera --private --source=. --push
-```
-
-Sem CLI: cria um repositório **privado** chamado `venera` em github.com/new, sem README nem .gitignore, e depois:
-
-```bash
-git remote add origin https://github.com/O-TEU-UTILIZADOR/venera.git
+git remote add origin https://github.com/O-TEU-UTILIZADOR/O-TEU-REPOSITORIO.git
 git push -u origin main
 ```
+
+Se o repositório foi criado com README ou .gitignore, o push é recusado por ter história diferente. Nesse caso, antes do push:
+
+```bash
+git pull --rebase origin main
+```
+
+Se o `git push` pedir palavra-passe, é um personal access token do GitHub, não a password da conta.
 
 Privado é a escolha certa. Não há segredos nos ficheiros — os tokens ficam na Cloudflare e nas definições das rotinas — mas não há razão para isto estar aberto.
 
@@ -107,7 +104,9 @@ Copia esse `id` para o `wrangler.toml`, por cima de `COLA_AQUI_O_ID_DO_KV`.
 npm run deploy
 ```
 
-No fim mostra o endereço, do género `https://venera.o-teu-nome.workers.dev`. Guarda-o.
+No fim publica em `https://bibliotecavenera.ruivenera18.workers.dev`.
+
+O `wrangler.toml` já traz `name = "bibliotecavenera"`, o mesmo nome do Worker criado no painel — este deploy escreve por cima do código de exemplo, que é o que se pretende. Se o wrangler avisar que o Worker foi alterado fora do wrangler e perguntar se queres continuar, responde que sim. Se mudares o `name`, ficas com dois Workers em vez de um.
 
 Neste momento a app responde `401` a tudo — ainda não há chaves. É o esperado.
 
@@ -130,7 +129,7 @@ O terminal não mostra o que colas. É normal.
 ### 2.5 Confirmar
 
 ```bash
-curl -s https://venera.O-TEU-NOME.workers.dev/api/chave \
+curl -s https://bibliotecavenera.ruivenera18.workers.dev/api/chave \
   -H "Authorization: Bearer A_CHAVE_DA_APP"
 ```
 
@@ -169,13 +168,13 @@ Só depois de a app abrir. Em `claude.ai/code/routines`.
 
 Nova routine → seletor de ambiente → definições:
 
-**Network access: Custom** — junta `venera.O-TEU-NOME.workers.dev` e mantém a lista predefinida de package managers. Sem isto o `curl` do `publicar.sh` leva `403 host_not_allowed` e a rotina termina como se tivesse corrido bem.
+**Network access: Custom** — junta `bibliotecavenera.ruivenera18.workers.dev` e mantém a lista predefinida de package managers. Sem isto o `curl` do `publicar.sh` leva `403 host_not_allowed` e a rotina termina como se tivesse corrido bem.
 
 **Environment variables:**
 
 | Nome | Valor |
 | --- | --- |
-| `VENERA_URL` | `https://venera.O-TEU-NOME.workers.dev` |
+| `VENERA_URL` | `https://bibliotecavenera.ruivenera18.workers.dev` |
 | `VENERA_TOKEN` | a chave das rotinas (`INGEST_TOKEN`) |
 
 ### 4.2 As duas rotinas

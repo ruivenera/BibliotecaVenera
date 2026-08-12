@@ -24,15 +24,18 @@ routine (07:00, cloud da Anthropic)
 ## Instalar
 
 ```bash
+npx wrangler login
 npx wrangler kv namespace create VENERA     # copia o id para wrangler.toml
+npx wrangler deploy                         # publica em bibliotecavenera.ruivenera18.workers.dev
 npx wrangler secret put APP_TOKEN           # a chave que escreves na app
 npx wrangler secret put INGEST_TOKEN        # a chave que as rotinas usam
-npx wrangler deploy
 ```
+
+O passo a passo detalhado, com git e resolução de avarias, está em **INSTALL.md**.
 
 Gera cada token com `openssl rand -hex 32`. **Não uses o mesmo nos dois**: as rotinas só precisam de escrever edições, a app só precisa de ler edições e mexer nas notas. Se um deles vazar, o outro continua fechado.
 
-Abre `https://venera.<subdominio>.workers.dev`, cola o `APP_TOKEN` e instala no telemóvel (Partilhar → Adicionar ao ecrã principal).
+Abre `https://bibliotecavenera.ruivenera18.workers.dev`, cola o `APP_TOKEN` e instala no telemóvel (Partilhar → Adicionar ao ecrã principal).
 
 ## Experimentar antes de publicar
 
@@ -53,7 +56,7 @@ Só depois de a app estar de pé. Cria um repositório `venera-rotinas` no GitHu
 
 Ambiente cloud, uma vez só:
 
-- **Network access: Custom** → junta `venera.<subdominio>.workers.dev` e mantém a lista predefinida de package managers. Sem isto o `curl` do `publicar.sh` leva `403 host_not_allowed` e a rotina termina como se tivesse corrido bem.
+- **Network access: Custom** → junta `bibliotecavenera.ruivenera18.workers.dev` e mantém a lista predefinida de package managers. Sem isto o `curl` do `publicar.sh` leva `403 host_not_allowed` e a rotina termina como se tivesse corrido bem.
 - **Environment variables:** `VENERA_URL` = o teu endereço, `VENERA_TOKEN` = o `INGEST_TOKEN`.
 
 Em cada rotina: trigger **Schedule / diário 07:00**, repositório `venera-rotinas`, e **remove todos os conectores** — o Claude pode usar qualquer ferramenta de um conector incluído sem pedir autorização, e estas rotinas só precisam de pesquisa e do script.
