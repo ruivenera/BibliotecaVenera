@@ -1,0 +1,16 @@
+name = "venera"
+main = "src/index.js"
+compatibility_date = "2026-08-01"
+
+# A PWA é servida por este mesmo Worker: um deploy, um domínio, zero CORS.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[kv_namespaces]]
+binding = "VENERA"
+id = "COLA_AQUI_O_ID_DO_KV"
+
+# Os tokens não vão aqui. São secrets:
+#   npx wrangler secret put APP_TOKEN      → a chave que escreves na app
+#   npx wrangler secret put INGEST_TOKEN   → a chave que as rotinas usam
