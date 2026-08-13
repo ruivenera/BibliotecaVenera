@@ -45,13 +45,19 @@ sentido nesse dia.
 Worker limpa em vez de recusar: um bloco malformado é descartado em silêncio e a edição
 publica na mesma. A edição é o que interessa; o painel é o resumo por cima dela.
 
+O painel tem duas metades, como o relatório tinha: **mercado** em cima, **geopolítica**
+por baixo, separadas na app.
+
 ```json
 "painel": {
   "indices": [
     { "nome": "S&P 500", "valor": "7 748,50", "variacao": 0.26, "leitura": "Fecho em alta" }
   ],
-  "carteira": [
+  "accoes": [
     { "nome": "NVDA", "valor": "217,48", "variacao": 1.4, "leitura": "Acordo de financiamento" }
+  ],
+  "carteira": [
+    { "nome": "IREN", "valor": "41,10", "variacao": 3.2, "leitura": "Arrastada pelos neoclouds" }
   ],
   "destaque": {
     "nome": "NBIS",
@@ -60,40 +66,75 @@ publica na mesma. A edição é o que interessa; o painel é o resumo por cima d
     "variacao": 12.4,
     "texto": "Duas ou três frases sobre o movimento do dia."
   },
-  "risco": {
-    "indice": 72,
-    "nivel": "Elevado",
-    "tendencia": "sobe",
-    "conflitos": 8,
-    "alertas": 3,
-    "hotspots": "Ormuz, Taiwan",
-    "expostos": "energia, transporte marítimo"
-  },
-  "conflitos": [
-    { "nome": "Irão · Ormuz", "probabilidade": "65%", "situacao": "Estreito fechado" }
-  ],
-  "oportunidades": ["Uma linha por oportunidade."],
-  "riscos": ["Uma linha por risco."],
+  "oportunidades": ["Uma linha por oportunidade de mercado."],
+  "riscos": ["Uma linha por risco de mercado."],
   "veredicto": {
     "tom": "neutro",
     "titulo": "Pausa longa",
-    "texto": "Duas a três frases a fechar a leitura do dia."
+    "texto": "Duas a três frases a fechar a leitura de mercado."
+  },
+
+  "geopolitica": {
+    "risco": {
+      "indice": 72,
+      "nivel": "Elevado",
+      "tendencia": "sobe",
+      "conflitos": 8,
+      "alertas": 3,
+      "hotspots": "Ormuz, Taiwan",
+      "expostos": "energia, transporte marítimo"
+    },
+    "alertas": [
+      { "nivel": "critico", "texto": "Estreito de Ormuz continua fechado ao tráfego civil." }
+    ],
+    "conflitos": [
+      { "nome": "Irão · Ormuz", "probabilidade": "65%", "situacao": "Estreito fechado" }
+    ],
+    "oportunidades": ["Uma linha por oportunidade geopolítica."],
+    "riscos": ["Uma linha por risco a 30 dias."],
+    "impacto_carteira": [
+      { "nome": "IREN", "sentido": "positivo", "justificacao": "Energia contratada fora da zona de risco." }
+    ],
+    "veredicto": {
+      "tom": "baixa",
+      "titulo": "Risco elevado",
+      "texto": "Duas a três frases a fechar a leitura geopolítica."
+    }
   }
 }
 ```
 
 | Bloco | Regra |
 | --- | --- |
-| `indices`, `carteira` | até 12 linhas; `nome` obrigatório, `valor` e `leitura` texto, `variacao` número em percentagem (positivo ou negativo) |
+| `indices`, `accoes`, `carteira` | até 12 linhas; `nome` obrigatório, `valor` e `leitura` texto, `variacao` número em percentagem |
 | `destaque` | precisa de `nome`; o resto é opcional |
-| `risco.indice` | 0 a 100 |
-| `risco.tendencia` | `sobe`, `desce` ou `estavel` |
-| `conflitos` | até 12 linhas; `nome` obrigatório |
 | `oportunidades`, `riscos` | até 8 linhas de texto cada |
 | `veredicto.tom` | `alta`, `baixa` ou `neutro` — dá a cor |
+| `geopolitica.risco.indice` | 0 a 100 |
+| `geopolitica.risco.tendencia` | `sobe`, `desce` ou `estavel` |
+| `geopolitica.alertas[].nivel` | `critico`, `elevado` ou `moderado` — dá a cor do sinal |
+| `geopolitica.conflitos` | até 12 linhas; `nome` obrigatório |
+| `geopolitica.impacto_carteira[].sentido` | `positivo`, `neutro` ou `negativo` |
+
+A metade geopolítica aceita os mesmos `oportunidades`, `riscos` e `veredicto` que a de
+mercado, e são independentes: uma leitura de mercado pode ser neutra e a geopolítica de
+baixa no mesmo dia.
 
 A `variacao` vai como número, não como texto: é a app que lhe põe o sinal, a seta e a cor.
 Manda `-2.4`, não `"▼ -2,4%"`.
+
+## Capítulos — para o curso de IA
+
+Cada item pode dizer que capítulo é. A app mostra o número e a rubrica por cima do título.
+
+```json
+{ "capitulo": 3, "rubrica": "Código", "titulo": "Uma crew de duas pessoas", "...": "..." }
+```
+
+| Campo | Regra |
+| --- | --- |
+| `capitulo` | 1 a 99 |
+| `rubrica` | texto curto, até 40 caracteres (`Conceito`, `Código`, `Ferramenta do dia`, `Desafio`…) |
 
 ## Progresso — só para o curso de IA
 

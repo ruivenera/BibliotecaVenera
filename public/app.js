@@ -127,7 +127,7 @@ async function sincronizar() {
 
 /* ----------------------------------------------------------------- rotas --- */
 
-const VISTAS = ["chave", "estante", "edicao", "notas", "revisao"];
+const VISTAS = ["chave", "estante", "edicao", "notas", "revisao", "definicoes"];
 
 function irPara(vista, ...args) {
   estado.vista = vista;
@@ -144,6 +144,7 @@ function irPara(vista, ...args) {
   if (vista === "estante") carregarEstante();
   if (vista === "notas") desenharNotas();
   if (vista === "revisao") comecarRevisao();
+  if (vista === "definicoes") desenharDefinicoes();
   if (vista === "edicao") abrirEdicao(...args);
 }
 
@@ -257,6 +258,10 @@ function desenharPainel(p) {
     html += bloco("Índices", `<table class="tabela">${p.indices.map(linhaCotacao).join("")}</table>`);
   }
 
+  if (p.accoes) {
+    html += bloco("Ações", `<table class="tabela">${p.accoes.map(linhaCotacao).join("")}</table>`);
+  }
+
   if (p.carteira || p.destaque) {
     let corpo = "";
     if (p.destaque) {
@@ -279,8 +284,50 @@ function desenharPainel(p) {
     html += bloco("Carteira", corpo);
   }
 
-  if (p.risco) {
-    const r = p.risco;
+  html += avaliacaoHTML(p, "Leitura de mercado");
+
+  html += geopoliticaHTML(p.geopolitica);
+
+  return html ? `<div class="painel">${html}</div>` : "";
+}
+
+/** Oportunidades, riscos e veredicto — as duas metades do painel têm os seus. */
+function avaliacaoHTML(o, titulo) {
+  let html = "";
+
+  if (o.oportunidades || o.riscos) {
+    const coluna = (rotulo, itens, tom) =>
+      itens
+        ? `<div><span class="rotulo">${rotulo}</span>
+             <ul class="lista" data-tom="${tom}">${itens.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
+           </div>`
+        : "";
+    html += bloco(
+      titulo,
+      `<div class="duas">${coluna("Oportunidades", o.oportunidades, "bom")}${coluna("Riscos", o.riscos, "mau")}</div>`
+    );
+  }
+
+  if (o.veredicto) {
+    const v = o.veredicto;
+    html += bloco(
+      "Veredicto",
+      `<div class="veredicto" data-tom="${esc(v.tom)}">
+        ${v.titulo ? `<div class="tom">${esc(v.titulo)}</div>` : ""}
+        <p>${esc(v.texto)}</p>
+      </div>`
+    );
+  }
+
+  return html;
+}
+
+function geopoliticaHTML(g) {
+  if (!g || typeof g !== "object") return "";
+  let html = "";
+
+  if (g.risco) {
+    const r = g.risco;
     const setas = { sobe: "▲", desce: "▼", estavel: "→" };
     let corpo = "";
     if (tem(r.indice)) {
@@ -288,7 +335,7 @@ function desenharPainel(p) {
           <span class="valor">${r.indice}</span>
           <span class="de">/ 100${r.nivel ? ` · ${esc(r.nivel)}` : ""}${r.tendencia ? ` ${setas[r.tendencia]}` : ""}</span>
         </div>
-        <div class="barra" data-alto="${r.indice >= 61 ? 1 : 0}"><i style="width:${r.indice}%"></i></div>`;
+        <div class="medidor-barra" data-alto="${r.indice >= 61 ? 1 : 0}"><i style="width:${r.indice}%"></i></div>`;
     }
     const campos = [
       ["Conflitos ativos", r.conflitos],
@@ -304,10 +351,19 @@ function desenharPainel(p) {
     html += bloco("Risco global", corpo);
   }
 
-  if (p.conflitos) {
+  if (g.alertas) {
+    html += bloco(
+      "Do dia",
+      `<ul class="alertas">${g.alertas
+        .map((a) => `<li data-nivel="${esc(a.nivel)}">${esc(a.texto)}</li>`)
+        .join("")}</ul>`
+    );
+  }
+
+  if (g.conflitos) {
     html += bloco(
       "Teatros",
-      `<table class="tabela">${p.conflitos
+      `<table class="tabela">${g.conflitos
         .map(
           (c) => `<tr>
             <td class="nome">${esc(c.nome)}</td>
@@ -319,31 +375,27 @@ function desenharPainel(p) {
     );
   }
 
-  if (p.oportunidades || p.riscos) {
-    const coluna = (titulo, itens, tom) =>
-      itens
-        ? `<div><span class="rotulo">${titulo}</span>
-             <ul class="lista" data-tom="${tom}">${itens.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
-           </div>`
-        : "";
+  html += avaliacaoHTML(g, "Leitura geopolítica");
+
+  if (g.impacto_carteira) {
+    const sinais = { positivo: "▲", neutro: "→", negativo: "▼" };
     html += bloco(
-      "Leitura",
-      `<div class="duas">${coluna("Oportunidades", p.oportunidades, "bom")}${coluna("Riscos", p.riscos, "mau")}</div>`
+      "Impacto na carteira",
+      `<table class="tabela">${g.impacto_carteira
+        .map(
+          (i) => `<tr>
+            <td class="nome">${esc(i.nome)}</td>
+            <td class="num"><span class="var" data-sinal="${
+              i.sentido === "positivo" ? "sobe" : i.sentido === "negativo" ? "desce" : "igual"
+            }">${sinais[i.sentido]}</span></td>
+            <td class="leitura">${esc(i.justificacao || "")}</td>
+          </tr>`
+        )
+        .join("")}</table>`
     );
   }
 
-  if (p.veredicto) {
-    const v = p.veredicto;
-    html += bloco(
-      "Veredicto",
-      `<div class="veredicto" data-tom="${esc(v.tom)}">
-        ${v.titulo ? `<div class="tom">${esc(v.titulo)}</div>` : ""}
-        <p>${esc(v.texto)}</p>
-      </div>`
-    );
-  }
-
-  return html ? `<div class="painel">${html}</div>` : "";
+  return html ? `<div class="metade"><span class="rotulo divisor">Geopolítica</span>${html}</div>` : "";
 }
 
 /** Onde vai o curso de IA. */
@@ -395,10 +447,17 @@ async function abrirEdicao(rotina, data) {
       const corpo = partes[0].trim();
       // O rótulo já diz "Porque interessa", por isso a frase começa em maiúscula.
       const porque = partes[1]?.trim().replace(/^./, (c) => c.toUpperCase());
+      const marca = [
+        tem(item.capitulo) ? `Cap. ${item.capitulo}` : "",
+        item.rubrica ? esc(item.rubrica) : "",
+      ].filter(Boolean);
       return `<article class="verbete" style="--marcador:${cor}">
-        <span class="impacto rotulo" data-nivel="${esc(item.impacto)}">
-          <i></i><i></i><i></i> impacto ${esc(item.impacto)}
-        </span>
+        <div class="verbete-meta">
+          ${marca.length ? `<span class="capitulo rotulo">${marca.join(" · ")}</span>` : ""}
+          <span class="impacto rotulo" data-nivel="${esc(item.impacto)}">
+            <i></i><i></i><i></i> impacto ${esc(item.impacto)}
+          </span>
+        </div>
         <h3>${esc(item.titulo)}</h3>
         <p>${esc(corpo)}</p>
         ${porque ? `<div class="porque"><b>Porque interessa</b>${esc(porque)}</div>` : ""}
@@ -695,6 +754,170 @@ document.addEventListener("keydown", (evento) => {
 
 window.addEventListener("online", sincronizar);
 window.addEventListener("offline", () => marcarEstado("offline", "offline"));
+
+/* ------------------------------------------------------------ definições --- */
+
+const avisoDef = (texto) => ($("#def-aviso").textContent = texto);
+
+/** A cópia leva os apagados de propósito: senão restaurar ressuscitava-os. */
+const copiaDeSeguranca = () => ({
+  formato: "venera/1",
+  exportado_em: new Date().toISOString(),
+  notas: Object.values(estado.biblioteca.notas),
+  cartoes: Object.values(estado.biblioteca.cartoes),
+});
+
+/**
+ * No iPhone é a partilha que abre o "Guardar em Ficheiros"; o download só
+ * funciona bem no computador. Tenta a partilha e cai para o download.
+ */
+async function entregarFicheiro(nome, texto, tipo) {
+  const ficheiro = new File([texto], nome, { type: tipo });
+  if (navigator.canShare?.({ files: [ficheiro] })) {
+    try {
+      await navigator.share({ files: [ficheiro], title: nome });
+      return "guardado";
+    } catch (erro) {
+      if (erro.name === "AbortError") return "cancelado";
+    }
+  }
+  const url = URL.createObjectURL(ficheiro);
+  const ligacao = document.createElement("a");
+  ligacao.href = url;
+  ligacao.download = nome;
+  ligacao.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return "descarregado";
+}
+
+const carimbo = () => new Date().toISOString().slice(0, 10);
+
+async function exportarJson() {
+  const r = await entregarFicheiro(
+    `venera-${carimbo()}.json`,
+    JSON.stringify(copiaDeSeguranca(), null, 2),
+    "application/json"
+  );
+  avisoDef(r === "cancelado" ? "Cópia cancelada." : `Cópia ${r}.`);
+}
+
+async function exportarMarkdown() {
+  const linhas = [`# Venera — ${carimbo()}`, ""];
+
+  const notas = vivos("notas").sort((a, b) => b.atualizado_em - a.atualizado_em);
+  if (notas.length) {
+    linhas.push("## Notas", "");
+    for (const n of notas) {
+      linhas.push(`### ${n.titulo || "Sem título"}`, "");
+      if (n.origem?.titulo) linhas.push(`*De: ${n.origem.titulo}*`, "");
+      linhas.push(n.texto || "", "");
+    }
+  }
+
+  const cartoes = vivos("cartoes").sort((a, b) => a.criado_em - b.criado_em);
+  if (cartoes.length) {
+    linhas.push("## Cartões", "");
+    for (const c of cartoes) {
+      linhas.push(`- **${c.frente}**`, `  ${c.verso}`, "");
+    }
+  }
+
+  const r = await entregarFicheiro(`venera-${carimbo()}.md`, linhas.join("\n"), "text/markdown");
+  avisoDef(r === "cancelado" ? "Exportação cancelada." : `Ficheiro ${r}.`);
+}
+
+async function importar(ficheiro) {
+  let dados;
+  try {
+    dados = JSON.parse(await ficheiro.text());
+  } catch {
+    return avisoDef("Não consegui ler o ficheiro: não é JSON válido.");
+  }
+  if (!dados || (!Array.isArray(dados.notas) && !Array.isArray(dados.cartoes))) {
+    return avisoDef("Isto não parece uma cópia da Venera.");
+  }
+
+  let novos = 0;
+  let recentes = 0;
+  let ignorados = 0;
+  for (const tipo of ["notas", "cartoes"]) {
+    for (const item of dados[tipo] || []) {
+      if (!item?.id || typeof item.id !== "string") {
+        ignorados++;
+        continue;
+      }
+      const atual = estado.biblioteca[tipo][item.id];
+      if (!atual) novos++;
+      else if ((item.atualizado_em || 0) > (atual.atualizado_em || 0)) recentes++;
+      else {
+        ignorados++;
+        continue;
+      }
+      // Não passa por alterar(): esse carimba a hora, e uma cópia antiga
+      // passaria a parecer a versão mais recente. Guarda a hora original.
+      estado.biblioteca[tipo][item.id] = item;
+      estado.sujos.add(`${tipo}:${item.id}`);
+    }
+  }
+
+  gravarLocal();
+  agendarSync();
+  desenharDefinicoes();
+  avisoDef(`${novos} novos, ${recentes} atualizados, ${ignorados} já estavam em dia.`);
+}
+
+async function limparCache() {
+  for (const nome of await caches.keys()) await caches.delete(nome);
+  const registos = await navigator.serviceWorker?.getRegistrations?.();
+  for (const r of registos || []) await r.unregister();
+  avisoDef("Cache limpa. Fecha e volta a abrir a app.");
+}
+
+function esquecerChave() {
+  localStorage.removeItem("venera:chave");
+  estado.chave = "";
+  irPara("chave");
+}
+
+function desenharDefinicoes() {
+  const notas = vivos("notas").length;
+  const cartoes = vivos("cartoes");
+  const devidos = cartoes.filter((c) => c.sm2.proxima <= Date.now()).length;
+  const bytes = new Blob([JSON.stringify(estado.biblioteca)]).size;
+
+  const par = (k, v) => `<div><span>${k}</span><span>${esc(String(v))}</span></div>`;
+
+  $("#def-numeros").innerHTML = [
+    par("Notas", notas),
+    par("Cartões", cartoes.length),
+    par("A rever hoje", devidos),
+    par("Tamanho", `${(bytes / 1024).toFixed(1)} kB`),
+  ].join("");
+
+  $("#def-sync").innerHTML = [
+    par("Estado", $("#estado").textContent),
+    par("Por enviar", estado.sujos.size),
+    par(
+      "Última",
+      estado.desde ? new Date(estado.desde).toLocaleString("pt-PT") : "ainda nenhuma"
+    ),
+  ].join("");
+}
+
+$("#def-exportar").addEventListener("click", exportarJson);
+$("#def-markdown").addEventListener("click", exportarMarkdown);
+$("#def-importar").addEventListener("click", () => $("#def-ficheiro").click());
+$("#def-ficheiro").addEventListener("change", (e) => {
+  const ficheiro = e.target.files?.[0];
+  if (ficheiro) importar(ficheiro);
+  e.target.value = "";
+});
+$("#def-sincronizar").addEventListener("click", async () => {
+  await sincronizar();
+  desenharDefinicoes();
+});
+$("#def-cache").addEventListener("click", limparCache);
+$("#def-esquecer").addEventListener("click", esquecerChave);
 
 /* --------------------------------------------------------------- arranque --- */
 

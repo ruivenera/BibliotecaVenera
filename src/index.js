@@ -130,6 +130,9 @@ function limparPainel(p) {
   const indices = cotacoes(p.indices);
   if (indices.length) painel.indices = indices;
 
+  const accoes = cotacoes(p.accoes);
+  if (accoes.length) painel.accoes = accoes;
+
   const carteira = cotacoes(p.carteira);
   if (carteira.length) painel.carteira = carteira;
 
@@ -156,7 +159,61 @@ function limparPainel(p) {
     if (risco.indice !== null || risco.nivel) painel.risco = risco;
   }
 
-  const conflitos = (Array.isArray(p.conflitos) ? p.conflitos : [])
+  avaliacao(p, painel);
+
+  const geo = limparGeopolitica(p.geopolitica);
+  if (geo) painel.geopolitica = geo;
+
+  return Object.keys(painel).length ? painel : null;
+}
+
+/** Oportunidades, riscos e veredicto: as duas metades do painel têm os seus. */
+function avaliacao(origem, alvo) {
+  const oportunidades = textos(origem.oportunidades, 8);
+  if (oportunidades.length) alvo.oportunidades = oportunidades;
+
+  const riscos = textos(origem.riscos, 8);
+  if (riscos.length) alvo.riscos = riscos;
+
+  const veredicto = frase(origem.veredicto?.texto, 800);
+  if (veredicto) {
+    alvo.veredicto = {
+      tom: ["alta", "baixa", "neutro"].includes(origem.veredicto.tom) ? origem.veredicto.tom : "neutro",
+      titulo: frase(origem.veredicto.titulo, 60),
+      texto: veredicto,
+    };
+  }
+}
+
+function limparGeopolitica(g) {
+  if (!g || typeof g !== "object") return null;
+  const geo = {};
+
+  if (g.risco && typeof g.risco === "object") {
+    const risco = {
+      indice: limite(g.risco.indice, 0, 100),
+      nivel: frase(g.risco.nivel, 30),
+      tendencia: ["sobe", "desce", "estavel"].includes(g.risco.tendencia) ? g.risco.tendencia : "",
+      conflitos: limite(g.risco.conflitos, 0, 999),
+      alertas: limite(g.risco.alertas, 0, 999),
+      hotspots: frase(g.risco.hotspots, 160),
+      expostos: frase(g.risco.expostos, 160),
+    };
+    if (risco.indice !== null || risco.nivel) geo.risco = risco;
+  }
+
+  const alertas = (Array.isArray(g.alertas) ? g.alertas : [])
+    .map((a) => {
+      const texto = frase(a?.texto, 240);
+      return texto
+        ? { nivel: ["critico", "elevado", "moderado"].includes(a.nivel) ? a.nivel : "moderado", texto }
+        : null;
+    })
+    .filter(Boolean)
+    .slice(0, 8);
+  if (alertas.length) geo.alertas = alertas;
+
+  const conflitos = (Array.isArray(g.conflitos) ? g.conflitos : [])
     .map((c) => {
       const nome = frase(c?.nome, 60);
       return nome
@@ -165,24 +222,38 @@ function limparPainel(p) {
     })
     .filter(Boolean)
     .slice(0, 12);
-  if (conflitos.length) painel.conflitos = conflitos;
+  if (conflitos.length) geo.conflitos = conflitos;
 
-  const oportunidades = textos(p.oportunidades, 8);
-  if (oportunidades.length) painel.oportunidades = oportunidades;
+  const impacto = (Array.isArray(g.impacto_carteira) ? g.impacto_carteira : [])
+    .map((i) => {
+      const nome = frase(i?.nome, 40);
+      return nome
+        ? {
+            nome,
+            sentido: ["positivo", "neutro", "negativo"].includes(i.sentido) ? i.sentido : "neutro",
+            justificacao: frase(i?.justificacao, 200),
+          }
+        : null;
+    })
+    .filter(Boolean)
+    .slice(0, 12);
+  if (impacto.length) geo.impacto_carteira = impacto;
 
-  const riscos = textos(p.riscos, 8);
-  if (riscos.length) painel.riscos = riscos;
+  avaliacao(g, geo);
 
-  const veredicto = frase(p.veredicto?.texto, 800);
-  if (veredicto) {
-    painel.veredicto = {
-      tom: ["alta", "baixa", "neutro"].includes(p.veredicto.tom) ? p.veredicto.tom : "neutro",
-      titulo: frase(p.veredicto.titulo, 60),
-      texto: veredicto,
-    };
-  }
+  return Object.keys(geo).length ? geo : null;
+}
 
-  return Object.keys(painel).length ? painel : null;
+/** Capítulo e rubrica são opcionais; o resto do item já passou pela validação. */
+function limparItem(i) {
+  const item = { ...i };
+  const capitulo = limite(i.capitulo, 1, 99);
+  const rubrica = frase(i.rubrica, 40);
+  if (capitulo === null) delete item.capitulo;
+  else item.capitulo = capitulo;
+  if (rubrica) item.rubrica = rubrica;
+  else delete item.rubrica;
+  return item;
 }
 
 function limparProgresso(p) {
@@ -215,6 +286,8 @@ async function ingerir(request, env) {
   if (erros.length) return resposta({ erro: "validacao_falhou", detalhes: erros }, 422);
 
   const edicao = { ...payload, recebido_em: new Date().toISOString() };
+
+  edicao.itens = payload.itens.map(limparItem);
 
   // Limpos, não validados: um bloco torto sai da edição em vez de a recusar.
   const painel = limparPainel(payload.painel);

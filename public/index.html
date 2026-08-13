@@ -106,6 +106,12 @@
     color: var(--papel);
     padding: 0;
     cursor: pointer;
+    text-align: left;
+    line-height: 1.15;
+  }
+  /* O nome por extenso não cabe a 375px ao lado do indicador de estado. */
+  @media (max-width: 26rem) {
+    .marca { font-size: 0.85rem; letter-spacing: 0.02em; }
   }
 
   .estado {
@@ -298,6 +304,14 @@
     margin-bottom: 0.25rem;
   }
 
+  .verbete-meta { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+  .capitulo {
+    color: var(--marcador, var(--latao));
+    border: 1px solid var(--tinta-3);
+    border-radius: 2rem;
+    padding: 0.15rem 0.55rem;
+  }
+
   .impacto { display: inline-flex; align-items: center; gap: 0.3rem; }
   .impacto i { width: 9px; height: 3px; background: var(--tinta-3); display: block; }
   .impacto[data-nivel="baixo"] i:nth-child(1),
@@ -324,6 +338,37 @@
      edição o trouxer. */
 
   .painel { margin: 1.6rem 0 0.5rem; }
+
+  /* A metade geopolítica, separada como estava no relatório. */
+  .metade { margin-top: 1.8rem; }
+  .divisor {
+    display: block;
+    border-top: 2px solid var(--marcador, var(--latao));
+    padding-top: 0.55rem;
+    color: var(--marcador, var(--latao));
+  }
+
+  .alertas { list-style: none; margin: 0; padding: 0; }
+  .alertas li {
+    display: flex;
+    gap: 0.6rem;
+    align-items: baseline;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--tinta-2);
+    font-size: 0.9rem;
+  }
+  .alertas li:last-child { border-bottom: 0; }
+  .alertas li::before {
+    content: "";
+    flex: none;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--papel-fosco);
+  }
+  .alertas li[data-nivel="critico"]::before  { background: var(--desce); }
+  .alertas li[data-nivel="elevado"]::before  { background: var(--latao); }
+  .alertas li[data-nivel="moderado"]::before { background: var(--papel-fosco); }
 
   .bloco { border-top: 1px solid var(--tinta-3); padding: 1.1rem 0; }
   .bloco > .rotulo { display: block; margin-bottom: 0.7rem; color: var(--papel-fosco); }
@@ -361,9 +406,10 @@
   .medidor { display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 0.6rem; }
   .medidor .valor { font-family: var(--display); font-weight: 700; font-size: 2rem; line-height: 1; }
   .medidor .de { color: var(--papel-fosco); font-family: var(--meta); font-size: 0.75rem; }
-  .barra { height: 4px; background: var(--tinta-3); margin-bottom: 0.8rem; }
-  .barra i { display: block; height: 100%; background: var(--latao); }
-  .barra[data-alto="1"] i { background: var(--rust); }
+  /* Nome próprio: a .barra da revisão é outra coisa e vem depois na folha. */
+  .medidor-barra { height: 4px; background: var(--tinta-3); margin-bottom: 0.8rem; }
+  .medidor-barra i { display: block; height: 100%; background: var(--latao); }
+  .medidor-barra[data-alto="1"] i { background: var(--desce); }
 
   .grelha { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.4rem 1.2rem; }
   .grelha div { display: flex; justify-content: space-between; gap: 0.5rem; padding: 0.3rem 0; border-bottom: 1px solid var(--tinta-2); }
@@ -561,6 +607,31 @@
   }
   .aba[aria-current="page"] { color: var(--papel); border-top-color: var(--latao); }
 
+  /* Símbolos de menu: SVG e não emoji, para herdarem a cor da aba e não
+     trazerem a paleta cheia do sistema para dentro de uma casa em tinta e papel. */
+  .aba svg {
+    display: block;
+    width: 20px;
+    height: 20px;
+    margin: 0 auto 0.3rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+  }
+  .aba[aria-current="page"] svg { stroke: var(--latao); }
+
+  .explica {
+    color: var(--papel-fosco);
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin: 0 0 0.85rem;
+  }
+  #v-definicoes .bloco .accoes { margin-top: 0.85rem; }
+  #v-definicoes .grelha span:last-child { color: var(--papel); }
+
   .conta {
     display: inline-block;
     min-width: 1.15rem;
@@ -619,7 +690,7 @@
 <body>
 
 <header class="topo">
-  <button class="marca" data-ir="estante">Venera</button>
+  <button class="marca" data-ir="estante">Biblioteca de Rui Venera</button>
   <button class="estado" id="estado" data-estado="parado" title="Sincronizar agora">a arrancar</button>
 </header>
 
@@ -696,12 +767,67 @@
     </div>
   </section>
 
+  <section class="vista" id="v-definicoes" aria-label="Definições">
+    <div class="seccao">
+      <div class="cabecalho-seccao">
+        <p class="rotulo">Definições</p>
+      </div>
+
+      <section class="bloco">
+        <span class="rotulo">Cópia de segurança</span>
+        <p class="explica">Guarda as notas e os cartões, com o histórico de revisão. As edições não vão na cópia — essas voltam sempre do servidor.</p>
+        <div class="accoes">
+          <button class="btn" data-tom="forte" id="def-exportar">Guardar cópia</button>
+          <button class="btn" id="def-markdown">Exportar em Markdown</button>
+          <button class="btn" id="def-importar">Restaurar de ficheiro</button>
+        </div>
+        <input type="file" id="def-ficheiro" accept="application/json,.json" hidden>
+        <p class="aviso" id="def-aviso"></p>
+      </section>
+
+      <section class="bloco">
+        <span class="rotulo">Biblioteca</span>
+        <div class="grelha" id="def-numeros"></div>
+      </section>
+
+      <section class="bloco">
+        <span class="rotulo">Sincronização</span>
+        <div class="grelha" id="def-sync"></div>
+        <div class="accoes">
+          <button class="btn" id="def-sincronizar">Sincronizar agora</button>
+        </div>
+      </section>
+
+      <section class="bloco">
+        <span class="rotulo">Manutenção</span>
+        <p class="explica">Se a app abrir com uma versão antiga depois de uma atualização, limpa a cache e volta a abri-la.</p>
+        <div class="accoes">
+          <button class="btn" id="def-cache">Limpar cache</button>
+          <button class="btn" id="def-esquecer">Esquecer a chave</button>
+        </div>
+      </section>
+    </div>
+  </section>
+
 </main>
 
 <nav class="rodape" aria-label="Secções">
-  <button class="aba" data-ir="estante" aria-current="page">Estante</button>
-  <button class="aba" data-ir="notas">Notas</button>
-  <button class="aba" data-ir="revisao">Revisão<span class="conta" id="conta-revisao" data-zero="sim"></span></button>
+  <button class="aba" data-ir="estante" aria-current="page">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V9m4.7 11V5m4.6 15V11M19 20V7M3 20h18"/></svg>
+    <span>Estante</span>
+  </button>
+  <button class="aba" data-ir="notas">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6zM15 3v4h4M9 12h7M9 16h5"/></svg>
+    <span>Notas</span>
+  </button>
+  <button class="aba" data-ir="revisao">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v4h-4"/></svg>
+    <span>Revisão</span><span class="conta" id="conta-revisao" data-zero="sim"></span>
+  </button>
+  <button class="aba" data-ir="definicoes">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10m4 0h2M4 17h4m4 0h8M16 4v6M8 14v6"/></svg>
+    <span>Definições</span>
+  </button>
 </nav>
 
 <dialog id="folha">
