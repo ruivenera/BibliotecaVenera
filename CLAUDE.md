@@ -20,13 +20,17 @@ routine (07:00, cloud da Anthropic)
 | KV namespace | `VENERA`, id `948b4582fa2446a199cdb95573e1b2ba`, já no `wrangler.toml` |
 | Secrets `APP_TOKEN` / `INGEST_TOKEN` | definidos por `wrangler secret put` |
 | Repositório GitHub | github.com/ruivenera/BibliotecaVenera, `main` enviado |
-| Rotinas no Claude Code | criadas e apontadas à Venera; falta o ambiente (ver abaixo) |
+| Rotinas no Claude Code | a publicar sozinhas desde 13/08/2026 |
 
 Publicado pelo **Caminho B** (`npx wrangler deploy` do Windows), não pelo A. O primeiro deploy foi manual porque o repositório ainda não estava ligado; se o Workers Builds estiver agora ligado, este commit é o primeiro a publicar sozinho. Enquanto não estiver, cada alteração precisa de `npm run deploy`.
 
 O repositório é **público** e o histórico do upload inicial foi preservado, por isso o antigo `dev.vars` continua acessível pelo SHA — não faz mal, só tinha valores de exemplo, mas convém não lá pôr nada de verdade.
 
-As duas rotinas existem e já apontam para cá — reaproveitadas das antigas, que faziam rascunhos no Gmail. Ficaram sem conectores, sem notificações, com este repositório como fonte. **Falta o ambiente:** `VENERA_URL`, `VENERA_TOKEN` e o domínio na allowlist. Sem isso o `publicar.sh` morre na primeira linha.
+As duas rotinas foram reaproveitadas das antigas, que faziam rascunhos no Gmail. Ficaram sem conectores, sem notificações, com este repositório como fonte, e publicam sozinhas desde 13/08/2026 — a de Finanças às 08:00 UTC (diária), a de IA às 13:00 UTC (dias úteis).
+
+**O que as destrancou foi a allowlist de rede do ambiente.** Enquanto o domínio não lá esteve, as corridas terminavam sem publicar nada e sem forma de saber porquê: um diagnóstico que só fazia `curl` e publicar, sem pesquisa, também não produzia nada. Quando algo parar de aparecer na estante, é o primeiro sítio a olhar.
+
+O `VENERA_URL` e o `VENERA_TOKEN` **não** estão no ambiente: vão dentro dos prompts das rotinas, porque a interface das rotinas esteve inacessível durante a montagem. Funciona, mas o token fica legível por quem tiver acesso à API das rotinas — vale a pena movê-lo para variável de ambiente e limpar os prompts.
 
 A rotina de IA não é um digest como a de finanças: é um curso diário por capítulos, herdado do email. Ver a nota no README.
 
@@ -52,7 +56,7 @@ E em produção, contra o Worker publicado:
 
 - Workers Builds — o deploy foi por `wrangler`, o repositório nunca chegou a estar ligado
 - Offline a sério: a casca fica em cache, mas nunca se cortou a rede para ver a app abrir
-- **As rotinas nunca conseguiram publicar.** Um `Run now` na de Finanças passou dez minutos sem pôr nada na estante. Repetiu-se com um prompt de diagnóstico puro — sem pesquisa nenhuma, só `curl` e publicar, coisa de menos de um minuto — e passaram seis minutos sem nada. O `publicar.sh` está bom: correu à mão contra produção e devolveu `OK publicado`. Logo a falha é dentro do ambiente da rotina, e a allowlist de rede é o suspeito que sobra. Falta ler a sessão para confirmar, o que exige a interface das rotinas
+- Qualidade das fontes na rotina de IA. A primeira aula automática (Dia 29) trouxe 16 fontes de apenas dois domínios, `github.com` e `techstartups.com`, quando o tema — CrewAI, AutoGen, LangGraph — pedia a documentação oficial de cada um. O prompt já manda preferir a fonte primária; não chegou
 - Tipos de letra: continuam por ver, mas já se sabe porquê. O pedido ao `fonts.googleapis.com` **é feito**; o proxy do ambiente devolve `text/html` em vez de CSS e o browser recusa a folha de estilo. É limitação do ambiente de teste, não da app — o markup está correto. A primeira vez que vires a tipografia real é no iPhone
 
 ### Verificado em produção, com edição real na estante
