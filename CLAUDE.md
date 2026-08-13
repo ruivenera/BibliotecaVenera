@@ -52,7 +52,7 @@ E em produção, contra o Worker publicado:
 
 - Workers Builds — o deploy foi por `wrangler`, o repositório nunca chegou a estar ligado
 - Offline a sério: a casca fica em cache, mas nunca se cortou a rede para ver a app abrir
-- **As rotinas nunca conseguiram publicar.** Um `Run now` na de Finanças passou dez minutos sem pôr nada na estante. O `publicar.sh` está bom — correu à mão contra produção e devolveu `OK publicado` — portanto a falha é dentro do ambiente da rotina. O suspeito é a allowlist de rede. Falta ler a sessão para confirmar
+- **As rotinas nunca conseguiram publicar.** Um `Run now` na de Finanças passou dez minutos sem pôr nada na estante. Repetiu-se com um prompt de diagnóstico puro — sem pesquisa nenhuma, só `curl` e publicar, coisa de menos de um minuto — e passaram seis minutos sem nada. O `publicar.sh` está bom: correu à mão contra produção e devolveu `OK publicado`. Logo a falha é dentro do ambiente da rotina, e a allowlist de rede é o suspeito que sobra. Falta ler a sessão para confirmar, o que exige a interface das rotinas
 - Tipos de letra: continuam por ver, mas já se sabe porquê. O pedido ao `fonts.googleapis.com` **é feito**; o proxy do ambiente devolve `text/html` em vez de CSS e o browser recusa a folha de estilo. É limitação do ambiente de teste, não da app — o markup está correto. A primeira vez que vires a tipografia real é no iPhone
 
 ### Verificado em produção, com edição real na estante
@@ -90,6 +90,10 @@ SCHEMA.md             Formato do JSON da edição
 **Estante como elemento âncora.** Cada edição é uma lombada: altura conforme o número de temas, cor conforme a rotina, a de hoje realçada. Codifica dados reais, não é decoração.
 
 **A app parte o texto no `Porque interessa:`** e mostra essa frase numa caixa destacada. Se o prompt da rotina deixar de a produzir, o tema aparece na mesma, só sem a caixa.
+
+**O `painel` é limpo, não validado.** Os campos obrigatórios da edição dão `422` quando falham; o painel não. Um bloco torto é descartado em silêncio e a edição publica na mesma — a edição é a carga, o painel é o resumo por cima. Trocar isto por validação estrita faria uma tabela mal formatada deitar fora um dia inteiro de pesquisa. Vem do relatório que ia por email: índices, carteira, medidor de risco, teatros de conflito, oportunidades/riscos e veredicto, mais o `progresso` para o curso de IA.
+
+**O painel traz a organização do email, não a estética.** Tabelas, selos e hierarquia densa, mas dentro da paleta da casa. Só se acrescentou `--sobe` (verde-sálvia abafado) porque a paleta não tinha como marcar variações positivas; o `--desce` reutiliza o rust. A `variacao` viaja como número e é a app que lhe põe a seta, o sinal e a cor — o JSON não manda `"▼ -2,4%"`.
 
 ## Convenções
 

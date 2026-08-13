@@ -85,6 +85,117 @@ function validarEdicao(p) {
   return erros;
 }
 
+/* ---------------------------------------------------------------- painel --- */
+
+/**
+ * O painel é opcional e nunca faz falhar a publicação: ao contrário dos campos
+ * obrigatórios, o que vier torto cai fora em silêncio. A edição é o que interessa;
+ * o painel é o resumo por cima dela, e mais vale publicar sem ele do que não publicar.
+ */
+
+const frase = (v, max) => String(v ?? "").trim().slice(0, max);
+
+const numero = (v) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+
+const limite = (v, min, max) => {
+  const n = numero(v);
+  return n === null ? null : Math.min(Math.max(n, min), max);
+};
+
+/** Linhas de índices e de carteira têm a mesma forma. */
+const cotacoes = (lista) =>
+  (Array.isArray(lista) ? lista : [])
+    .map((l) => {
+      const nome = frase(l?.nome, 40);
+      return nome
+        ? { nome, valor: frase(l?.valor, 30), variacao: numero(l?.variacao), leitura: frase(l?.leitura, 160) }
+        : null;
+    })
+    .filter(Boolean)
+    .slice(0, 12);
+
+const textos = (lista, max) =>
+  (Array.isArray(lista) ? lista : [])
+    .map((t) => frase(t, 240))
+    .filter(Boolean)
+    .slice(0, max);
+
+function limparPainel(p) {
+  if (!p || typeof p !== "object") return null;
+  const painel = {};
+
+  const indices = cotacoes(p.indices);
+  if (indices.length) painel.indices = indices;
+
+  const carteira = cotacoes(p.carteira);
+  if (carteira.length) painel.carteira = carteira;
+
+  if (frase(p.destaque?.nome, 40)) {
+    painel.destaque = {
+      nome: frase(p.destaque.nome, 40),
+      descricao: frase(p.destaque.descricao, 80),
+      valor: frase(p.destaque.valor, 30),
+      variacao: numero(p.destaque.variacao),
+      texto: frase(p.destaque.texto, 600),
+    };
+  }
+
+  if (p.risco && typeof p.risco === "object") {
+    const risco = {
+      indice: limite(p.risco.indice, 0, 100),
+      nivel: frase(p.risco.nivel, 30),
+      tendencia: ["sobe", "desce", "estavel"].includes(p.risco.tendencia) ? p.risco.tendencia : "",
+      conflitos: limite(p.risco.conflitos, 0, 999),
+      alertas: limite(p.risco.alertas, 0, 999),
+      hotspots: frase(p.risco.hotspots, 160),
+      expostos: frase(p.risco.expostos, 160),
+    };
+    if (risco.indice !== null || risco.nivel) painel.risco = risco;
+  }
+
+  const conflitos = (Array.isArray(p.conflitos) ? p.conflitos : [])
+    .map((c) => {
+      const nome = frase(c?.nome, 60);
+      return nome
+        ? { nome, probabilidade: frase(c?.probabilidade, 20), situacao: frase(c?.situacao, 160) }
+        : null;
+    })
+    .filter(Boolean)
+    .slice(0, 12);
+  if (conflitos.length) painel.conflitos = conflitos;
+
+  const oportunidades = textos(p.oportunidades, 8);
+  if (oportunidades.length) painel.oportunidades = oportunidades;
+
+  const riscos = textos(p.riscos, 8);
+  if (riscos.length) painel.riscos = riscos;
+
+  const veredicto = frase(p.veredicto?.texto, 800);
+  if (veredicto) {
+    painel.veredicto = {
+      tom: ["alta", "baixa", "neutro"].includes(p.veredicto.tom) ? p.veredicto.tom : "neutro",
+      titulo: frase(p.veredicto.titulo, 60),
+      texto: veredicto,
+    };
+  }
+
+  return Object.keys(painel).length ? painel : null;
+}
+
+function limparProgresso(p) {
+  if (!p || typeof p !== "object") return null;
+  const progresso = {
+    dia: limite(p.dia, 0, 100000),
+    nivel: frase(p.nivel, 40),
+    percentagem: limite(p.percentagem, 0, 100),
+    leitura_min: limite(p.leitura_min, 0, 600),
+  };
+  return progresso.dia !== null || progresso.nivel ? progresso : null;
+}
+
 /* --------------------------------------------------------------- edições --- */
 
 async function ingerir(request, env) {
@@ -104,6 +215,15 @@ async function ingerir(request, env) {
   if (erros.length) return resposta({ erro: "validacao_falhou", detalhes: erros }, 422);
 
   const edicao = { ...payload, recebido_em: new Date().toISOString() };
+
+  // Limpos, não validados: um bloco torto sai da edição em vez de a recusar.
+  const painel = limparPainel(payload.painel);
+  const progresso = limparProgresso(payload.progresso);
+  if (painel) edicao.painel = painel;
+  else delete edicao.painel;
+  if (progresso) edicao.progresso = progresso;
+  else delete edicao.progresso;
+
   // Mesma rotina + mesmo dia sobrepõe: um re-run não duplica a edição.
   await env.VENERA.put(`edicao:${payload.rotina}:${payload.data}`, JSON.stringify(edicao));
 

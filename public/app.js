@@ -226,6 +226,139 @@ function desenharDossies(feed) {
     vazio("A estante está vazia", "Assim que as rotinas correrem, a primeira edição aparece aqui.");
 }
 
+/* ---------------------------------------------------------------- painel --- */
+
+/** A edição manda o número; o sinal, a seta e a cor são desenhados aqui. */
+function variacao(v) {
+  if (typeof v !== "number" || !Number.isFinite(v)) return "";
+  const sinal = v > 0 ? "sobe" : v < 0 ? "desce" : "igual";
+  const seta = v > 0 ? "▲" : v < 0 ? "▼" : "→";
+  return `<span class="var" data-sinal="${sinal}">${seta} ${Math.abs(v).toFixed(2).replace(".", ",")}%</span>`;
+}
+
+const bloco = (titulo, corpo) =>
+  corpo ? `<section class="bloco"><span class="rotulo">${titulo}</span>${corpo}</section>` : "";
+
+const linhaCotacao = (l) => `<tr>
+  <td class="nome">${esc(l.nome)}</td>
+  <td class="num">${esc(l.valor || "")}</td>
+  <td class="num">${variacao(l.variacao)}</td>
+  <td class="leitura">${esc(l.leitura || "")}</td>
+</tr>`;
+
+const tem = (v) => v !== null && v !== undefined && v !== "";
+
+/** Cada bloco só aparece se a edição o trouxer — o painel todo é opcional. */
+function desenharPainel(p) {
+  if (!p || typeof p !== "object") return "";
+  let html = "";
+
+  if (p.indices) {
+    html += bloco("Índices", `<table class="tabela">${p.indices.map(linhaCotacao).join("")}</table>`);
+  }
+
+  if (p.carteira || p.destaque) {
+    let corpo = "";
+    if (p.destaque) {
+      const d = p.destaque;
+      corpo += `<div class="destaque">
+        <div class="topo">
+          <div>
+            <div class="tick">${esc(d.nome)}</div>
+            ${d.descricao ? `<div class="desc">${esc(d.descricao)}</div>` : ""}
+          </div>
+          <div style="text-align:right">
+            ${variacao(d.variacao)}
+            ${d.valor ? `<div class="desc">${esc(d.valor)}</div>` : ""}
+          </div>
+        </div>
+        ${d.texto ? `<p class="texto">${esc(d.texto)}</p>` : ""}
+      </div>`;
+    }
+    if (p.carteira) corpo += `<table class="tabela">${p.carteira.map(linhaCotacao).join("")}</table>`;
+    html += bloco("Carteira", corpo);
+  }
+
+  if (p.risco) {
+    const r = p.risco;
+    const setas = { sobe: "▲", desce: "▼", estavel: "→" };
+    let corpo = "";
+    if (tem(r.indice)) {
+      corpo += `<div class="medidor">
+          <span class="valor">${r.indice}</span>
+          <span class="de">/ 100${r.nivel ? ` · ${esc(r.nivel)}` : ""}${r.tendencia ? ` ${setas[r.tendencia]}` : ""}</span>
+        </div>
+        <div class="barra" data-alto="${r.indice >= 61 ? 1 : 0}"><i style="width:${r.indice}%"></i></div>`;
+    }
+    const campos = [
+      ["Conflitos ativos", r.conflitos],
+      ["Alertas críticos", r.alertas],
+      ["Focos", r.hotspots],
+      ["Mais expostos", r.expostos],
+    ].filter(([, v]) => tem(v));
+    if (campos.length) {
+      corpo += `<div class="grelha">${campos
+        .map(([k, v]) => `<div><span>${k}</span><span>${esc(String(v))}</span></div>`)
+        .join("")}</div>`;
+    }
+    html += bloco("Risco global", corpo);
+  }
+
+  if (p.conflitos) {
+    html += bloco(
+      "Teatros",
+      `<table class="tabela">${p.conflitos
+        .map(
+          (c) => `<tr>
+            <td class="nome">${esc(c.nome)}</td>
+            <td class="num">${esc(c.probabilidade || "")}</td>
+            <td class="leitura">${esc(c.situacao || "")}</td>
+          </tr>`
+        )
+        .join("")}</table>`
+    );
+  }
+
+  if (p.oportunidades || p.riscos) {
+    const coluna = (titulo, itens, tom) =>
+      itens
+        ? `<div><span class="rotulo">${titulo}</span>
+             <ul class="lista" data-tom="${tom}">${itens.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
+           </div>`
+        : "";
+    html += bloco(
+      "Leitura",
+      `<div class="duas">${coluna("Oportunidades", p.oportunidades, "bom")}${coluna("Riscos", p.riscos, "mau")}</div>`
+    );
+  }
+
+  if (p.veredicto) {
+    const v = p.veredicto;
+    html += bloco(
+      "Veredicto",
+      `<div class="veredicto" data-tom="${esc(v.tom)}">
+        ${v.titulo ? `<div class="tom">${esc(v.titulo)}</div>` : ""}
+        <p>${esc(v.texto)}</p>
+      </div>`
+    );
+  }
+
+  return html ? `<div class="painel">${html}</div>` : "";
+}
+
+/** Onde vai o curso de IA. */
+function desenharProgresso(pr) {
+  if (!pr || typeof pr !== "object") return "";
+  const selos = [];
+  if (tem(pr.dia)) selos.push(`Dia <b>${pr.dia}</b>`);
+  if (pr.nivel) selos.push(`<b>${esc(pr.nivel)}</b>`);
+  if (tem(pr.percentagem)) selos.push(`<b>${pr.percentagem}%</b> do curso`);
+  if (tem(pr.leitura_min)) selos.push(`<b>${pr.leitura_min}</b> min`);
+  return selos.length
+    ? `<div class="progresso">${selos.map((s) => `<span class="selo">${s}</span>`).join("")}</div>`
+    : "";
+}
+
 /* --------------------------------------------------------------- leitura --- */
 
 async function abrirEdicao(rotina, data) {
@@ -252,7 +385,9 @@ async function abrirEdicao(rotina, data) {
     <p class="rotulo" style="color:${cor};margin-top:1.4rem">${esc(NOMES[edicao.rotina] || edicao.rotina)}</p>
     <h1 class="titulo-grande">${esc(edicao.titulo)}</h1>
     <p class="linha-meta rotulo">${esc(porExtenso(edicao.data))} · ${edicao.itens.length} temas</p>
-    <p class="resumo">${esc(edicao.resumo)}</p>`;
+    ${desenharProgresso(edicao.progresso)}
+    <p class="resumo">${esc(edicao.resumo)}</p>
+    <div style="--marcador:${cor}">${desenharPainel(edicao.painel)}</div>`;
 
   itens.innerHTML = edicao.itens
     .map((item, i) => {
