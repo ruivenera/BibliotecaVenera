@@ -112,6 +112,7 @@ SCHEMA.md             Formato do JSON da edição
 - **`wrangler.toml` tem `id = "COLA_AQUI_O_ID_DO_KV"`.** A primeira build falha com `KV namespace not found` enquanto lá estiver.
 - **O nome do Worker tem de continuar `bibliotecavenera`**, senão o deploy cria um segundo Worker.
 - **As rotinas precisam do domínio na allowlist do ambiente** (Network access: Custom). Sem isso o `curl` leva `403 host_not_allowed` e a rotina termina verde na mesma — verde não é sinal de sucesso, é preciso ver `OK publicado` na sessão.
+- **O domínio vai na allowlist, nunca no setup script.** O setup script é bash: uma linha com `bibliotecavenera.ruivenera18.workers.dev` solta é lida como um comando, não existe, e a sessão morre logo no arranque com `exit code 127: command not found` — antes sequer de chegar ao `publicar.sh`. Sintoma a decorar, porque parece lentidão: a rotina dispara, o `last_fired_at` atualiza, não há erro na API das rotinas, e nunca aparece nada na estante.
 - **Nas rotinas, remover todos os conectores.** Só precisam de pesquisa e do script.
 - Ao mexer no `sw.js`, subir o `VERSAO` — senão os aparelhos ficam com a versão antiga em cache.
 
