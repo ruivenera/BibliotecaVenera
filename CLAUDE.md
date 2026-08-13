@@ -52,9 +52,12 @@ E em produção, contra o Worker publicado:
 
 - Workers Builds — o deploy foi por `wrangler`, o repositório nunca chegou a estar ligado
 - Offline a sério: a casca fica em cache, mas nunca se cortou a rede para ver a app abrir
-- Instalação como PWA no iPhone
-- Um `/api/ingest` válido contra produção — para não meter uma edição falsa na estante real. Só o 401 e o 422 foram exercitados; o 200 só em local
-- Tipos de letra: continuam por ver. O painel do browser não faz sequer o pedido ao `fonts.googleapis.com`, por isso a tipografia real (Fraunces / Spectral / IBM Plex Mono) nunca foi observada — a primeira vez que a vires é no iPhone
+- **As rotinas nunca conseguiram publicar.** Um `Run now` na de Finanças passou dez minutos sem pôr nada na estante. O `publicar.sh` está bom — correu à mão contra produção e devolveu `OK publicado` — portanto a falha é dentro do ambiente da rotina. O suspeito é a allowlist de rede. Falta ler a sessão para confirmar
+- Tipos de letra: continuam por ver, mas já se sabe porquê. O pedido ao `fonts.googleapis.com` **é feito**; o proxy do ambiente devolve `text/html` em vez de CSS e o browser recusa a folha de estilo. É limitação do ambiente de teste, não da app — o markup está correto. A primeira vez que vires a tipografia real é no iPhone
+
+### Verificado em produção, com edição real na estante
+
+A 13/08/2026 publicou-se à mão uma edição de finanças com seis temas (`./publicar.sh`, `OK publicado`, 200). A app mostra-a toda: lombada na estante, resumo, os seis verbetes, as seis caixas de `Porque interessa` e os sete links de fontes. O percurso `/api/chave` → `/api/estante` → `/api/edicao` funciona contra o Worker publicado.
 
 ## Ficheiros
 
