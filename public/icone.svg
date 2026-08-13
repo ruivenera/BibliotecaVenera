@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Venera">
+  <!-- Três lombadas numa prateleira: o mesmo motivo da estante da app. -->
+  <rect width="512" height="512" rx="96" fill="#0E1A1C"/>
+  <rect x="144" y="176" width="64" height="232" rx="6" fill="#C69749"/>
+  <rect x="224" y="128" width="64" height="280" rx="6" fill="#E9E5D8"/>
+  <rect x="304" y="208" width="64" height="200" rx="6" fill="#8091DC"/>
+  <rect x="128" y="408" width="256" height="18" rx="9" fill="#94A29E"/>
+</svg>

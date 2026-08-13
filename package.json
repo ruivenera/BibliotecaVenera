@@ -1,0 +1,13 @@
+{
+  "name": "venera",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Biblioteca de estudo: edições diárias, notas e revisão espaçada.",
+  "scripts": {
+    "local": "node teste/servidor.mjs",
+    "dev": "npx wrangler dev",
+    "deploy": "npx wrangler deploy",
+    "logs": "npx wrangler tail"
+  }
+}

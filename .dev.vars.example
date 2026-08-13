@@ -1,0 +1,6 @@
+# Copia para .dev.vars (que o git ignora) e muda os valores.
+# Só serve ao `npx wrangler dev`; em produção são secrets na Cloudflare.
+# O `npm run local` não lê este ficheiro: usa chave-app / chave-rotinas.
+
+APP_TOKEN=chave-app
+INGEST_TOKEN=chave-rotinas

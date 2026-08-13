@@ -1,0 +1,9 @@
+node_modules/
+.wrangler/
+.claude/
+
+# Os tokens reais nunca vão para o repositório — ver .dev.vars.example.
+.dev.vars
+
+files.zip
+.DS_Store

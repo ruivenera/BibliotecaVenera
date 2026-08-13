@@ -1,0 +1,6 @@
+# LF em todo o lado. O publicar.sh corre no Linux das rotinas e com CRLF
+# rebentava logo na primeira linha.
+* text=auto eol=lf
+
+*.png binary
+*.zip binary
