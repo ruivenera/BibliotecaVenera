@@ -19,10 +19,12 @@ routine (07:00, cloud da Anthropic)
 | Worker `bibliotecavenera` na Cloudflare | publicado; o "Hello World!" desapareceu |
 | KV namespace | `VENERA`, id `948b4582fa2446a199cdb95573e1b2ba`, já no `wrangler.toml` |
 | Secrets `APP_TOKEN` / `INGEST_TOKEN` | definidos por `wrangler secret put` |
-| Repositório GitHub | por ligar — o repositório local existe, com dois commits |
+| Repositório GitHub | github.com/ruivenera/BibliotecaVenera, `main` enviado |
 | Rotinas no Claude Code | por criar |
 
-Publicado pelo **Caminho B** (`npx wrangler deploy` do Windows), não pelo A. Não há repositório ligado, por isso **a publicação não é automática**: por agora cada alteração precisa de um `npm run deploy`. Ligar o GitHub em Settings → Builds continua a valer a pena, e passa a publicar a cada push.
+Publicado pelo **Caminho B** (`npx wrangler deploy` do Windows), não pelo A. O primeiro deploy foi manual porque o repositório ainda não estava ligado; se o Workers Builds estiver agora ligado, este commit é o primeiro a publicar sozinho. Enquanto não estiver, cada alteração precisa de `npm run deploy`.
+
+O repositório é **público** e o histórico do upload inicial foi preservado, por isso o antigo `dev.vars` continua acessível pelo SHA — não faz mal, só tinha valores de exemplo, mas convém não lá pôr nada de verdade.
 
 Os próximos passos são enviar o repositório para o GitHub e criar as duas rotinas (INSTALL.md, passo 6).
 
