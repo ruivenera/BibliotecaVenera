@@ -202,6 +202,12 @@ async function carregarModulo(rotina) {
     marcarEstado("guardado", "ligado");
     desenharEstante(estanteDados.lombadas.filter((l) => l.rotina === rotina), modulo);
     desenharDossies(feed.edicoes.filter((e) => e.rotina === rotina), rotina, modulo);
+    if (modulo === "noticias") {
+      const hoje = feed.edicoes.find((e) => e.rotina === rotina);
+      estado.edicaoNoticias = hoje || null;
+      $("#data-noticias").textContent = hoje ? porExtensoComDia(hoje.data) : "sem edição de hoje";
+      desenharNoticias();
+    }
   } catch {
     marcarEstado(navigator.onLine ? "sem ligação" : "offline", "offline");
     if (!$(`#estante-${modulo}`).children.length) {
@@ -215,6 +221,172 @@ async function carregarModulo(rotina) {
 
 const vazio = (titulo, texto, botao = "") =>
   `<div class="vazio"><strong>${esc(titulo)}</strong><p>${esc(texto)}</p>${botao}</div>`;
+
+const porExtensoComDia = (iso) => {
+  const d = new Date(iso + "T12:00:00Z");
+  const dia = d.toLocaleDateString("pt-PT", { weekday: "long" });
+  return `${porExtenso(iso)} · ${dia}`;
+};
+
+/* -------------------------------------------------------------- notícias --- */
+
+/** As rubricas de mercado e as de geopolítica dividem a edição em duas metades. */
+const E_GEO = (item) => /geopol/i.test(item.rubrica || "");
+
+/** Duas letras sempre: com a inicial só, "Mercados" e "Macro" ficavam iguais. */
+const SIGLA = (texto) => {
+  const palavras = (texto || "?").replace(/[^\p{L}\p{N} ]/gu, "").split(/\s+/).filter(Boolean);
+  if (!palavras.length) return "?";
+  if (palavras.length === 1) return palavras[0].slice(0, 2).toUpperCase();
+  return palavras.slice(0, 2).map((p) => p[0].toUpperCase()).join("");
+};
+
+function linhaNoticia(item, i, cor) {
+  const marcada = vivos("notas").some((n) => n.origem?.chave === chaveItem(item));
+  return `<button class="noticia" data-item-noticia="${i}" style="--marcador:${cor}">
+    <span class="mosaico-noticia">${esc(SIGLA(item.rubrica || item.titulo))}</span>
+    <span class="corpo">
+      <h3>${esc(item.titulo)}</h3>
+      <span class="meta">${esc(item.rubrica || "Tema")} <em>· impacto ${esc(item.impacto)}</em></span>
+    </span>
+    <span class="lado">
+      <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>
+      <span class="marcador-nota" data-marcar="${i}" aria-pressed="${marcada}">
+        <svg viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg>
+      </span>
+    </span>
+  </button>`;
+}
+
+const chaveItem = (item) => `${estado.edicaoNoticias?.data || ""}:${item.titulo}`;
+
+function desenharNoticias() {
+  const alvo = $("#noticias-corpo");
+  const edicao = estado.edicaoNoticias;
+  if (!edicao) {
+    alvo.innerHTML = vazio(
+      "Sem edição de hoje",
+      "Assim que a rotina publicar, os temas do dia aparecem aqui."
+    );
+    return;
+  }
+
+  const meia = estado.meiaNoticias || "mercado";
+  const cor = COR["financas-geopolitica"];
+  const painel = edicao.painel || {};
+  const itens = edicao.itens.map((item, i) => ({ item, i }));
+  let html = "";
+
+  if (meia === "mercado") {
+    if (painel.indices) {
+      html += `<div class="indices">${painel.indices
+        .map((l) => {
+          const sinal = typeof l.variacao !== "number" ? "igual" : l.variacao > 0 ? "sobe" : l.variacao < 0 ? "desce" : "igual";
+          const seta = sinal === "sobe" ? "↑" : sinal === "desce" ? "↓" : "→";
+          return `<div class="cartao-indice">
+            <span class="n">${esc(l.nome)}<span class="seta-var" data-sinal="${sinal}">${seta}</span></span>
+            <span class="v">${esc(l.valor || "—")}</span>
+            ${variacao(l.variacao)}
+          </div>`;
+        })
+        .join("")}</div>`;
+    }
+    const mercado = itens.filter(({ item }) => !E_GEO(item));
+    html += `<div class="cabecalho-lista">
+        <span class="rotulo">Destaques de investimentos</span>
+        <button class="ver-mais" data-abrir-edicao>Ver tudo ›</button>
+      </div>
+      <div class="grupo">${
+        mercado.map(({ item, i }) => linhaNoticia(item, i, cor)).join("") ||
+        `<p class="linha"><span class="texto"><span>Esta edição não trouxe temas de mercado.</span></span></p>`
+      }</div>`;
+  } else {
+    const geo = painel.geopolitica || {};
+    if (geo.risco && tem(geo.risco.indice)) {
+      html += `<div class="grupo" style="padding:1rem">
+        <div class="medidor">
+          <span class="valor">${geo.risco.indice}</span>
+          <span class="de">/ 100${geo.risco.nivel ? ` · ${esc(geo.risco.nivel)}` : ""}</span>
+        </div>
+        <div class="medidor-barra" data-alto="${geo.risco.indice >= 61 ? 1 : 0}"><i style="width:${geo.risco.indice}%"></i></div>
+      </div>`;
+    }
+    if (geo.alertas) {
+      html += `<div class="cabecalho-lista"><span class="rotulo">Do dia</span></div>
+        <div class="grupo" style="padding:0.4rem 1rem">
+          <ul class="alertas">${geo.alertas
+            .map((a) => `<li data-nivel="${esc(a.nivel)}">${esc(a.texto)}</li>`)
+            .join("")}</ul>
+        </div>`;
+    }
+    const temas = itens.filter(({ item }) => E_GEO(item));
+    html += `<div class="cabecalho-lista">
+        <span class="rotulo">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/></svg>
+          Geopolítica
+        </span>
+        <button class="ver-mais" data-abrir-edicao>Ver tudo ›</button>
+      </div>
+      <div class="grupo">${
+        temas.map(({ item, i }) => linhaNoticia(item, i, cor)).join("") ||
+        `<p class="linha"><span class="texto"><span>Esta edição não trouxe temas geopolíticos.</span></span></p>`
+      }</div>`;
+  }
+
+  alvo.innerHTML = html;
+}
+
+document.querySelectorAll("[data-meia]").forEach((b) =>
+  b.addEventListener("click", () => {
+    estado.meiaNoticias = b.dataset.meia;
+    document
+      .querySelectorAll("[data-meia]")
+      .forEach((o) => o.setAttribute("aria-selected", o.dataset.meia === b.dataset.meia));
+    desenharNoticias();
+  })
+);
+
+$("#btn-arquivo-noticias").addEventListener("click", () => {
+  const arquivo = $("#arquivo-noticias");
+  const estanteEl = $("#estante-noticias");
+  const escondido = arquivo.hidden;
+  arquivo.hidden = !escondido;
+  estanteEl.hidden = !escondido;
+});
+
+$("#noticias-corpo").addEventListener("click", (e) => {
+  if (e.target.closest("[data-abrir-edicao]")) {
+    const ed = estado.edicaoNoticias;
+    return irPara("edicao", ed.rotina, ed.data);
+  }
+  const marcar = e.target.closest("[data-marcar]");
+  const linha = e.target.closest("[data-item-noticia]");
+  const ed = estado.edicaoNoticias;
+  if (!ed) return;
+
+  if (marcar) {
+    e.stopPropagation();
+    const item = ed.itens[Number(marcar.dataset.marcar)];
+    const chave = chaveItem(item);
+    const jaLa = vivos("notas").find((n) => n.origem?.chave === chave);
+    if (jaLa) {
+      jaLa.apagado = true;
+      alterar("notas", jaLa);
+    } else {
+      alterar("notas", {
+        id: id(),
+        titulo: item.titulo,
+        texto: item.texto,
+        origem: { chave, rotina: ed.rotina, data: ed.data, titulo: ed.titulo },
+        criado_em: Date.now(),
+        apagado: false,
+      });
+    }
+    return desenharNoticias();
+  }
+
+  if (linha) irPara("edicao", ed.rotina, ed.data);
+});
 
 function desenharEstante(lombadas, modulo) {
   const hoje = new Date().toISOString().slice(0, 10);
@@ -989,6 +1161,8 @@ async function exportarJson() {
     JSON.stringify(copiaDeSeguranca(), null, 2),
     "application/json"
   );
+  if (r !== "cancelado") localStorage.setItem("venera:ultima-copia", Date.now());
+  desenharDefinicoes();
   avisoDef(r === "cancelado" ? "Cópia cancelada." : `Cópia ${r}.`);
 }
 
@@ -1070,30 +1244,61 @@ function esquecerChave() {
   irPara("chave");
 }
 
-function desenharDefinicoes() {
-  const notas = vivos("notas").length;
-  const cartoes = vivos("cartoes");
-  const devidos = cartoes.filter((c) => c.sm2.proxima <= Date.now()).length;
-  const bytes = new Blob([JSON.stringify(estado.biblioteca)]).size;
+const REALCES = [
+  ["latao", "var(--latao)"],
+  ["indigo", "var(--indigo)"],
+  ["rust", "var(--rust)"],
+  ["sobe", "var(--sobe)"],
+];
 
-  const par = (k, v) => `<div><span>${k}</span><span>${esc(String(v))}</span></div>`;
-
-  $("#def-numeros").innerHTML = [
-    par("Notas", notas),
-    par("Cartões", cartoes.length),
-    par("A rever hoje", devidos),
-    par("Tamanho", `${(bytes / 1024).toFixed(1)} kB`),
-  ].join("");
-
-  $("#def-sync").innerHTML = [
-    par("Estado", $("#estado").textContent),
-    par("Por enviar", estado.sujos.size),
-    par(
-      "Última",
-      estado.desde ? new Date(estado.desde).toLocaleString("pt-PT") : "ainda nenhuma"
-    ),
-  ].join("");
+function aplicarRealce(nome) {
+  const cor = (REALCES.find(([n]) => n === nome) || REALCES[0])[1];
+  document.documentElement.style.setProperty("--realce", cor);
+  localStorage.setItem("venera:realce", nome);
+  $("#def-cores").innerHTML = REALCES.map(
+    ([n, c]) =>
+      `<button class="ponto-cor" data-realce="${n}" aria-current="${n === nome}" style="background:${c}" aria-label="${n}"></button>`
+  ).join("");
 }
+
+function aplicarEscala(valor) {
+  document.documentElement.style.setProperty("--escala", valor);
+  localStorage.setItem("venera:escala", valor);
+  document
+    .querySelectorAll("[data-escala]")
+    .forEach((b) => b.setAttribute("aria-current", b.dataset.escala === String(valor)));
+}
+
+function desenharDefinicoes() {
+  const bytes = new Blob([JSON.stringify(estado.biblioteca)]).size;
+  const n = (t) => vivos(t).length;
+
+  $("#def-armazenamento").textContent =
+    `${(bytes / 1024).toFixed(1)} kB · ${n("notas")} notas, ${n("cartoes")} cartões, ${n("livros")} livros`;
+
+  const ultima = Number(localStorage.getItem("venera:ultima-copia")) || 0;
+  $("#def-ultima-copia").textContent = ultima
+    ? new Date(ultima).toLocaleString("pt-PT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+    : "nunca";
+
+  const porEnviar = estado.sujos.size;
+  $("#def-estado-sync").textContent = porEnviar ? `${porEnviar} por enviar` : "em dia";
+  $("#def-estado-sync").style.color = porEnviar ? "var(--desce)" : "var(--sobe)";
+
+  $("#def-versao").textContent = `Versão ${VERSAO_APP}`;
+}
+
+const VERSAO_APP = "1.1.0";
+
+document.addEventListener("click", (e) => {
+  const cor = e.target.closest("[data-realce]");
+  if (cor) aplicarRealce(cor.dataset.realce);
+  const escala = e.target.closest("[data-escala]");
+  if (escala) aplicarEscala(escala.dataset.escala);
+});
+
+aplicarRealce(localStorage.getItem("venera:realce") || "latao");
+aplicarEscala(localStorage.getItem("venera:escala") || "1");
 
 $("#def-exportar").addEventListener("click", exportarJson);
 $("#def-markdown").addEventListener("click", exportarMarkdown);
