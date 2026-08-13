@@ -586,34 +586,43 @@
     bottom: 0; left: 0; right: 0;
     z-index: 20;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     background: color-mix(in srgb, var(--tinta) 92%, transparent);
     backdrop-filter: blur(12px);
     border-top: 1px solid var(--tinta-3);
     padding-bottom: var(--seguro-baixo);
   }
 
+  /* Ícone por cima do rótulo; as quatro abas cabem numa fila só. */
   .aba {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.22rem;
     background: none;
     border: 0;
     border-top: 2px solid transparent;
-    padding: 0.85rem 0.4rem;
+    padding: 0.6rem 0.25rem;
     color: var(--papel-fosco);
     font-family: var(--meta);
-    font-size: 0.68rem;
-    letter-spacing: 0.1em;
+    font-size: 0.6rem;
+    letter-spacing: 0.03em;
     text-transform: uppercase;
+    white-space: nowrap;
     cursor: pointer;
   }
+  /* Divisória entre abas; a primeira não leva. */
+  .aba + .aba { border-left: 1px solid var(--tinta-3); }
   .aba[aria-current="page"] { color: var(--papel); border-top-color: var(--latao); }
 
   /* Símbolos de menu: SVG e não emoji, para herdarem a cor da aba e não
      trazerem a paleta cheia do sistema para dentro de uma casa em tinta e papel. */
   .aba svg {
     display: block;
-    width: 20px;
-    height: 20px;
-    margin: 0 auto 0.3rem;
+    flex: none;
+    width: 16px;
+    height: 16px;
     fill: none;
     stroke: currentColor;
     stroke-width: 1.6;
@@ -622,6 +631,12 @@
     pointer-events: none;
   }
   .aba[aria-current="page"] svg { stroke: var(--latao); }
+  /* "Definições" é a etiqueta mais longa e o menu é monoespaçado: a 375px
+     quatro colunas só cabem com o texto mais apertado. */
+  @media (max-width: 24rem) {
+    .aba { font-size: 0.55rem; letter-spacing: 0.01em; padding: 0.55rem 0.15rem; }
+    .aba svg { width: 15px; height: 15px; }
+  }
 
   .explica {
     color: var(--papel-fosco);
@@ -679,7 +694,7 @@
     .estante { padding-left: 2rem; padding-right: 2rem; }
     .eixo-estante { padding-left: 2rem; padding-right: 2rem; }
     .dossies { grid-template-columns: 1fr 1fr; }
-    .rodape { grid-template-columns: repeat(3, minmax(0, 10rem)); justify-content: center; }
+    .rodape { grid-template-columns: repeat(4, minmax(0, 10rem)); justify-content: center; }
   }
 
   @media (prefers-reduced-motion: reduce) {
