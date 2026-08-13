@@ -11,18 +11,20 @@ routine (07:00, cloud da Anthropic)
 
 ## Estado atual
 
-**Escrito e testado localmente. Ainda não publicado.**
+**Publicado e a responder em https://bibliotecavenera.ruivenera18.workers.dev.**
 
 | | Estado |
 | --- | --- |
 | Código do Worker e da PWA | pronto |
-| Worker `bibliotecavenera` na Cloudflare | existe, mas ainda serve o "Hello World!" de exemplo |
-| KV namespace | por criar |
-| Secrets `APP_TOKEN` / `INGEST_TOKEN` | por definir |
-| Repositório GitHub | criado; ficheiros por enviar |
+| Worker `bibliotecavenera` na Cloudflare | publicado; o "Hello World!" desapareceu |
+| KV namespace | `VENERA`, id `948b4582fa2446a199cdb95573e1b2ba`, já no `wrangler.toml` |
+| Secrets `APP_TOKEN` / `INGEST_TOKEN` | definidos por `wrangler secret put` |
+| Repositório GitHub | por ligar — o repositório local existe, com dois commits |
 | Rotinas no Claude Code | por criar |
 
-O próximo passo é o **INSTALL.md, Caminho A** (sem terminal): enviar ficheiros → criar KV e colar o id no `wrangler.toml` → ligar o repositório em Settings → Builds → pôr os dois secrets.
+Publicado pelo **Caminho B** (`npx wrangler deploy` do Windows), não pelo A. Não há repositório ligado, por isso **a publicação não é automática**: por agora cada alteração precisa de um `npm run deploy`. Ligar o GitHub em Settings → Builds continua a valer a pena, e passa a publicar a cada push.
+
+Os próximos passos são enviar o repositório para o GitHub e criar as duas rotinas (INSTALL.md, passo 6).
 
 ### O que já foi verificado
 
@@ -35,12 +37,20 @@ Com um servidor Node que corre o código real do Worker (`teste/servidor.mjs`, K
 - Intervalos SM-2 distintos nos quatro botões
 - Zero erros de consola
 
+E em produção, contra o Worker publicado:
+
+- A PWA é servida na raiz e os nove ficheiros do `public/` respondem 200 com o content-type certo — o binding `[assets]` está bom
+- `/api/estante` e `/api/chave`: 401 sem chave, 200 com o `APP_TOKEN`
+- `/api/ingest`: 401 com o `APP_TOKEN`, 422 com o `INGEST_TOKEN` — os dois tokens estão trocados por miúdos e cada um só abre a sua porta
+- Service worker regista, fica `ativo` e mete as cinco entradas da casca em cache
+
 ### O que **não** foi verificado
 
-- Deploy real na Cloudflare (binding `[assets]`, Workers Builds)
-- Service worker e funcionamento offline — escrito, nunca exercitado
+- Workers Builds — o deploy foi por `wrangler`, o repositório nunca chegou a estar ligado
+- Offline a sério: a casca fica em cache, mas nunca se cortou a rede para ver a app abrir
 - Instalação como PWA no iPhone
-- Tipos de letra: o Google Fonts estava bloqueado no ambiente de teste, por isso a tipografia real (Fraunces / Spectral / IBM Plex Mono) nunca foi vista. As capturas usaram Georgia como recurso
+- Um `/api/ingest` válido contra produção — para não meter uma edição falsa na estante real. Só o 401 e o 422 foram exercitados; o 200 só em local
+- Tipos de letra: continuam por ver. O painel do browser não faz sequer o pedido ao `fonts.googleapis.com`, por isso a tipografia real (Fraunces / Spectral / IBM Plex Mono) nunca foi observada — a primeira vez que a vires é no iPhone
 
 ## Ficheiros
 
