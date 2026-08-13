@@ -91,6 +91,10 @@ SCHEMA.md             Formato do JSON da edição
 
 **Chaves em localStorage, biblioteca em localStorage, edições na Cache API.** As edições são grandes e já vêm cacheadas pelo service worker; notas e cartões são texto curto.
 
+**A cor do título diz a rotina.** Os títulos dos temas herdam o `--marcador` — latão nas finanças, índigo na IA — em vez de serem todos papel. Serve a leitura e codifica o mesmo dado que a lombada. O título da edição fica em papel, para a hierarquia não se perder. Contraste medido sobre a tinta: 6,7:1 no latão, 5,9:1 no índigo.
+
+**Tipografia de leitura: corpo pequeno, medida estreita, muito ar.** 16px com entrelinha 1,72 e a coluna a 36rem. Baixar o corpo sem estreitar a medida teria piorado a leitura, não melhorado — linha longa com letra pequena é o pior dos dois mundos. O espaço entre temas subiu para 3rem e os traços de separação passaram a `--tinta-2`, quase invisíveis: é o espaço que separa, não a linha.
+
 **Estante como elemento âncora.** Cada edição é uma lombada: altura conforme o número de temas, cor conforme a rotina, a de hoje realçada. Codifica dados reais, não é decoração.
 
 **A app parte o texto no `Porque interessa:`** e mostra essa frase numa caixa destacada. Se o prompt da rotina deixar de a produzir, o tema aparece na mesma, só sem a caixa.
