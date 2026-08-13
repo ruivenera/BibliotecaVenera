@@ -1037,16 +1037,27 @@
   /* Mosaico tipográfico em vez de logótipo: as marcas são de terceiros. */
   .mosaico-noticia {
     flex: none;
+    position: relative;
     width: 56px; height: 56px;
     display: grid;
     place-items: center;
     border-radius: 8px;
+    overflow: hidden;
     background: var(--tinta-2);
     border: 1px solid var(--tinta-3);
     color: var(--marcador, var(--latao));
     font-family: var(--display);
     font-weight: 700;
     font-size: 1.15rem;
+  }
+  /* O ícone da fonte tapa a sigla; se não carregar, o JS remove-o e a sigla fica. */
+  .mosaico-noticia img {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
   }
   .noticia .corpo { flex: 1; min-width: 0; }
   .noticia h3 {
@@ -1180,10 +1191,9 @@
       </button>
     </div>
 
-    <p class="linha-data rotulo" id="data-noticias"></p>
-
     <div class="separadores" role="tablist">
-      <button class="separador" data-meia="mercado" aria-selected="true">Investimentos</button>
+      <button class="separador" data-meia="geral" aria-selected="true">Geral</button>
+      <button class="separador" data-meia="mercado" aria-selected="false">Investimentos</button>
       <button class="separador" data-meia="geo" aria-selected="false">Geopolítica</button>
     </div>
 

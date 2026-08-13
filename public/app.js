@@ -205,7 +205,6 @@ async function carregarModulo(rotina) {
     if (modulo === "noticias") {
       const hoje = feed.edicoes.find((e) => e.rotina === rotina);
       estado.edicaoNoticias = hoje || null;
-      $("#data-noticias").textContent = hoje ? porExtensoComDia(hoje.data) : "sem edição de hoje";
       desenharNoticias();
     }
   } catch {
@@ -241,10 +240,27 @@ const SIGLA = (texto) => {
   return palavras.slice(0, 2).map((p) => p[0].toUpperCase()).join("");
 };
 
+/**
+ * O ícone vem do próprio site da fonte, não de um serviço pelo meio: já se está
+ * a ler essa fonte, não faz sentido contar a mais ninguém. Se falhar, fica a sigla.
+ */
+function iconeDaFonte(item) {
+  const url = item.fontes?.[0]?.url;
+  if (!url) return "";
+  try {
+    return `<img src="${esc(new URL(url).origin)}/favicon.ico" alt="" loading="lazy" decoding="async">`;
+  } catch {
+    return "";
+  }
+}
+
 function linhaNoticia(item, i, cor) {
   const marcada = vivos("notas").some((n) => n.origem?.chave === chaveItem(item));
   return `<button class="noticia" data-item-noticia="${i}" style="--marcador:${cor}">
-    <span class="mosaico-noticia">${esc(SIGLA(item.rubrica || item.titulo))}</span>
+    <span class="mosaico-noticia">
+      <b>${esc(SIGLA(item.rubrica || item.titulo))}</b>
+      ${iconeDaFonte(item)}
+    </span>
     <span class="corpo">
       <h3>${esc(item.titulo)}</h3>
       <span class="meta">${esc(item.rubrica || "Tema")} <em>· impacto ${esc(item.impacto)}</em></span>
@@ -271,69 +287,81 @@ function desenharNoticias() {
     return;
   }
 
-  const meia = estado.meiaNoticias || "mercado";
+  const meia = estado.meiaNoticias || "geral";
   const cor = COR["financas-geopolitica"];
   const painel = edicao.painel || {};
+  const geo = painel.geopolitica || {};
   const itens = edicao.itens.map((item, i) => ({ item, i }));
-  let html = "";
+  const mercado = itens.filter(({ item }) => !E_GEO(item));
+  const geopoliticos = itens.filter(({ item }) => E_GEO(item));
 
-  if (meia === "mercado") {
-    if (painel.indices) {
-      html += `<div class="indices">${painel.indices
-        .map((l) => {
-          const sinal = typeof l.variacao !== "number" ? "igual" : l.variacao > 0 ? "sobe" : l.variacao < 0 ? "desce" : "igual";
-          const seta = sinal === "sobe" ? "↑" : sinal === "desce" ? "↓" : "→";
-          return `<div class="cartao-indice">
-            <span class="n">${esc(l.nome)}<span class="seta-var" data-sinal="${sinal}">${seta}</span></span>
-            <span class="v">${esc(l.valor || "—")}</span>
-            ${variacao(l.variacao)}
-          </div>`;
-        })
-        .join("")}</div>`;
-    }
-    const mercado = itens.filter(({ item }) => !E_GEO(item));
-    html += `<div class="cabecalho-lista">
-        <span class="rotulo">Destaques de investimentos</span>
-        <button class="ver-mais" data-abrir-edicao>Ver tudo ›</button>
-      </div>
-      <div class="grupo">${
-        mercado.map(({ item, i }) => linhaNoticia(item, i, cor)).join("") ||
-        `<p class="linha"><span class="texto"><span>Esta edição não trouxe temas de mercado.</span></span></p>`
-      }</div>`;
-  } else {
-    const geo = painel.geopolitica || {};
-    if (geo.risco && tem(geo.risco.indice)) {
-      html += `<div class="grupo" style="padding:1rem">
-        <div class="medidor">
-          <span class="valor">${geo.risco.indice}</span>
-          <span class="de">/ 100${geo.risco.nivel ? ` · ${esc(geo.risco.nivel)}` : ""}</span>
-        </div>
-        <div class="medidor-barra" data-alto="${geo.risco.indice >= 61 ? 1 : 0}"><i style="width:${geo.risco.indice}%"></i></div>
-      </div>`;
-    }
-    if (geo.alertas) {
-      html += `<div class="cabecalho-lista"><span class="rotulo">Do dia</span></div>
-        <div class="grupo" style="padding:0.4rem 1rem">
-          <ul class="alertas">${geo.alertas
-            .map((a) => `<li data-nivel="${esc(a.nivel)}">${esc(a.texto)}</li>`)
-            .join("")}</ul>
-        </div>`;
-    }
-    const temas = itens.filter(({ item }) => E_GEO(item));
-    html += `<div class="cabecalho-lista">
-        <span class="rotulo">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/></svg>
-          Geopolítica
-        </span>
-        <button class="ver-mais" data-abrir-edicao>Ver tudo ›</button>
-      </div>
-      <div class="grupo">${
-        temas.map(({ item, i }) => linhaNoticia(item, i, cor)).join("") ||
-        `<p class="linha"><span class="texto"><span>Esta edição não trouxe temas geopolíticos.</span></span></p>`
-      }</div>`;
-  }
+  const lista = (conjunto, semNada) =>
+    `<div class="grupo">${
+      conjunto.map(({ item, i }) => linhaNoticia(item, i, cor)).join("") ||
+      `<p class="linha"><span class="texto"><span>${semNada}</span></span></p>`
+    }</div>`;
 
-  alvo.innerHTML = html;
+  const blocoIndices = () =>
+    painel.indices
+      ? `<div class="indices">${painel.indices
+          .map((l) => {
+            const sinal =
+              typeof l.variacao !== "number" ? "igual" : l.variacao > 0 ? "sobe" : l.variacao < 0 ? "desce" : "igual";
+            const seta = sinal === "sobe" ? "↑" : sinal === "desce" ? "↓" : "→";
+            return `<div class="cartao-indice">
+              <span class="n">${esc(l.nome)}<span class="seta-var" data-sinal="${sinal}">${seta}</span></span>
+              <span class="v">${esc(l.valor || "—")}</span>
+              ${variacao(l.variacao)}
+            </div>`;
+          })
+          .join("")}</div>`
+      : "";
+
+  const cabecalho = (titulo, icone = "") =>
+    `<div class="cabecalho-lista">
+      <span class="rotulo">${icone}${titulo}</span>
+      <button class="ver-mais" data-abrir-edicao>Ver tudo ›</button>
+    </div>`;
+
+  const GLOBO = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/></svg>`;
+
+  const blocoRisco = () =>
+    geo.risco && tem(geo.risco.indice)
+      ? `<div class="grupo" style="padding:1rem">
+          <div class="medidor">
+            <span class="valor">${geo.risco.indice}</span>
+            <span class="de">/ 100${geo.risco.nivel ? ` · ${esc(geo.risco.nivel)}` : ""}</span>
+          </div>
+          <div class="medidor-barra" data-alto="${geo.risco.indice >= 61 ? 1 : 0}"><i style="width:${geo.risco.indice}%"></i></div>
+        </div>`
+      : "";
+
+  const blocoAlertas = () =>
+    geo.alertas
+      ? `<div class="cabecalho-lista"><span class="rotulo">Do dia</span></div>
+         <div class="grupo" style="padding:0.4rem 1rem">
+           <ul class="alertas">${geo.alertas
+             .map((a) => `<li data-nivel="${esc(a.nivel)}">${esc(a.texto)}</li>`)
+             .join("")}</ul>
+         </div>`
+      : "";
+
+  const semMercado = "Esta edição não trouxe temas de mercado.";
+  const semGeo = "Esta edição não trouxe temas geopolíticos.";
+
+  const paginas = {
+    // Geral é a vista da maqueta: as duas metades seguidas, na mesma página.
+    geral: () =>
+      blocoIndices() +
+      cabecalho("Destaques de investimentos") +
+      lista(mercado, semMercado) +
+      cabecalho("Geopolítica", GLOBO) +
+      lista(geopoliticos, semGeo),
+    mercado: () => blocoIndices() + cabecalho("Investimentos") + lista(mercado, semMercado),
+    geo: () => blocoRisco() + blocoAlertas() + cabecalho("Geopolítica", GLOBO) + lista(geopoliticos, semGeo),
+  };
+
+  alvo.innerHTML = (paginas[meia] || paginas.geral)();
 }
 
 document.querySelectorAll("[data-meia]").forEach((b) =>
@@ -353,6 +381,13 @@ $("#btn-arquivo-noticias").addEventListener("click", () => {
   arquivo.hidden = !escondido;
   estanteEl.hidden = !escondido;
 });
+
+// Fonte sem favicon: tira-se a imagem e fica a sigla por baixo.
+$("#noticias-corpo").addEventListener(
+  "error",
+  (e) => { if (e.target.tagName === "IMG") e.target.remove(); },
+  true
+);
 
 $("#noticias-corpo").addEventListener("click", (e) => {
   if (e.target.closest("[data-abrir-edicao]")) {
@@ -411,7 +446,9 @@ function desenharEstante(lombadas, modulo) {
 
 function desenharDossies(edicoes, rotina, modulo) {
   const alvo = $(`#dossies-${modulo}`);
-  $(`#data-${modulo}`).textContent = edicoes[0] ? porExtenso(edicoes[0].data) : "";
+  // Nem todos os módulos têm linha de data — as Notícias deixaram de a mostrar.
+  const data = $(`#data-${modulo}`);
+  if (data) data.textContent = edicoes[0] ? porExtenso(edicoes[0].data) : "";
 
   alvo.innerHTML =
     edicoes
