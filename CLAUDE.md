@@ -20,13 +20,15 @@ routine (07:00, cloud da Anthropic)
 | KV namespace | `VENERA`, id `948b4582fa2446a199cdb95573e1b2ba`, já no `wrangler.toml` |
 | Secrets `APP_TOKEN` / `INGEST_TOKEN` | definidos por `wrangler secret put` |
 | Repositório GitHub | github.com/ruivenera/BibliotecaVenera, `main` enviado |
-| Rotinas no Claude Code | por criar |
+| Rotinas no Claude Code | criadas e apontadas à Venera; falta o ambiente (ver abaixo) |
 
 Publicado pelo **Caminho B** (`npx wrangler deploy` do Windows), não pelo A. O primeiro deploy foi manual porque o repositório ainda não estava ligado; se o Workers Builds estiver agora ligado, este commit é o primeiro a publicar sozinho. Enquanto não estiver, cada alteração precisa de `npm run deploy`.
 
 O repositório é **público** e o histórico do upload inicial foi preservado, por isso o antigo `dev.vars` continua acessível pelo SHA — não faz mal, só tinha valores de exemplo, mas convém não lá pôr nada de verdade.
 
-Os próximos passos são enviar o repositório para o GitHub e criar as duas rotinas (INSTALL.md, passo 6).
+As duas rotinas existem e já apontam para cá — reaproveitadas das antigas, que faziam rascunhos no Gmail. Ficaram sem conectores, sem notificações, com este repositório como fonte. **Falta o ambiente:** `VENERA_URL`, `VENERA_TOKEN` e o domínio na allowlist. Sem isso o `publicar.sh` morre na primeira linha.
+
+A rotina de IA não é um digest como a de finanças: é um curso diário por capítulos, herdado do email. Ver a nota no README.
 
 ### O que já foi verificado
 
