@@ -12,7 +12,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,400;9..144,600;9..144,700&family=Spectral:ital,wght@0,300;0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
+  /* As variáveis são semânticas, não literais: --tinta é sempre o fundo e
+     --papel é sempre o texto. Por isso o tema claro troca-lhes os valores e
+     tudo o resto segue atrás, sem uma única regra duplicada. */
+  :root, :root[data-tema="escuro"] {
     --tinta:      #0E1A1C;
     --tinta-2:    #14262A;
     --tinta-3:    #1E353B;
@@ -24,7 +27,43 @@
     /* Sobe e desce. Verde-sálvia abafado para não destoar do papel; o rust já servia. */
     --sobe:       #7F9E72;
     --desce:      #C2604A;
+    --sombra:     rgba(0, 0, 0, 0.5);
+  }
 
+  /* Os acentos escurecem no claro: o latão e o índigo de cima, sobre papel,
+     não chegavam ao contraste mínimo. */
+  :root[data-tema="claro"] {
+    --tinta:      #F4F1E6;
+    --tinta-2:    #E9E4D3;
+    --tinta-3:    #D3CDB8;
+    --papel:      #16262B;
+    --papel-fosco:#5E6E6C;
+    --latao:      #8A6420;
+    --indigo:     #41529F;
+    --rust:       #A34527;
+    --sobe:       #4C6A41;
+    --desce:      #A34527;
+    --sombra:     rgba(20, 38, 42, 0.16);
+  }
+
+  /* Sem escolha guardada, manda o sistema. */
+  @media (prefers-color-scheme: light) {
+    :root:not([data-tema]) {
+      --tinta:      #F4F1E6;
+      --tinta-2:    #E9E4D3;
+      --tinta-3:    #D3CDB8;
+      --papel:      #16262B;
+      --papel-fosco:#5E6E6C;
+      --latao:      #8A6420;
+      --indigo:     #41529F;
+      --rust:       #A34527;
+      --sobe:       #4C6A41;
+      --desce:      #A34527;
+      --sombra:     rgba(20, 38, 42, 0.16);
+    }
+  }
+
+  :root {
     --display: "Fraunces", Georgia, serif;
     --leitura: "Spectral", Georgia, serif;
     --meta:    "IBM Plex Mono", ui-monospace, monospace;
@@ -202,7 +241,10 @@
     );
   }
   .lombada:hover, .lombada:focus-visible { transform: translateY(-5px); filter: brightness(1.12); }
-  .lombada[data-hoje="sim"] { box-shadow: 0 0 0 1px var(--papel), 0 0 14px rgba(233,229,216,0.18); }
+  /* O halo da lombada de hoje segue a cor do texto, senão desaparecia no claro. */
+  .lombada[data-hoje="sim"] {
+    box-shadow: 0 0 0 1px var(--papel), 0 0 14px color-mix(in srgb, var(--papel) 22%, transparent);
+  }
 
   .eixo-estante {
     display: flex;
@@ -592,7 +634,7 @@
     bottom: 0; left: 0; right: 0;
     z-index: 20;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     background: color-mix(in srgb, var(--tinta) 92%, transparent);
     backdrop-filter: blur(12px);
     border-top: 1px solid var(--tinta-3);
@@ -612,8 +654,8 @@
     padding: 0.6rem 0.25rem;
     color: var(--papel-fosco);
     font-family: var(--meta);
-    font-size: 0.6rem;
-    letter-spacing: 0.03em;
+    font-size: 0.52rem;
+    letter-spacing: 0.01em;
     text-transform: uppercase;
     white-space: nowrap;
     cursor: pointer;
@@ -640,8 +682,52 @@
   /* "Definições" é a etiqueta mais longa e o menu é monoespaçado: a 375px
      quatro colunas só cabem com o texto mais apertado. */
   @media (max-width: 24rem) {
-    .aba { font-size: 0.55rem; letter-spacing: 0.01em; padding: 0.55rem 0.15rem; }
-    .aba svg { width: 15px; height: 15px; }
+    .aba { font-size: 0.48rem; letter-spacing: 0; padding: 0.5rem 0.1rem; }
+    .aba svg { width: 14px; height: 14px; }
+  }
+
+  .quote {
+    margin: 0;
+    border-left: 2px solid var(--latao);
+    padding: 0.2rem 0 0.2rem 1.2rem;
+  }
+  .quote blockquote {
+    margin: 0 0 0.7rem;
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: 1.15rem;
+    line-height: 1.45;
+    font-style: italic;
+  }
+  .quote figcaption { color: var(--papel-fosco); font-family: var(--meta); font-size: 0.7rem; }
+
+  .livro {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--tinta-2);
+    padding: 1rem 0;
+    color: inherit;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .livro h4 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin: 0.3rem 0 0.2rem;
+  }
+  .livro p { margin: 0.2rem 0 0; color: var(--papel-fosco); font-size: 0.88rem; }
+  .estado-livro { color: var(--latao); }
+  .estado-livro[data-estado="lido"] { color: var(--sobe); }
+  .estado-livro[data-estado="recomendado"] { color: var(--indigo); }
+
+  .segmentado { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .segmentado .btn[aria-current="true"] {
+    border-color: var(--latao);
+    color: var(--latao);
   }
 
   .explica {
@@ -700,7 +786,7 @@
     .estante { padding-left: 2rem; padding-right: 2rem; }
     .eixo-estante { padding-left: 2rem; padding-right: 2rem; }
     .dossies { grid-template-columns: 1fr 1fr; }
-    .rodape { grid-template-columns: repeat(4, minmax(0, 10rem)); justify-content: center; }
+    .rodape { grid-template-columns: repeat(6, minmax(0, 8rem)); justify-content: center; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -711,7 +797,7 @@
 <body>
 
 <header class="topo">
-  <button class="marca" data-ir="estante">Biblioteca de Rui Venera</button>
+  <button class="marca" data-ir="noticias">Biblioteca de Rui Venera</button>
   <button class="estado" id="estado" data-estado="parado" title="Sincronizar agora">a arrancar</button>
 </header>
 
@@ -729,45 +815,72 @@
     </div>
   </section>
 
-  <!-- ------------------------------------------------------------ estante -->
-  <section class="vista" id="v-estante" aria-label="Estante">
+  <!-- ----------------------------------------------------------- notícias -->
+  <section class="vista" id="v-noticias" aria-label="Notícias">
     <div class="seccao" style="padding-bottom:0.7rem">
       <div class="cabecalho-seccao" style="margin-bottom:0">
-        <p class="rotulo">Estante</p>
-        <p class="legenda rotulo">
-          <span style="--ponto:var(--latao)">Finanças</span>
-          <span style="--ponto:var(--indigo)">IA</span>
-        </p>
+        <p class="rotulo">Notícias</p>
+        <span class="rotulo" id="data-noticias"></span>
       </div>
     </div>
-    <div class="estante" id="estante"></div>
+    <div class="estante" id="estante-noticias"></div>
     <div class="eixo-estante">
       <span class="rotulo">hoje</span>
       <span class="rotulo">mais antigo →</span>
     </div>
-
     <div class="seccao">
-      <div class="cabecalho-seccao">
-        <p class="rotulo">Última edição</p>
-        <span class="rotulo" id="data-hoje"></span>
-      </div>
-      <div class="dossies" id="dossies"></div>
+      <div class="dossies" id="dossies-noticias"></div>
     </div>
   </section>
 
-  <!-- ------------------------------------------------------------ leitura -->
+  <!-- ------------------------------------------------------- aprendizagem -->
+  <section class="vista" id="v-aprendizagem" aria-label="Aprendizagem">
+    <div class="seccao" style="padding-bottom:0.7rem">
+      <div class="cabecalho-seccao" style="margin-bottom:0">
+        <p class="rotulo">Aprendizagem</p>
+        <span class="rotulo" id="data-aprendizagem"></span>
+      </div>
+    </div>
+    <div class="estante" id="estante-aprendizagem"></div>
+    <div class="eixo-estante">
+      <span class="rotulo">hoje</span>
+      <span class="rotulo">mais antigo →</span>
+    </div>
+    <div class="seccao">
+      <div class="dossies" id="dossies-aprendizagem"></div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------ leitura (livros) -->
+  <section class="vista" id="v-leitura" aria-label="Leitura">
+    <div class="seccao">
+      <div class="cabecalho-seccao">
+        <p class="rotulo">Leitura</p>
+        <button class="btn" id="btn-livro-novo">Novo livro</button>
+      </div>
+      <input class="campo" id="procura-livros" type="search" placeholder="Procurar nos livros">
+      <div id="lista-livros"></div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------- edição -->
   <section class="vista" id="v-edicao" aria-label="Edição">
     <div class="leitura">
-      <button class="btn-voltar" data-ir="estante">← Estante</button>
+      <button class="btn-voltar" id="btn-voltar-edicao">← Voltar</button>
       <div id="edicao-cabecalho"></div>
       <div id="edicao-itens"></div>
     </div>
   </section>
 
   <!-- -------------------------------------------------------------- notas -->
-  <section class="vista" id="v-notas" aria-label="Notas">
+  <section class="vista" id="v-notas" aria-label="Notas e Quotes">
     <div class="seccao">
       <div class="cabecalho-seccao">
+        <p class="rotulo">Quote do dia</p>
+      </div>
+      <figure class="quote" id="quote"></figure>
+
+      <div class="cabecalho-seccao" style="margin-top:2.4rem">
         <p class="rotulo">Notas</p>
         <button class="btn" id="btn-nota-nova">Nova nota</button>
       </div>
@@ -793,6 +906,15 @@
       <div class="cabecalho-seccao">
         <p class="rotulo">Definições</p>
       </div>
+
+      <section class="bloco">
+        <span class="rotulo">Aspeto</span>
+        <div class="segmentado" role="group" aria-label="Tema">
+          <button class="btn" data-tema-opcao="claro">Claro</button>
+          <button class="btn" data-tema-opcao="escuro">Escuro</button>
+          <button class="btn" data-tema-opcao="sistema">Sistema</button>
+        </div>
+      </section>
 
       <section class="bloco">
         <span class="rotulo">Cópia de segurança</span>
@@ -833,9 +955,17 @@
 </main>
 
 <nav class="rodape" aria-label="Secções">
-  <button class="aba" data-ir="estante" aria-current="page">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V9m4.7 11V5m4.6 15V11M19 20V7M3 20h18"/></svg>
-    <span>Estante</span>
+  <button class="aba" data-ir="noticias" aria-current="page">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h13v14H4zM17 9h3v8a2 2 0 0 1-3 0M7 9h7M7 13h7M7 16h4"/></svg>
+    <span>Notícias</span>
+  </button>
+  <button class="aba" data-ir="aprendizagem">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5 3 9l9 4 9-4zM6 11v5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-5"/></svg>
+    <span>Aprender</span>
+  </button>
+  <button class="aba" data-ir="leitura">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6.5C10.5 5.2 8.4 4.7 4 5v13c4.4-.3 6.5.2 8 1.5 1.5-1.3 3.6-1.8 8-1.5V5c-4.4-.3-6.5.2-8 1.5zM12 6.5v13"/></svg>
+    <span>Leitura</span>
   </button>
   <button class="aba" data-ir="notas">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6zM15 3v4h4M9 12h7M9 16h5"/></svg>
@@ -850,6 +980,23 @@
     <span>Definições</span>
   </button>
 </nav>
+
+<dialog id="folha-livro">
+  <p class="rotulo" id="livro-rotulo">Livro</p>
+  <input class="campo" id="livro-titulo" placeholder="Título">
+  <input class="campo" id="livro-autor" placeholder="Autor">
+  <div class="segmentado" role="group" aria-label="Estado do livro">
+    <button class="btn" data-livro-estado="a_ler">A ler</button>
+    <button class="btn" data-livro-estado="lido">Lido</button>
+    <button class="btn" data-livro-estado="recomendado">Recomendado</button>
+  </div>
+  <textarea class="campo" id="livro-resumo" placeholder="Resumo, notas de leitura, citações…"></textarea>
+  <div class="accoes">
+    <button class="btn" id="livro-apagar">Apagar</button>
+    <button class="btn" id="livro-cancelar">Cancelar</button>
+    <button class="btn" data-tom="forte" id="livro-guardar">Guardar</button>
+  </div>
+</dialog>
 
 <dialog id="folha">
   <p class="rotulo" id="folha-rotulo"></p>

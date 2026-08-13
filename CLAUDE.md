@@ -91,6 +91,16 @@ SCHEMA.md             Formato do JSON da edição
 
 **Chaves em localStorage, biblioteca em localStorage, edições na Cache API.** As edições são grandes e já vêm cacheadas pelo service worker; notas e cartões são texto curto.
 
+**Seis módulos, um por tema.** Notícias (finanças), Aprendizagem (curso de IA), Leitura (livros do Rui), Notas e Quotes, Revisão, Definições. A estante partiu-se em dois porque as duas rotinas não são a mesma coisa: uma é imprensa diária, a outra é um curso com continuidade. O conteúdo só aparece depois de entrar no módulo.
+
+**Claro, escuro e sistema.** As variáveis de cor são semânticas, não literais: `--tinta` é sempre o fundo e `--papel` é sempre o texto. Por isso o tema claro só troca os valores no `:root` e nenhuma regra de componente foi duplicada. "Sistema" é a ausência do atributo `data-tema`, para o `@media` voltar a mandar. Os acentos escurecem no claro — o latão e o índigo do tema escuro, sobre papel, não chegavam ao contraste mínimo.
+
+**A casca vai a rede primeiro no service worker.** Com cache primeiro, cada versão nova só aparecia à segunda abertura. HTML e JS passam a network-first com a cache como rede de segurança; ícones e manifest ficam cache-first, que mudam de longe a longe.
+
+**Livros são um terceiro tipo sincronizado**, a par de notas e cartões, com o mesmo mecanismo de `atualizado_em`. Bibliotecas gravadas antes disto não têm a gaveta: tanto o Worker como a app criam-na à chegada, senão `vivos("livros")` rebentava.
+
+**As quotes são uma coletânea fixa no código.** Roda pelo dia do ano, funciona offline e não gasta corridas de rotina. Todas de obras identificadas — ao acrescentar, manter a fonte.
+
 **A cor do título diz a rotina.** Os títulos dos temas herdam o `--marcador` — latão nas finanças, índigo na IA — em vez de serem todos papel. Serve a leitura e codifica o mesmo dado que a lombada. O título da edição fica em papel, para a hierarquia não se perder. Contraste medido sobre a tinta: 6,7:1 no latão, 5,9:1 no índigo.
 
 **Tipografia de leitura: corpo pequeno, medida estreita, muito ar.** 16px com entrelinha 1,72 e a coluna a 36rem. Baixar o corpo sem estreitar a medida teria piorado a leitura, não melhorado — linha longa com letra pequena é o pior dos dois mundos. O espaço entre temas subiu para 3rem e os traços de separação passaram a `--tinta-2`, quase invisíveis: é o espaço que separa, não a linha.

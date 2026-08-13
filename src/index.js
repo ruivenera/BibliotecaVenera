@@ -394,6 +394,22 @@ function limparCartao(c) {
   };
 }
 
+function limparLivro(l) {
+  if (!l?.id || typeof l.id !== "string" || l.id.length > 64) return null;
+  return {
+    id: l.id,
+    titulo: String(l.titulo || "").slice(0, 200),
+    autor: String(l.autor || "").slice(0, 120),
+    estado: ["a_ler", "lido", "recomendado"].includes(l.estado) ? l.estado : "a_ler",
+    resumo: String(l.resumo || "").slice(0, 40000),
+    criado_em: Number(l.criado_em) || agora(),
+    atualizado_em: Number(l.atualizado_em) || agora(),
+    apagado: !!l.apagado,
+  };
+}
+
+const TIPOS = { notas: limparNota, cartoes: limparCartao, livros: limparLivro };
+
 /**
  * Sincronização por diferenças. O cliente manda o que mudou desde a última vez
  * e recebe tudo o que mudou no servidor desde então. Ganha a versão com
@@ -413,13 +429,14 @@ async function sincronizar(request, env) {
   }
 
   const desde = Number(payload.desde) || 0;
-  const biblioteca = JSON.parse((await env.VENERA.get("biblioteca")) || '{"notas":{},"cartoes":{}}');
+  const biblioteca = JSON.parse((await env.VENERA.get("biblioteca")) || "{}");
+  // Bibliotecas gravadas antes dos livros não trazem a gaveta: cria-a à chegada.
+  for (const tipo of Object.keys(TIPOS)) biblioteca[tipo] ||= {};
 
   let mudou = false;
-  const limpadores = { notas: limparNota, cartoes: limparCartao };
-  for (const tipo of ["notas", "cartoes"]) {
+  for (const tipo of Object.keys(TIPOS)) {
     for (const cru of payload[tipo] || []) {
-      const item = limpadores[tipo](cru);
+      const item = TIPOS[tipo](cru);
       if (!item) continue;
       const atual = biblioteca[tipo][item.id];
       if (!atual || item.atualizado_em > (atual.atualizado_em || 0)) {
@@ -438,7 +455,9 @@ async function sincronizar(request, env) {
   const alterados = (tipo) =>
     Object.values(biblioteca[tipo]).filter((i) => (i.atualizado_em || 0) > desde);
 
-  return resposta({ agora: agora(), notas: alterados("notas"), cartoes: alterados("cartoes") });
+  const devolver = { agora: agora() };
+  for (const tipo of Object.keys(TIPOS)) devolver[tipo] = alterados(tipo);
+  return resposta(devolver);
 }
 
 /* ---------------------------------------------------------------- router --- */

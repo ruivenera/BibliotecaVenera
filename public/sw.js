@@ -1,6 +1,6 @@
 /* Venera — offline. O que já leste continua a abrir sem rede. */
 
-const VERSAO = "venera-v5";
+const VERSAO = "venera-v6";
 const CASCA = ["/", "/index.html", "/app.js", "/manifest.json", "/icone.svg"];
 
 self.addEventListener("install", (evento) => {
@@ -60,13 +60,32 @@ self.addEventListener("fetch", (evento) => {
 
   if (!mesmaOrigem) return;
 
-  evento.respondWith(
-    caches.match(pedido).then(
-      (guardado) =>
-        guardado ||
-        fetch(pedido).catch(() =>
-          pedido.mode === "navigate" ? caches.match("/index.html") : Promise.reject(new Error("offline"))
+  // A casca vai a rede primeiro. Com cache primeiro, uma versão nova só
+  // aparecia à segunda abertura — e a app tem nome, menu e código a mudar.
+  // Os ícones e o manifest, esses, podem vir da cache: mudam de longe a longe.
+  const casca = pedido.mode === "navigate" || /\.(html|js)$/.test(url.pathname) || url.pathname === "/";
+
+  if (casca) {
+    evento.respondWith(
+      fetch(pedido)
+        .then((resposta) => {
+          if (resposta.ok) {
+            const copia = resposta.clone();
+            caches.open(VERSAO).then((c) => c.put(pedido, copia));
+          }
+          return resposta;
+        })
+        .catch(() =>
+          caches
+            .match(pedido)
+            .then((r) => r || (pedido.mode === "navigate" ? caches.match("/index.html") : null))
+            .then((r) => r || Promise.reject(new Error("offline")))
         )
-    )
+    );
+    return;
+  }
+
+  evento.respondWith(
+    caches.match(pedido).then((guardado) => guardado || fetch(pedido))
   );
 });

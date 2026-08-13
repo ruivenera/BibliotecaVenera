@@ -7,6 +7,7 @@ const esc = (s) =>
   );
 const id = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const DIA = 864e5;
+const TIPOS = ["notas", "cartoes", "livros"];
 
 const COR = {
   "financas-geopolitica": "var(--latao)",
@@ -29,7 +30,7 @@ const guardado = (chave, valorInicial) => {
 
 const estado = {
   chave: localStorage.getItem("venera:chave") || "",
-  biblioteca: guardado("venera:biblioteca", { notas: {}, cartoes: {} }),
+  biblioteca: guardado("venera:biblioteca", { notas: {}, cartoes: {}, livros: {} }),
   sujos: new Set(guardado("venera:sujos", [])),
   desde: guardado("venera:desde", 0),
   vista: "estante",
@@ -38,6 +39,9 @@ const estado = {
   cartaoAtual: null,
   versoVisivel: false,
 };
+
+// Quem já usava a app tem uma biblioteca gravada sem a gaveta dos livros.
+for (const tipo of TIPOS) estado.biblioteca[tipo] ||= {};
 
 function gravarLocal() {
   localStorage.setItem("venera:biblioteca", JSON.stringify(estado.biblioteca));
@@ -94,7 +98,7 @@ async function sincronizar() {
   if (!navigator.onLine) return marcarEstado("offline", "offline");
 
   marcarEstado("a sincronizar", "a-sincronizar");
-  const porEnviar = { notas: [], cartoes: [] };
+  const porEnviar = { notas: [], cartoes: [], livros: [] };
   for (const marca of estado.sujos) {
     const [tipo, item] = marca.split(":");
     const dados = estado.biblioteca[tipo]?.[item];
@@ -106,8 +110,8 @@ async function sincronizar() {
       method: "POST",
       body: JSON.stringify({ desde: estado.desde, ...porEnviar }),
     });
-    for (const tipo of ["notas", "cartoes"]) {
-      for (const vindo of r[tipo]) {
+    for (const tipo of TIPOS) {
+      for (const vindo of r[tipo] || []) {
         const atual = estado.biblioteca[tipo][vindo.id];
         if (!atual || vindo.atualizado_em > atual.atualizado_em) {
           estado.biblioteca[tipo][vindo.id] = vindo;
@@ -127,7 +131,23 @@ async function sincronizar() {
 
 /* ----------------------------------------------------------------- rotas --- */
 
-const VISTAS = ["chave", "estante", "edicao", "notas", "revisao", "definicoes"];
+const VISTAS = [
+  "chave",
+  "noticias",
+  "aprendizagem",
+  "leitura",
+  "notas",
+  "revisao",
+  "definicoes",
+  "edicao",
+];
+
+/** Cada rotina tem o seu módulo: as edições deixaram de partilhar uma estante. */
+const MODULO = {
+  "financas-geopolitica": "noticias",
+  "inteligencia-artificial": "aprendizagem",
+};
+const ROTINA_DO_MODULO = { noticias: "financas-geopolitica", aprendizagem: "inteligencia-artificial" };
 
 function irPara(vista, ...args) {
   estado.vista = vista;
@@ -136,13 +156,15 @@ function irPara(vista, ...args) {
     if (alvo) alvo.dataset.ativa = v === vista ? "sim" : "nao";
   });
   document.querySelectorAll(".aba").forEach((aba) => {
-    const ativa = aba.dataset.ir === vista || (vista === "edicao" && aba.dataset.ir === "estante");
+    const ativa =
+      aba.dataset.ir === vista || (vista === "edicao" && aba.dataset.ir === estado.moduloOrigem);
     aba.setAttribute("aria-current", ativa ? "page" : "false");
   });
   window.scrollTo({ top: 0, behavior: "instant" });
 
-  if (vista === "estante") carregarEstante();
-  if (vista === "notas") desenharNotas();
+  if (ROTINA_DO_MODULO[vista]) carregarModulo(ROTINA_DO_MODULO[vista]);
+  if (vista === "leitura") desenharLivros();
+  if (vista === "notas") { desenharQuote(); desenharNotas(); }
   if (vista === "revisao") comecarRevisao();
   if (vista === "definicoes") desenharDefinicoes();
   if (vista === "edicao") abrirEdicao(...args);
@@ -162,18 +184,29 @@ const porExtenso = (iso) =>
     year: "numeric",
   });
 
-async function carregarEstante() {
+/** Um pedido serve os dois módulos; sem isto trocar de aba refazia tudo. */
+let cacheEstante = { quando: 0, dados: null };
+
+async function buscarEstante() {
+  if (cacheEstante.dados && Date.now() - cacheEstante.quando < 30000) return cacheEstante.dados;
+  const [estanteDados, feed] = await Promise.all([api("/api/estante"), api("/api/feed")]);
+  cacheEstante = { quando: Date.now(), dados: { estanteDados, feed } };
+  return cacheEstante.dados;
+}
+
+async function carregarModulo(rotina) {
+  const modulo = MODULO[rotina];
   try {
-    const [estanteDados, feed] = await Promise.all([api("/api/estante"), api("/api/feed")]);
+    const { estanteDados, feed } = await buscarEstante();
     NOMES = estanteDados.rotinas || NOMES;
     marcarEstado("guardado", "ligado");
-    desenharEstante(estanteDados.lombadas);
-    desenharDossies(feed);
+    desenharEstante(estanteDados.lombadas.filter((l) => l.rotina === rotina), modulo);
+    desenharDossies(feed.edicoes.filter((e) => e.rotina === rotina), rotina, modulo);
   } catch {
     marcarEstado(navigator.onLine ? "sem ligação" : "offline", "offline");
-    if (!$("#estante").children.length) {
-      $("#dossies").innerHTML = vazio(
-        "A estante não respondeu",
+    if (!$(`#estante-${modulo}`).children.length) {
+      $(`#dossies-${modulo}`).innerHTML = vazio(
+        "Não foi possível carregar",
         "Verifica a ligação. O que já leste continua disponível offline."
       );
     }
@@ -183,9 +216,9 @@ async function carregarEstante() {
 const vazio = (titulo, texto, botao = "") =>
   `<div class="vazio"><strong>${esc(titulo)}</strong><p>${esc(texto)}</p>${botao}</div>`;
 
-function desenharEstante(lombadas) {
+function desenharEstante(lombadas, modulo) {
   const hoje = new Date().toISOString().slice(0, 10);
-  const alvo = $("#estante");
+  const alvo = $(`#estante-${modulo}`);
 
   if (!lombadas.length) {
     alvo.innerHTML = `<p class="rotulo" style="align-self:center">sem volumes arquivados</p>`;
@@ -204,27 +237,26 @@ function desenharEstante(lombadas) {
     .join("");
 }
 
-function desenharDossies(feed) {
-  const alvo = $("#dossies");
-  $("#data-hoje").textContent = feed.edicoes[0] ? porExtenso(feed.edicoes[0].data) : "";
+function desenharDossies(edicoes, rotina, modulo) {
+  const alvo = $(`#dossies-${modulo}`);
+  $(`#data-${modulo}`).textContent = edicoes[0] ? porExtenso(edicoes[0].data) : "";
 
-  const cartoes = feed.edicoes.map(
-    (e) => `<button class="dossie" style="--marcador:${COR[e.rotina]}"
+  alvo.innerHTML =
+    edicoes
+      .map(
+        (e) => `<button class="dossie" style="--marcador:${COR[e.rotina]}"
       data-rotina="${esc(e.rotina)}" data-data="${esc(e.data)}">
       <span class="rotulo" style="color:${COR[e.rotina]}">${esc(NOMES[e.rotina] || e.rotina)}</span>
       <h3>${esc(e.titulo)}</h3>
       <p>${esc(e.resumo)}</p>
       <span class="linha-meta rotulo">${e.itens.length} temas · ${esc(dataCurta(e.data))}</span>
     </button>`
-  );
-
-  const faltam = (feed.em_falta || []).map((r) =>
-    vazio(NOMES[r] || r, "A rotina ainda não arquivou nada. A próxima corrida é às 07:00.")
-  );
-
-  alvo.innerHTML =
-    cartoes.concat(faltam).join("") ||
-    vazio("A estante está vazia", "Assim que as rotinas correrem, a primeira edição aparece aqui.");
+      )
+      .join("") ||
+    vazio(
+      NOMES[rotina] || rotina,
+      "A rotina ainda não arquivou nada aqui. A edição aparece assim que a próxima corrida terminar."
+    );
 }
 
 /* ---------------------------------------------------------------- painel --- */
@@ -431,6 +463,10 @@ async function abrirEdicao(rotina, data) {
   }
 
   estado.edicaoAberta = edicao;
+  // Guarda de que módulo veio, para o "voltar" não atirar sempre para Notícias.
+  estado.moduloOrigem = MODULO[edicao.rotina] || "noticias";
+  $("#btn-voltar-edicao").textContent =
+    estado.moduloOrigem === "aprendizagem" ? "← Aprendizagem" : "← Notícias";
   const cor = COR[edicao.rotina];
 
   cabecalho.innerHTML = `
@@ -755,6 +791,160 @@ document.addEventListener("keydown", (evento) => {
 window.addEventListener("online", sincronizar);
 window.addEventListener("offline", () => marcarEstado("offline", "offline"));
 
+$("#btn-voltar-edicao").addEventListener("click", () => irPara(estado.moduloOrigem || "noticias"));
+
+/* ---------------------------------------------------------------- quotes --- */
+
+/* Colectânea fixa: roda pelo dia do ano, funciona offline e não gasta corridas.
+   Todas de obras publicadas e identificadas — se acrescentares, mantém a fonte. */
+const QUOTES = [
+  ["Não é que tenhamos pouco tempo, é que perdemos muito.", "Séneca, Sobre a Brevidade da Vida"],
+  ["Enquanto se adia, a vida passa.", "Séneca, Cartas a Lucílio"],
+  ["Nenhum vento é favorável a quem não sabe para que porto se dirige.", "Séneca, Cartas a Lucílio"],
+  ["O impedimento à ação faz avançar a ação. O que está no caminho torna-se o caminho.", "Marco Aurélio, Meditações"],
+  ["Tens poder sobre a tua mente, não sobre os acontecimentos.", "Marco Aurélio, Meditações"],
+  ["A qualidade da tua vida depende da qualidade dos teus pensamentos.", "Marco Aurélio, Meditações"],
+  ["Ninguém escreve um livro só; escreve-o com tudo o que leu.", "Montaigne, Ensaios"],
+  ["O primeiro princípio é não te enganares a ti próprio — e tu és a pessoa mais fácil de enganar.", "Richard Feynman"],
+  ["A ciência é uma forma de não nos enganarmos.", "Richard Feynman"],
+  ["Não sobrevive a espécie mais forte, mas a que melhor se adapta à mudança.", "atribuído a Charles Darwin"],
+  ["A ignorância gera mais confiança do que o conhecimento.", "Charles Darwin, A Origem do Homem"],
+  ["Ler é conversar com os homens mais sábios de séculos passados.", "Descartes, Discurso do Método"],
+  ["Divide cada dificuldade em tantas partes quantas forem possíveis para a resolver.", "Descartes, Discurso do Método"],
+  ["Alguns livros devem ser provados, outros engolidos, e poucos mastigados e digeridos.", "Francis Bacon, Ensaios"],
+  ["O conhecimento é poder.", "Francis Bacon, Meditationes Sacrae"],
+  ["Aquele que tem um porquê para viver suporta quase qualquer como.", "Nietzsche, Crepúsculo dos Ídolos"],
+  ["Os limites da minha linguagem são os limites do meu mundo.", "Wittgenstein, Tractatus"],
+  ["Aquilo de que não se pode falar, deve-se calar.", "Wittgenstein, Tractatus"],
+  ["Uma vida não examinada não vale a pena ser vivida.", "Sócrates, em Apologia de Platão"],
+  ["Só sei que nada sei.", "atribuído a Sócrates, a partir de Platão"],
+  ["Somos aquilo que fazemos repetidamente.", "Will Durant, a resumir Aristóteles"],
+  ["O todo é maior do que a soma das partes.", "Aristóteles, Metafísica"],
+  ["Aprender sem pensar é trabalho perdido; pensar sem aprender é perigoso.", "Confúcio, Analectos"],
+  ["Não te preocupes por não seres conhecido; preocupa-te por não seres digno de o ser.", "Confúcio, Analectos"],
+];
+
+function desenharQuote() {
+  const inicio = Date.UTC(new Date().getUTCFullYear(), 0, 1);
+  const dia = Math.floor((Date.now() - inicio) / DIA);
+  const [texto, fonte] = QUOTES[dia % QUOTES.length];
+  $("#quote").innerHTML = `<blockquote>“${esc(texto)}”</blockquote>
+    <figcaption>${esc(fonte)}</figcaption>`;
+}
+
+/* ---------------------------------------------------------------- livros --- */
+
+const ESTADOS_LIVRO = { a_ler: "A ler", lido: "Lido", recomendado: "Recomendado" };
+
+let livroAberto = null;
+
+function desenharLivros() {
+  const procura = $("#procura-livros").value.trim().toLowerCase();
+  const lista = vivos("livros")
+    .filter((l) => !procura || `${l.titulo} ${l.autor} ${l.resumo}`.toLowerCase().includes(procura))
+    .sort((a, b) => b.atualizado_em - a.atualizado_em);
+
+  $("#lista-livros").innerHTML =
+    lista
+      .map(
+        (l) => `<button class="livro" data-livro="${esc(l.id)}">
+          <span class="rotulo estado-livro" data-estado="${esc(l.estado)}">${esc(
+          ESTADOS_LIVRO[l.estado] || l.estado
+        )}</span>
+          <h4>${esc(l.titulo || "Sem título")}</h4>
+          ${l.autor ? `<p>${esc(l.autor)}</p>` : ""}
+          ${l.resumo ? `<p>${esc(l.resumo.slice(0, 120))}${l.resumo.length > 120 ? "…" : ""}</p>` : ""}
+        </button>`
+      )
+      .join("") ||
+    vazio(
+      procura ? "Nada encontrado" : "Ainda sem livros",
+      procura
+        ? "Não há livros com esse termo."
+        : "Acrescenta o primeiro: título, autor e o que quiseres guardar da leitura."
+    );
+}
+
+function abrirLivro(livro) {
+  livroAberto = livro || {
+    id: id(),
+    titulo: "",
+    autor: "",
+    estado: "a_ler",
+    resumo: "",
+    criado_em: Date.now(),
+    apagado: false,
+  };
+  $("#livro-rotulo").textContent = livro ? "Editar livro" : "Novo livro";
+  $("#livro-titulo").value = livroAberto.titulo;
+  $("#livro-autor").value = livroAberto.autor;
+  $("#livro-resumo").value = livroAberto.resumo;
+  $("#livro-apagar").style.display = livro ? "" : "none";
+  marcarEstadoLivro(livroAberto.estado);
+  $("#folha-livro").showModal();
+}
+
+function marcarEstadoLivro(valor) {
+  livroAberto.estado = valor;
+  document
+    .querySelectorAll("[data-livro-estado]")
+    .forEach((b) => b.setAttribute("aria-current", b.dataset.livroEstado === valor ? "true" : "false"));
+}
+
+document
+  .querySelectorAll("[data-livro-estado]")
+  .forEach((b) => b.addEventListener("click", () => marcarEstadoLivro(b.dataset.livroEstado)));
+
+$("#btn-livro-novo").addEventListener("click", () => abrirLivro(null));
+$("#procura-livros").addEventListener("input", desenharLivros);
+
+$("#lista-livros").addEventListener("click", (e) => {
+  const alvo = e.target.closest("[data-livro]");
+  if (alvo) abrirLivro(estado.biblioteca.livros[alvo.dataset.livro]);
+});
+
+$("#livro-cancelar").addEventListener("click", () => $("#folha-livro").close());
+
+$("#livro-guardar").addEventListener("click", () => {
+  livroAberto.titulo = $("#livro-titulo").value.trim();
+  livroAberto.autor = $("#livro-autor").value.trim();
+  livroAberto.resumo = $("#livro-resumo").value;
+  if (!livroAberto.titulo) return;
+  alterar("livros", livroAberto);
+  $("#folha-livro").close();
+  desenharLivros();
+});
+
+$("#livro-apagar").addEventListener("click", () => {
+  livroAberto.apagado = true;
+  alterar("livros", livroAberto);
+  $("#folha-livro").close();
+  desenharLivros();
+});
+
+/* ----------------------------------------------------------------- tema --- */
+
+/** "sistema" é a ausência do atributo: assim o @media volta a mandar. */
+function aplicarTema(tema) {
+  if (tema === "sistema") delete document.documentElement.dataset.tema;
+  else document.documentElement.dataset.tema = tema;
+  localStorage.setItem("venera:tema", tema);
+
+  // A barra do Safari segue o fundo real, seja ele qual for.
+  const fundo = getComputedStyle(document.documentElement).getPropertyValue("--tinta").trim();
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", fundo);
+
+  document
+    .querySelectorAll("[data-tema-opcao]")
+    .forEach((b) => b.setAttribute("aria-current", b.dataset.temaOpcao === tema ? "true" : "false"));
+}
+
+document.querySelectorAll("[data-tema-opcao]").forEach((b) =>
+  b.addEventListener("click", () => aplicarTema(b.dataset.temaOpcao))
+);
+
+aplicarTema(localStorage.getItem("venera:tema") || "sistema");
+
 /* ------------------------------------------------------------ definições --- */
 
 const avisoDef = (texto) => ($("#def-aviso").textContent = texto);
@@ -765,6 +955,7 @@ const copiaDeSeguranca = () => ({
   exportado_em: new Date().toISOString(),
   notas: Object.values(estado.biblioteca.notas),
   cartoes: Object.values(estado.biblioteca.cartoes),
+  livros: Object.values(estado.biblioteca.livros || {}),
 });
 
 /**
@@ -833,14 +1024,14 @@ async function importar(ficheiro) {
   } catch {
     return avisoDef("Não consegui ler o ficheiro: não é JSON válido.");
   }
-  if (!dados || (!Array.isArray(dados.notas) && !Array.isArray(dados.cartoes))) {
+  if (!dados || !TIPOS.some((t) => Array.isArray(dados[t]))) {
     return avisoDef("Isto não parece uma cópia da Venera.");
   }
 
   let novos = 0;
   let recentes = 0;
   let ignorados = 0;
-  for (const tipo of ["notas", "cartoes"]) {
+  for (const tipo of TIPOS) {
     for (const item of dados[tipo] || []) {
       if (!item?.id || typeof item.id !== "string") {
         ignorados++;
@@ -932,7 +1123,7 @@ async function ligar() {
     estado.chave = chave;
     localStorage.setItem("venera:chave", chave);
     $("#campo-chave").value = "";
-    irPara("estante");
+    irPara("noticias");
     sincronizar();
   } catch {
     $("#aviso-chave").textContent = "Chave recusada. Confirma que copiaste a chave da app, não a das rotinas.";
@@ -943,7 +1134,7 @@ async function ligar() {
 
 contarRevisao();
 if (estado.chave) {
-  irPara("estante");
+  irPara("noticias");
   sincronizar();
 } else {
   irPara("chave");
