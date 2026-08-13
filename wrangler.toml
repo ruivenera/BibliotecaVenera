@@ -9,7 +9,7 @@ binding = "ASSETS"
 
 [[kv_namespaces]]
 binding = "VENERA"
-id = "COLA_AQUI_O_ID_DO_KV"
+id = "948b4582fa2446a199cdb95573e1b2ba"
 
 # Os tokens não vão aqui. São secrets:
 #   npx wrangler secret put APP_TOKEN      → a chave que escreves na app
