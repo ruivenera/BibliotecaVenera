@@ -1486,7 +1486,14 @@ function desenharDefinicoes() {
   $("#def-estado-sync").textContent = porEnviar ? `${porEnviar} por enviar` : "em dia";
   $("#def-estado-sync").style.color = porEnviar ? "var(--desce)" : "var(--sobe)";
 
-  $("#def-versao").textContent = `Versão ${VERSAO_APP}`;
+  // A versão que interessa é a que está mesmo instalada, não a que eu escrevi.
+  fetch("/sw.js", { cache: "no-store" })
+    .then((r) => r.text())
+    .then((t) => {
+      const versao = t.match(/venera-v(\d+)/)?.[1];
+      $("#def-versao").textContent = versao ? `Versão ${VERSAO_APP} · casca v${versao}` : `Versão ${VERSAO_APP}`;
+    })
+    .catch(() => ($("#def-versao").textContent = `Versão ${VERSAO_APP}`));
 }
 
 const VERSAO_APP = "1.1.0";
@@ -1548,5 +1555,28 @@ if (estado.chave) {
 }
 
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+  /**
+   * Quando sai uma versão nova, o service worker antigo ainda serve a página
+   * que já está aberta — daí a app parecer que não mudou até se abrir a
+   * segunda vez. Assim que o novo assume, recarrega-se uma vez e acabou-se.
+   */
+  let recarregado = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (recarregado) return;
+    recarregado = true;
+    location.reload();
+  });
+
+  window.addEventListener("load", async () => {
+    try {
+      const registo = await navigator.serviceWorker.register("/sw.js");
+      // O iPhone só procura versões novas de vez em quando; forçamos à entrada.
+      registo.update();
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) registo.update();
+      });
+    } catch {
+      /* sem service worker, a app funciona à mesma, só não fica offline */
+    }
+  });
 }
