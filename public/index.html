@@ -232,7 +232,7 @@
 
   .rotulo-seccao {
     display: block;
-    padding: 0.9rem var(--gap) 0.45rem;
+    padding: 0.6rem var(--gap) 0.35rem;
     font-family: var(--meta);
     font-size: 0.58rem;
     letter-spacing: 0.19em;
@@ -289,7 +289,7 @@
     gap: 0.6rem;
     padding: 0.9rem 1rem;
   }
-  .mosaico { text-align: center; }
+  .mosaico { text-align: left; }
   .mosaico .icone { color: var(--latao); }
   .mosaico .icone svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; }
   .mosaico .n {
@@ -1004,7 +1004,7 @@
     background: color-mix(in srgb, var(--tinta-2) 60%, transparent);
     border: 1px solid var(--tinta-3);
     border-radius: 10px;
-    padding: 0.45rem 0.55rem;
+    padding: 0.4rem 0.5rem;
   }
   .cartao-indice .n {
     display: flex;
@@ -1039,7 +1039,7 @@
     display: flex;
     align-items: center;
     gap: 0.8rem;
-    padding: 0.4rem var(--gap) 0;
+    padding: 0.3rem var(--gap) 0;
   }
   .icone-data {
     flex: none;
@@ -1071,7 +1071,8 @@
   .carrossel {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: 60%;
+    align-items: stretch;
+    grid-auto-columns: 46%;
     gap: 0.7rem;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
@@ -1095,7 +1096,7 @@
   }
   /* Faixa tipográfica no lugar da fotografia. */
   .faixa-geo {
-    height: 34px;
+    height: 48px;
     display: grid;
     place-items: center;
     background: linear-gradient(140deg, var(--tinta-3), var(--tinta-2));
@@ -1136,11 +1137,14 @@
     font-family: var(--display);
     font-weight: 600;
     font-size: 0.79rem;
-    line-height: 1.22;
+    line-height: 1.26;
     margin: 0;
     flex: 1;
+    /* Três linhas fixas: com número variável, os rodapés desalinhavam entre
+       cartões e a fila deixava de assentar. */
+    min-height: calc(3 * 1.26em);
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
@@ -1155,7 +1159,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    padding: 0.6rem var(--gap) 0.35rem;
+    padding: 0.42rem var(--gap) 0.28rem;
   }
   .cabecalho-lista .rotulo { display: flex; align-items: center; gap: 0.45rem; }
   .cabecalho-lista svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.6; }
@@ -1175,7 +1179,7 @@
     align-items: flex-start;
     gap: 0.85rem;
     width: 100%;
-    padding: 0.3rem 0.7rem;
+    padding: 0.22rem 0.7rem;
     background: none;
     border: 0;
     border-bottom: 1px solid var(--tinta-3);
@@ -1251,7 +1255,7 @@
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--tinta-3);
   }
-  .topo-artigo .rotulo { flex: 1; text-align: center; color: var(--realce, var(--latao)); }
+  .topo-artigo .rotulo { flex: 1; text-align: left; color: var(--realce, var(--latao)); }
   .acao-artigo {
     flex: none;
     width: 34px; height: 34px;
@@ -1371,9 +1375,79 @@
   .passo-artigo .rotulo { display: block; margin-bottom: 0.25rem; }
   .passo-artigo .t { font-size: 0.9rem; line-height: 1.35; }
 
+  /* --------------------------------------------------------- revisão */
+
+  .hoje-revisao { display: flex; align-items: center; gap: 0.9rem; }
+  .hoje-revisao .lado-esq { flex: none; }
+  .hoje-revisao .grande {
+    display: block;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 2rem;
+    line-height: 1;
+  }
+  .hoje-revisao .et { display: block; max-width: 5.5rem; line-height: 1.3; margin-top: 0.2rem; }
+
+  .legenda-revisao {
+    flex: 1;
+    min-width: 0;
+    list-style: none;
+    margin: 0;
+    padding: 0 0.6rem;
+    border-left: 1px solid var(--tinta-3);
+  }
+  .legenda-revisao li {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.82rem;
+    padding: 0.15rem 0;
+  }
+  .legenda-revisao li::before {
+    content: "";
+    flex: none;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--ponto, var(--latao));
+  }
+  .legenda-revisao .n { margin-left: auto; font-family: var(--meta); font-size: 0.75rem; color: var(--papel-fosco); }
+
+  .metodos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    padding: 0 var(--gap);
+  }
+  .metodo {
+    background: color-mix(in srgb, var(--tinta-2) 70%, transparent);
+    border: 1px solid var(--tinta-3);
+    border-radius: 12px;
+    padding: 0.85rem 0.8rem;
+  }
+  .metodo .icone { color: var(--ponto, var(--latao)); }
+  .metodo .icone svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+  .metodo h4 {
+    font-family: var(--meta);
+    font-size: 0.64rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin: 0.5rem 0 0.35rem;
+  }
+  .metodo p { margin: 0 0 0.6rem; font-size: 0.78rem; line-height: 1.4; color: var(--papel-fosco); }
+  .metodo .selo { color: var(--ponto, var(--latao)); }
+
+  .proxima-revisao { display: flex; align-items: center; gap: 0.85rem; padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--tinta-3); }
+  .proxima-revisao:last-child { border-bottom: 0; }
+  .proxima-revisao .dia { flex: none; text-align: center; width: 2.6rem; }
+  .proxima-revisao .dia b { display: block; font-family: var(--display); font-weight: 700; font-size: 1.2rem; line-height: 1; }
+  .proxima-revisao .dia span { font-family: var(--meta); font-size: 0.55rem; text-transform: uppercase; color: var(--papel-fosco); }
+  .proxima-revisao .corpo { flex: 1; min-width: 0; }
+  .proxima-revisao .corpo b { display: block; color: var(--ponto, var(--latao)); font-size: 0.92rem; }
+  .proxima-revisao .corpo span { color: var(--papel-fosco); font-size: 0.8rem; }
+
   /* ----------------------------------------------------- aprendizagem */
 
-  .anel { display: block; width: 44px; height: 44px; margin: 0 auto; }
+  .anel { display: block; width: 40px; height: 40px; }
   .anel circle { fill: none; stroke-width: 3.5; }
   .anel .fundo { stroke: var(--tinta-3); }
   .anel .frente { stroke: var(--realce, var(--latao)); stroke-linecap: round; transform: rotate(-90deg); transform-origin: center; }
@@ -1685,13 +1759,58 @@
 
   <!-- ------------------------------------------------------------ revisão -->
   <section class="vista" id="v-revisao" aria-label="Revisão">
-    <div class="seccao">
-      <div class="cabecalho-seccao">
-        <p class="rotulo">Revisão</p>
-        <span class="rotulo" id="progresso-revisao"></span>
+
+    <div id="revisao-painel">
+      <div class="cabecalho-pagina">
+        <div>
+          <h1>Revisão</h1>
+          <p class="sub rotulo">Aprendizagem ativa</p>
+        </div>
+        <span class="botao-icone" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M9.5 3A2.5 2.5 0 0 0 7 5.5 2.5 2.5 0 0 0 5 8c0 .9.5 1.7 1.2 2.1A2.5 2.5 0 0 0 5 12.3c0 1 .6 1.9 1.5 2.3A2.5 2.5 0 0 0 9 18.5c0 1.4 1.1 2.5 2.5 2.5.8 0 1.5-.4 2-1V4c-.5-.6-1.2-1-2-1zM14.5 3c.8 0 1.5.4 2 1M16.5 3A2.5 2.5 0 0 1 19 5.5 2.5 2.5 0 0 1 21 8c0 .9-.5 1.7-1.2 2.1A2.5 2.5 0 0 1 21 12.3c0 1-.6 1.9-1.5 2.3A2.5 2.5 0 0 1 17 18.5c0 1.4-1.1 2.5-2.5 2.5"/></svg>
+        </span>
       </div>
-      <div class="barra"><i id="barra-revisao" style="width:0%"></i></div>
-      <div id="palco-revisao"></div>
+
+      <div class="caixa-data">
+        <span class="icone-data">
+          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+        </span>
+        <span class="datas"><b id="data-revisao"></b><i id="dia-revisao"></i></span>
+      </div>
+
+      <div class="grupo" style="margin-top:0.8rem">
+        <div class="mosaicos" id="revisao-numeros"></div>
+      </div>
+
+      <span class="rotulo-seccao">Hoje</span>
+      <div class="grupo" style="padding:0.9rem 1rem">
+        <div class="hoje-revisao">
+          <div class="lado-esq">
+            <span class="grande" id="revisao-devidos">0</span>
+            <span class="et rotulo">conceitos a rever</span>
+          </div>
+          <ul class="legenda-revisao" id="revisao-legenda"></ul>
+          <div id="revisao-anel"></div>
+        </div>
+        <button class="btn-grande" id="btn-comecar-revisao">▶ Começar revisão</button>
+      </div>
+
+      <span class="rotulo-seccao">Métodos de estudo</span>
+      <div class="metodos" id="revisao-metodos"></div>
+
+      <span class="rotulo-seccao">Próximas revisões</span>
+      <div class="grupo" id="revisao-proximas"></div>
+    </div>
+
+    <div id="revisao-sessao" hidden>
+      <div class="seccao">
+        <div class="cabecalho-seccao">
+          <button class="btn-voltar" id="btn-sair-revisao">← Revisão</button>
+          <span class="rotulo" id="progresso-revisao"></span>
+        </div>
+        <div class="barra"><i id="barra-revisao" style="width:0%"></i></div>
+        <div id="palco-revisao"></div>
+      </div>
     </div>
   </section>
 

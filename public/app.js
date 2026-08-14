@@ -1045,6 +1045,9 @@ function agendar(sm2, q) {
     facilidade: Number(facilidade.toFixed(2)),
     repeticoes,
     revisoes: (revisoes || 0) + 1,
+    // Acerto é ter-se lembrado: "Difícil", "Bom" ou "Fácil". "Outra vez" não conta.
+    acertos: (sm2.acertos || 0) + (q >= 3 ? 1 : 0),
+    ultima: Date.now(),
     proxima: Date.now() + (intervalo === 0 ? 6e5 : intervalo * DIA),
   };
 }
@@ -1060,11 +1063,132 @@ function contarRevisao() {
   alvo.dataset.zero = n ? "nao" : "sim";
 }
 
+/* Entrar no módulo mostra o painel; a sessão só arranca a pedido. */
 function comecarRevisao() {
+  $("#revisao-painel").hidden = false;
+  $("#revisao-sessao").hidden = true;
+  desenharPainelRevisao();
+}
+
+function arrancarSessao() {
   estado.fila = devidos().sort((a, b) => a.sm2.proxima - b.sm2.proxima);
   estado.total = estado.fila.length;
+  $("#revisao-painel").hidden = true;
+  $("#revisao-sessao").hidden = false;
   proximoCartao();
 }
+
+/** A que assunto pertence o cartão: a rotina de origem, ou "Soltos". */
+const assuntoDoCartao = (c) =>
+  c.origem?.rotina ? NOMES[c.origem.rotina] || c.origem.rotina : "Soltos";
+
+const COR_ASSUNTO = (nome) =>
+  nome === NOMES["financas-geopolitica"]
+    ? "var(--latao)"
+    : nome === NOMES["inteligencia-artificial"]
+      ? "var(--indigo)"
+      : "var(--papel-fosco)";
+
+function desenharPainelRevisao() {
+  const cartoes = vivos("cartoes");
+  const paraHoje = devidos();
+  const revisoes = cartoes.reduce((n, c) => n + (c.sm2.revisoes || 0), 0);
+  const acertos = cartoes.reduce((n, c) => n + (c.sm2.acertos || 0), 0);
+  const taxa = revisoes ? Math.round((acertos / revisoes) * 100) : 0;
+
+  const hoje = new Date();
+  $("#data-revisao").textContent = hoje.toLocaleDateString("pt-PT", { day: "numeric", month: "long", year: "numeric" });
+  $("#dia-revisao").textContent = hoje.toLocaleDateString("pt-PT", { weekday: "long" });
+
+  const mosaico = (icone, n, etiqueta) =>
+    `<div class="mosaico"><span class="icone">${icone}</span><span class="n">${n}</span><span class="et">${etiqueta}</span></div>`;
+
+  $("#revisao-numeros").innerHTML = [
+    mosaico(`<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v4h-4"/></svg>`, paraHoje.length, "A rever hoje"),
+    mosaico(`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/></svg>`, revisoes, "Revisões feitas"),
+    mosaico(`<svg viewBox="0 0 24 24"><path d="M12 2c1 4-2 5-2 8a4 4 0 0 0 8 0c0-1-.4-2-1-3 2 2 3 4 3 6a8 8 0 0 1-16 0c0-5 5-7 8-11z"/></svg>`, sequenciaDeDias(), "Dias seguidos"),
+    mosaico(`<svg viewBox="0 0 24 24"><path d="m12 3 2.6 5.6 6 .8-4.4 4.2 1.1 6L12 16.8 6.7 19.6l1.1-6L3.4 9.4l6-.8z"/></svg>`, revisoes ? `${taxa}%` : "—", "Taxa de acerto"),
+  ].join("");
+
+  // Hoje, por assunto
+  $("#revisao-devidos").textContent = paraHoje.length;
+  const porAssunto = {};
+  for (const c of paraHoje) porAssunto[assuntoDoCartao(c)] = (porAssunto[assuntoDoCartao(c)] || 0) + 1;
+  const assuntos = Object.entries(porAssunto).sort((a, b) => b[1] - a[1]);
+
+  $("#revisao-legenda").innerHTML =
+    assuntos
+      .map(
+        ([nome, n]) =>
+          `<li style="--ponto:${COR_ASSUNTO(nome)}">${esc(nome)}<span class="n">${n}</span></li>`
+      )
+      .join("") || `<li style="--ponto:var(--tinta-3)">nada devido</li>`;
+
+  const feitosHoje = cartoes.filter(
+    (c) => c.sm2.ultima && new Date(c.sm2.ultima).toDateString() === hoje.toDateString()
+  ).length;
+  const alvo = paraHoje.length + feitosHoje;
+  $("#revisao-anel").innerHTML = anel(alvo ? Math.round((feitosHoje / alvo) * 100) : 0);
+
+  $("#btn-comecar-revisao").disabled = !paraHoje.length;
+  $("#btn-comecar-revisao").textContent = paraHoje.length ? "▶ Começar revisão" : "Nada para rever agora";
+
+  // Métodos: só os que existem de facto.
+  $("#revisao-metodos").innerHTML = [
+    {
+      icone: `<svg viewBox="0 0 24 24"><rect x="3" y="6" width="14" height="11" rx="2"/><path d="M7 4h14v11"/></svg>`,
+      nome: "Flashcards",
+      texto: "Frente e verso, com o verso escondido até dizeres.",
+      cor: "var(--latao)",
+    },
+    {
+      icone: `<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>`,
+      nome: "Revisão espaçada",
+      texto: "SM-2, com os quatro prazos visíveis em cada botão.",
+      cor: "var(--indigo)",
+    },
+  ]
+    .map(
+      (m) => `<div class="metodo" style="--ponto:${m.cor}">
+        <span class="icone">${m.icone}</span>
+        <h4>${m.nome}</h4>
+        <p>${m.texto}</p>
+        <span class="selo">Ativo</span>
+      </div>`
+    )
+    .join("");
+
+  // Próximas: agrupadas pelo dia em que ficam devidas.
+  const futuros = cartoes.filter((c) => c.sm2.proxima > Date.now());
+  const porDia = {};
+  for (const c of futuros) {
+    const chave = new Date(c.sm2.proxima).toDateString();
+    (porDia[chave] ||= []).push(c);
+  }
+  const dias = Object.entries(porDia)
+    .sort((a, b) => new Date(a[0]) - new Date(b[0]))
+    .slice(0, 5);
+
+  $("#revisao-proximas").innerHTML =
+    dias
+      .map(([chave, lista]) => {
+        const d = new Date(chave);
+        const assunto = assuntoDoCartao(lista[0]);
+        const emDias = Math.max(1, Math.round((d - new Date().setHours(0, 0, 0, 0)) / DIA));
+        return `<div class="proxima-revisao" style="--ponto:${COR_ASSUNTO(assunto)}">
+          <span class="dia"><b>${d.getDate()}</b><span>${d.toLocaleDateString("pt-PT", { month: "short" })}</span></span>
+          <span class="corpo">
+            <b>${lista.length} ${lista.length === 1 ? "conceito" : "conceitos"}</b>
+            <span>${esc(assunto)} · daqui a ${prazo(emDias)}</span>
+          </span>
+        </div>`;
+      })
+      .join("") ||
+    `<p class="linha"><span class="texto"><span>Sem revisões agendadas. Faz cartões a partir das notas ou dos temas.</span></span></p>`;
+}
+
+$("#btn-comecar-revisao").addEventListener("click", arrancarSessao);
+$("#btn-sair-revisao").addEventListener("click", comecarRevisao);
 
 function proximoCartao() {
   estado.cartaoAtual = estado.fila[0] || null;

@@ -470,6 +470,10 @@ function limparCartao(c) {
       repeticoes: Number(sm2.repeticoes) || 0,
       proxima: Number(sm2.proxima) || agora(),
       revisoes: Number(sm2.revisoes) || 0,
+      // Acertos e hora da última: sem isto, a taxa de acerto e a sequência de
+      // dias na Revisão teriam de ser inventadas.
+      acertos: Number(sm2.acertos) || 0,
+      ultima: Number(sm2.ultima) || 0,
     },
   };
 }
