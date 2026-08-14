@@ -244,15 +244,28 @@ function limparGeopolitica(g) {
   return Object.keys(geo).length ? geo : null;
 }
 
-/** Capítulo e rubrica são opcionais; o resto do item já passou pela validação. */
+/** Capítulo, rubrica, tópicos e hora são opcionais; o resto já foi validado. */
 function limparItem(i) {
   const item = { ...i };
+
   const capitulo = limite(i.capitulo, 1, 99);
-  const rubrica = frase(i.rubrica, 40);
   if (capitulo === null) delete item.capitulo;
   else item.capitulo = capitulo;
+
+  const rubrica = frase(i.rubrica, 40);
   if (rubrica) item.rubrica = rubrica;
   else delete item.rubrica;
+
+  // Os tópicos do resumo rápido, à cabeça da leitura.
+  const pontos = textos(i.pontos, 6);
+  if (pontos.length) item.pontos = pontos;
+  else delete item.pontos;
+
+  // Hora do acontecimento, para a app poder dizer "há 2 horas".
+  const quando = Date.parse(i.publicado_em);
+  if (Number.isFinite(quando)) item.publicado_em = new Date(quando).toISOString();
+  else delete item.publicado_em;
+
   return item;
 }
 

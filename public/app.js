@@ -140,6 +140,7 @@ const VISTAS = [
   "revisao",
   "definicoes",
   "edicao",
+  "artigo",
 ];
 
 /** Cada rotina tem o seu módulo: as edições deixaram de partilhar uma estante. */
@@ -157,7 +158,8 @@ function irPara(vista, ...args) {
   });
   document.querySelectorAll(".aba").forEach((aba) => {
     const ativa =
-      aba.dataset.ir === vista || (vista === "edicao" && aba.dataset.ir === estado.moduloOrigem);
+      aba.dataset.ir === vista ||
+      ((vista === "edicao" || vista === "artigo") && aba.dataset.ir === (estado.moduloOrigem || "noticias"));
     aba.setAttribute("aria-current", ativa ? "page" : "false");
   });
   window.scrollTo({ top: 0, behavior: "instant" });
@@ -168,6 +170,7 @@ function irPara(vista, ...args) {
   if (vista === "revisao") comecarRevisao();
   if (vista === "definicoes") desenharDefinicoes();
   if (vista === "edicao") abrirEdicao(...args);
+  if (vista === "artigo") abrirArtigo(...args);
 }
 
 /* --------------------------------------------------------------- estante --- */
@@ -228,6 +231,131 @@ const porExtensoComDia = (iso) => {
   const dia = d.toLocaleDateString("pt-PT", { weekday: "long" });
   return `${porExtenso(iso)} · ${dia}`;
 };
+
+/* --------------------------------------------------------------- artigo --- */
+
+/** "há 2 horas". Sem hora no item, cai para a data da edição. */
+function haQuanto(item, edicao) {
+  const quando = item.publicado_em ? Date.parse(item.publicado_em) : null;
+  if (!Number.isFinite(quando)) return porExtenso(edicao.data);
+  const minutos = Math.max(0, Math.round((Date.now() - quando) / 60000));
+  if (minutos < 60) return `há ${minutos} min`;
+  const horas = Math.round(minutos / 60);
+  if (horas < 24) return `há ${horas}h`;
+  return porExtenso(edicao.data);
+}
+
+const avaliacoes = () => guardado("venera:avaliacoes", {});
+
+function abrirArtigo(indice) {
+  const edicao = estado.edicaoNoticias;
+  if (!edicao) return irPara("noticias");
+  const item = edicao.itens[indice];
+  if (!item) return irPara("noticias");
+
+  estado.artigoIndice = indice;
+  $("#artigo-seccao").textContent = item.rubrica || "Tema";
+
+  const partes = String(item.texto).split(/Porque interessa:\s*/i);
+  const paragrafos = partes[0].trim().split(/\n{2,}/).filter(Boolean);
+  const entrada = paragrafos.shift() || "";
+  const porque = partes[1]?.trim().replace(/^./, (c) => c.toUpperCase());
+  const marcada = vivos("notas").some((n) => n.origem?.chave === chaveItem(item));
+  $("#artigo-marcar").setAttribute("aria-pressed", marcada);
+
+  const nota = avaliacoes()[chaveItem(item)];
+
+  $("#artigo-corpo").innerHTML = `
+    <p class="etiqueta">
+      <span class="selo">${esc(item.rubrica || "Tema")}</span>
+      <span class="quando">· ${esc(haQuanto(item, edicao))}</span>
+    </p>
+    <h1>${esc(item.titulo)}</h1>
+    <p class="entrada">${esc(entrada)}</p>
+
+    ${
+      item.pontos
+        ? `<section class="resumo-rapido">
+             <p class="cabeca rotulo">
+               <svg viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/></svg>
+               Resumo rápido
+             </p>
+             <ol>${item.pontos.map((p) => `<li>${esc(p)}</li>`).join("")}</ol>
+           </section>`
+        : ""
+    }
+
+    <div class="corpo">${paragrafos.map((p) => `<p>${esc(p)}</p>`).join("")}</div>
+
+    ${porque ? `<div class="porque" style="--marcador:${COR[edicao.rotina]}"><b>Porque interessa</b>${esc(porque)}</div>` : ""}
+
+    <div class="fontes">${item.fontes
+      .map(
+        (f) =>
+          `<a class="fonte" href="${esc(f.url)}" target="_blank" rel="noopener noreferrer">${esc(f.titulo)} ↗</a>`
+      )
+      .join("")}</div>
+
+    <div class="avaliar">
+      <span>Como avalias este tema?</span>
+      <span class="botoes">
+        <button class="btn" data-avaliar="util" aria-current="${nota === "util"}">Útil</button>
+        <button class="btn" data-avaliar="nao" aria-current="${nota === "nao"}">Não útil</button>
+      </span>
+    </div>`;
+
+  const passo = (i, rotulo, alinhar) => {
+    const outro = edicao.itens[i];
+    return `<button data-passo="${i}" ${outro ? "" : "disabled"} style="text-align:${alinhar}">
+      <span class="rotulo">${rotulo}</span>
+      <span class="t">${outro ? esc(outro.titulo.slice(0, 34)) + (outro.titulo.length > 34 ? "…" : "") : "—"}</span>
+    </button>`;
+  };
+  $("#artigo-passos").innerHTML = passo(indice - 1, "‹ Anterior", "left") + passo(indice + 1, "Próxima ›", "right");
+
+  window.scrollTo({ top: 0, behavior: "instant" });
+}
+
+$("#artigo-voltar").addEventListener("click", () => irPara("noticias"));
+
+$("#artigo-marcar").addEventListener("click", () => {
+  const edicao = estado.edicaoNoticias;
+  const item = edicao?.itens[estado.artigoIndice];
+  if (!item) return;
+  alternarNota(item, edicao);
+  abrirArtigo(estado.artigoIndice);
+});
+
+$("#artigo-partilhar").addEventListener("click", async () => {
+  const item = estado.edicaoNoticias?.itens[estado.artigoIndice];
+  if (!item) return;
+  const texto = `${item.titulo}\n\n${item.fontes?.[0]?.url || ""}`;
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: item.titulo, text: texto });
+    } catch {
+      /* cancelado */
+    }
+  } else {
+    navigator.clipboard?.writeText(texto);
+  }
+});
+
+$("#artigo-corpo").addEventListener("click", (e) => {
+  const avaliar = e.target.closest("[data-avaliar]");
+  if (!avaliar) return;
+  const item = estado.edicaoNoticias?.itens[estado.artigoIndice];
+  const guardadas = avaliacoes();
+  const chave = chaveItem(item);
+  guardadas[chave] = guardadas[chave] === avaliar.dataset.avaliar ? undefined : avaliar.dataset.avaliar;
+  localStorage.setItem("venera:avaliacoes", JSON.stringify(guardadas));
+  abrirArtigo(estado.artigoIndice);
+});
+
+$("#artigo-passos").addEventListener("click", (e) => {
+  const passo = e.target.closest("[data-passo]");
+  if (passo && !passo.disabled) abrirArtigo(Number(passo.dataset.passo));
+});
 
 /* -------------------------------------------------------------- notícias --- */
 
@@ -422,6 +550,23 @@ $("#noticias-corpo").addEventListener(
   true
 );
 
+function alternarNota(item, edicao) {
+  const chave = chaveItem(item);
+  const jaLa = vivos("notas").find((n) => n.origem?.chave === chave);
+  if (jaLa) {
+    jaLa.apagado = true;
+    return alterar("notas", jaLa);
+  }
+  alterar("notas", {
+    id: id(),
+    titulo: item.titulo,
+    texto: item.texto,
+    origem: { chave, rotina: edicao.rotina, data: edicao.data, titulo: edicao.titulo },
+    criado_em: Date.now(),
+    apagado: false,
+  });
+}
+
 $("#noticias-corpo").addEventListener("click", (e) => {
   if (e.target.closest("[data-abrir-edicao]")) {
     const ed = estado.edicaoNoticias;
@@ -434,26 +579,12 @@ $("#noticias-corpo").addEventListener("click", (e) => {
 
   if (marcar) {
     e.stopPropagation();
-    const item = ed.itens[Number(marcar.dataset.marcar)];
-    const chave = chaveItem(item);
-    const jaLa = vivos("notas").find((n) => n.origem?.chave === chave);
-    if (jaLa) {
-      jaLa.apagado = true;
-      alterar("notas", jaLa);
-    } else {
-      alterar("notas", {
-        id: id(),
-        titulo: item.titulo,
-        texto: item.texto,
-        origem: { chave, rotina: ed.rotina, data: ed.data, titulo: ed.titulo },
-        criado_em: Date.now(),
-        apagado: false,
-      });
-    }
+    alternarNota(ed.itens[Number(marcar.dataset.marcar)], ed);
     return desenharNoticias();
   }
 
-  if (linha) irPara("edicao", ed.rotina, ed.data);
+  // Um tema abre sozinho, não a edição inteira.
+  if (linha) irPara("artigo", Number(linha.dataset.itemNoticia));
 });
 
 function desenharEstante(lombadas, modulo) {

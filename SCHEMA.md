@@ -136,6 +136,29 @@ Cada item pode dizer que capítulo é. A app mostra o número e a rubrica por ci
 | `capitulo` | 1 a 99 |
 | `rubrica` | texto curto, até 40 caracteres (`Conceito`, `Código`, `Ferramenta do dia`, `Desafio`…) |
 
+## Resumo rápido e hora — por item, opcionais
+
+```json
+{
+  "titulo": "...",
+  "pontos": [
+    "Uma linha por facto, o essencial à cabeça.",
+    "Até seis, e cada uma tem de se aguentar sozinha."
+  ],
+  "publicado_em": "2026-08-14T09:20:00Z",
+  "...": "..."
+}
+```
+
+| Campo | Regra |
+| --- | --- |
+| `pontos` | até 6 linhas; a app mostra-as numeradas por cima do texto |
+| `publicado_em` | hora do acontecimento em ISO 8601; a app mostra "há 2h" |
+
+O `texto` continua a ser o corpo. O **primeiro parágrafo** é usado como entrada,
+por baixo do título, por isso vale a pena que resuma o tema numa ou duas frases.
+Separa os parágrafos com uma linha em branco.
+
 ## Progresso — só para o curso de IA
 
 A rotina de IA é um curso. Pode mandar onde vai:

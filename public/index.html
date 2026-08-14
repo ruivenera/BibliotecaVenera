@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0E1A1C">
+<meta name="theme-color" content="#030405">
 <title>Venera</title>
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icone.svg" type="image/svg+xml">
@@ -16,9 +16,10 @@
      --papel é sempre o texto. Por isso o tema claro troca-lhes os valores e
      tudo o resto segue atrás, sem uma única regra duplicada. */
   :root, :root[data-tema="escuro"] {
-    --tinta:      #0E1A1C;
-    --tinta-2:    #14262A;
-    --tinta-3:    #1E353B;
+    /* Quase preto: o fundo recua e as edições ficam à frente. */
+    --tinta:      #030405;
+    --tinta-2:    #0C1114;
+    --tinta-3:    #1A2226;
     --papel:      #E9E5D8;
     --papel-fosco:#94A29E;
     --latao:      #C69749;
@@ -1114,6 +1115,140 @@
   .marcador-nota[aria-pressed="true"] { color: var(--realce, var(--latao)); }
   .marcador-nota[aria-pressed="true"] svg { fill: currentColor; }
 
+  /* ---------------------------------------------------------- artigo */
+
+  .topo-artigo {
+    position: sticky;
+    top: 0;
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.8rem var(--gap);
+    background: color-mix(in srgb, var(--tinta) 92%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--tinta-3);
+  }
+  .topo-artigo .rotulo { flex: 1; text-align: center; color: var(--realce, var(--latao)); }
+  .acao-artigo {
+    flex: none;
+    width: 34px; height: 34px;
+    display: grid;
+    place-items: center;
+    background: none;
+    border: 0;
+    color: var(--realce, var(--latao));
+    cursor: pointer;
+  }
+  .acao-artigo svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .acao-artigo[aria-pressed="true"] svg { fill: currentColor; }
+
+  .artigo { padding: 1.5rem var(--gap) 0; max-width: 36rem; margin: 0 auto; }
+
+  .artigo .etiqueta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .artigo .etiqueta .selo { color: var(--realce, var(--latao)); border-radius: 6px; }
+  .artigo .etiqueta .quando { font-family: var(--meta); font-size: 0.68rem; color: var(--papel-fosco); }
+
+  .artigo h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-variation-settings: "SOFT" 20, "WONK" 1;
+    font-size: clamp(1.55rem, 6.5vw, 2rem);
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    margin: 0 0 1rem;
+  }
+  .artigo .entrada {
+    color: var(--papel-fosco);
+    font-size: 1.02rem;
+    line-height: 1.6;
+    margin: 0 0 1.8rem;
+  }
+
+  .resumo-rapido { margin: 0 0 1.8rem; }
+  .resumo-rapido .cabeca {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.8rem;
+    color: var(--realce, var(--latao));
+  }
+  .resumo-rapido .cabeca svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+  .resumo-rapido ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    background: color-mix(in srgb, var(--tinta-2) 70%, transparent);
+    border: 1px solid var(--tinta-3);
+    border-radius: 12px;
+  }
+  .resumo-rapido li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+    padding: 0.95rem 1rem;
+    border-bottom: 1px solid var(--tinta-3);
+    font-size: 0.94rem;
+    line-height: 1.55;
+  }
+  .resumo-rapido li:last-child { border-bottom: 0; }
+  .resumo-rapido li::before {
+    content: counter(ponto);
+    counter-increment: ponto;
+    flex: none;
+    width: 26px; height: 26px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 1px solid var(--realce, var(--latao));
+    color: var(--realce, var(--latao));
+    font-family: var(--meta);
+    font-size: 0.7rem;
+  }
+  .resumo-rapido ol { counter-reset: ponto; }
+
+  .artigo .corpo p { margin: 0 0 1.3rem; }
+
+  .avaliar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin: 2.4rem 0 0;
+    padding: 1.2rem 0;
+    border-top: 1px solid var(--tinta-3);
+  }
+  .avaliar span { color: var(--papel-fosco); font-size: 0.9rem; }
+  .avaliar .botoes { display: flex; gap: 0.5rem; }
+
+  .passo-artigo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--tinta-3);
+    border-top: 1px solid var(--tinta-3);
+    margin-top: 1.5rem;
+  }
+  .passo-artigo button {
+    background: var(--tinta);
+    border: 0;
+    padding: 1rem var(--gap);
+    color: inherit;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: left;
+  }
+  .passo-artigo button:last-child { text-align: right; }
+  .passo-artigo button:disabled { opacity: 0.35; cursor: default; }
+  .passo-artigo .rotulo { display: block; margin-bottom: 0.25rem; }
+  .passo-artigo .t { font-size: 0.9rem; line-height: 1.35; }
+
   .cores { display: flex; gap: 0.4rem; }
   .ponto-cor {
     width: 20px; height: 20px;
@@ -1273,7 +1408,25 @@
     </div>
   </section>
 
-  <!-- ------------------------------------------------------------- edição -->
+  <!-- -------------------------------------------------------------- artigo -->
+  <section class="vista" id="v-artigo" aria-label="Tema">
+    <header class="topo-artigo">
+      <button class="acao-artigo" id="artigo-voltar" aria-label="Voltar">
+        <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <span class="rotulo" id="artigo-seccao"></span>
+      <button class="acao-artigo" id="artigo-marcar" aria-label="Guardar nota" aria-pressed="false">
+        <svg viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg>
+      </button>
+      <button class="acao-artigo" id="artigo-partilhar" aria-label="Partilhar">
+        <svg viewBox="0 0 24 24"><path d="M12 3v12m0-12 4 4m-4-4-4 4M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>
+      </button>
+    </header>
+    <article class="artigo" id="artigo-corpo"></article>
+    <nav class="passo-artigo" id="artigo-passos"></nav>
+  </section>
+
+  <!-- ------------------------------------------------------ edição inteira -->
   <section class="vista" id="v-edicao" aria-label="Edição">
     <div class="leitura">
       <button class="btn-voltar" id="btn-voltar-edicao">← Voltar</button>
