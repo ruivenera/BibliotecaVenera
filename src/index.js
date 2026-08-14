@@ -110,12 +110,39 @@ const cotacoes = (lista) =>
   (Array.isArray(lista) ? lista : [])
     .map((l) => {
       const nome = frase(l?.nome, 40);
-      return nome
-        ? { nome, valor: frase(l?.valor, 30), variacao: numero(l?.variacao), leitura: frase(l?.leitura, 160) }
-        : null;
+      if (!nome) return null;
+      const linha = {
+        nome,
+        valor: frase(l?.valor, 30),
+        variacao: numero(l?.variacao),
+        leitura: frase(l?.leitura, 160),
+      };
+      // Fechos recentes, para o gráfico ter forma logo no primeiro dia.
+      const serie = (Array.isArray(l?.serie) ? l.serie : []).map(numero).filter((n) => n !== null);
+      if (serie.length >= 3) linha.serie = serie.slice(-30);
+      return linha;
     })
     .filter(Boolean)
     .slice(0, 12);
+
+/**
+ * Imagem do tema. Só passa se for https e de um sítio de licença clara — o
+ * crédito é obrigatório porque a app tem de o mostrar ao lado da imagem.
+ */
+const SITIOS_IMAGEM = /^(upload\.wikimedia\.org|commons\.wikimedia\.org|images\.unsplash\.com)$/i;
+
+function limparImagem(img) {
+  const url = frase(img?.url, 600);
+  const credito = frase(img?.credito, 160);
+  if (!url || !credito) return null;
+  try {
+    const { protocol, hostname } = new URL(url);
+    if (protocol !== "https:" || !SITIOS_IMAGEM.test(hostname)) return null;
+  } catch {
+    return null;
+  }
+  return { url, credito };
+}
 
 const textos = (lista, max) =>
   (Array.isArray(lista) ? lista : [])
@@ -265,6 +292,10 @@ function limparItem(i) {
   const pontos = textos(i.pontos, 6);
   if (pontos.length) item.pontos = pontos;
   else delete item.pontos;
+
+  const imagem = limparImagem(i.imagem);
+  if (imagem) item.imagem = imagem;
+  else delete item.imagem;
 
   // Hora do acontecimento, para a app poder dizer "há 2 horas".
   const quando = Date.parse(i.publicado_em);

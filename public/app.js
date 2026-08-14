@@ -287,6 +287,15 @@ function abrirArtigo(indice) {
     <p class="entrada">${esc(entrada)}</p>
 
     ${
+      item.imagem
+        ? `<figure class="foto-artigo">
+             <img src="${esc(item.imagem.url)}" alt="" loading="lazy" decoding="async">
+             <figcaption>${esc(item.imagem.credito)}</figcaption>
+           </figure>`
+        : ""
+    }
+
+    ${
       item.pontos
         ? `<section class="resumo-rapido">
              <p class="cabeca rotulo">
@@ -374,18 +383,22 @@ $("#artigo-passos").addEventListener("click", (e) => {
 
 /** Linha do percurso do índice. Com menos de dois dias não se desenha nada. */
 function faisca(pontos, sinal) {
-  if (!pontos || pontos.length < 2) return "";
+  if (!pontos || pontos.length < 3) return "";
   const niveis = pontos.map((p) => p.nivel);
   const min = Math.min(...niveis);
   const alcance = Math.max(...niveis) - min || 1;
+  // Margem de 2 em cada lado: encostado à borda, metade do traço ficava cortada.
   const d = niveis
     .map((n, i) => {
-      const x = (i / (niveis.length - 1)) * 100;
-      const y = 24 - ((n - min) / alcance) * 22;
+      const x = 2 + (i / (niveis.length - 1)) * 96;
+      const y = 23 - ((n - min) / alcance) * 20;
       return `${i ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`;
     })
     .join(" ");
-  return `<svg class="faisca" data-sinal="${sinal}" viewBox="0 0 100 26" preserveAspectRatio="none"><path d="${d}"/></svg>`;
+  // non-scaling-stroke: sem isto o esticar horizontal deformava a espessura.
+  return `<svg class="faisca" data-sinal="${sinal}" viewBox="0 0 100 26" preserveAspectRatio="none">
+    <path d="${d}" vector-effect="non-scaling-stroke"/>
+  </svg>`;
 }
 
 /**
@@ -477,7 +490,10 @@ function desenharNoticias() {
               <span class="v">${esc(l.valor || "—")}</span>
               <span class="rodape-indice">
                 ${variacao(l.variacao)}
-                ${faisca(estado.historico?.[l.nome]?.pontos, sinal)}
+                ${faisca(
+                  l.serie ? l.serie.map((v) => ({ nivel: v })) : estado.historico?.[l.nome]?.pontos,
+                  sinal
+                )}
               </span>
             </div>`;
           })
@@ -486,7 +502,11 @@ function desenharNoticias() {
 
   const semGeoAqui = "Esta edição não trouxe temas geopolíticos.";
   const cartaoGeo = ({ item, i }) => `<button class="cartao-geo" data-item-noticia="${i}" style="--marcador:${cor}">
-      <span class="faixa-geo">${esc(SIGLA(item.rubrica || item.titulo))}</span>
+      ${
+        item.imagem
+          ? `<span class="faixa-geo com-foto"><img src="${esc(item.imagem.url)}" alt="" loading="lazy" decoding="async"><i class="credito">${esc(item.imagem.credito)}</i></span>`
+          : `<span class="faixa-geo">${esc(SIGLA(item.rubrica || item.titulo))}</span>`
+      }
       <span class="dentro">
         <span class="selo" style="color:${cor};align-self:flex-start">${esc(item.rubrica || "Tema")}</span>
         <h3>${esc(item.titulo)}</h3>

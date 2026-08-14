@@ -155,6 +155,33 @@ Cada item pode dizer que capítulo é. A app mostra o número e a rubrica por ci
 | `pontos` | até 6 linhas; a app mostra-as numeradas por cima do texto |
 | `publicado_em` | hora do acontecimento em ISO 8601; a app mostra "há 2h" |
 
+## Imagem do tema — opcional
+
+```json
+"imagem": {
+  "url": "https://upload.wikimedia.org/wikipedia/commons/…",
+  "credito": "Autor / Wikimedia Commons, CC BY-SA 4.0"
+}
+```
+
+O Worker só aceita imagens de `upload.wikimedia.org`, `commons.wikimedia.org` e
+`images.unsplash.com`, em https, **e só com `credito` preenchido** — a app mostra-o por
+cima da imagem. Qualquer outra origem é descartada em silêncio, como o resto do painel.
+
+Nada de imagens gráficas de violência, feridos ou mortos: mapas, bandeiras, edifícios,
+equipamento, retratos oficiais.
+
+## Série do índice — opcional
+
+```json
+{ "nome": "S&P 500", "valor": "7 800,34", "variacao": -0.68, "serie": [7742, 7768, 7801, 7783, 7800] }
+```
+
+Os últimos fechos, do mais antigo para o mais recente, no máximo 30. **Precisa de pelo
+menos três** para a app desenhar a linha: com dois pontos a linha seria reta e não diria
+nada. Sem `serie`, a app monta o percurso a partir das variações das edições anteriores,
+o que só ganha forma ao fim de alguns dias.
+
 O `texto` continua a ser o corpo. O **primeiro parágrafo** é usado como entrada,
 por baixo do título, por isso vale a pena que resuma o tema numa ou duas frases.
 Separa os parágrafos com uma linha em branco.
