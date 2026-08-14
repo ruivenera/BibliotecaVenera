@@ -7,7 +7,7 @@ const esc = (s) =>
   );
 const id = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const DIA = 864e5;
-const TIPOS = ["notas", "cartoes", "livros"];
+const TIPOS = ["notas", "cartoes", "livros", "areas"];
 
 const COR = {
   "financas-geopolitica": "var(--latao)",
@@ -30,7 +30,7 @@ const guardado = (chave, valorInicial) => {
 
 const estado = {
   chave: localStorage.getItem("venera:chave") || "",
-  biblioteca: guardado("venera:biblioteca", { notas: {}, cartoes: {}, livros: {} }),
+  biblioteca: guardado("venera:biblioteca", { notas: {}, cartoes: {}, livros: {}, areas: {} }),
   sujos: new Set(guardado("venera:sujos", [])),
   desde: guardado("venera:desde", 0),
   vista: "estante",
@@ -98,7 +98,7 @@ async function sincronizar() {
   if (!navigator.onLine) return marcarEstado("offline", "offline");
 
   marcarEstado("a sincronizar", "a-sincronizar");
-  const porEnviar = { notas: [], cartoes: [], livros: [] };
+  const porEnviar = { notas: [], cartoes: [], livros: [], areas: [] };
   for (const marca of estado.sujos) {
     const [tipo, item] = marca.split(":");
     const dados = estado.biblioteca[tipo]?.[item];
@@ -205,6 +205,13 @@ async function carregarModulo(rotina) {
     marcarEstado("guardado", "ligado");
     desenharEstante(estanteDados.lombadas.filter((l) => l.rotina === rotina), modulo);
     desenharDossies(feed.edicoes.filter((e) => e.rotina === rotina), rotina, modulo);
+    if (modulo === "aprendizagem") {
+      estado.edicaoCurso = feed.edicoes.find((e) => e.rotina === rotina) || null;
+      const quando = estado.edicaoCurso?.data || estanteDados.lombadas.find((l) => l.rotina === rotina)?.data;
+      $("#data-aprendizagem").textContent = quando ? porExtensoComDia(quando) : "sem aula publicada";
+      desenharAprendizagem();
+    }
+
     if (modulo === "noticias") {
       const hoje = feed.edicoes.find((e) => e.rotina === rotina);
       estado.edicaoNoticias = hoje || null;
@@ -1300,6 +1307,167 @@ function desenharQuote() {
     <figcaption>${esc(fonte)}</figcaption>`;
 }
 
+/* ---------------------------------------------------------- aprendizagem --- */
+
+const CORES_AREA = { latao: "var(--latao)", indigo: "var(--indigo)", sobe: "var(--sobe)", rust: "var(--rust)" };
+
+const progressoArea = (a) =>
+  a.temas.length ? Math.round((a.temas.filter((t) => t.feito).length / a.temas.length) * 100) : 0;
+
+/**
+ * Sequência de dias: dias seguidos, a contar de hoje para trás, com pelo menos
+ * uma alteração na biblioteca. Sai do que já existe, não de um contador à parte.
+ */
+function sequenciaDeDias() {
+  const dias = new Set();
+  for (const tipo of TIPOS) {
+    for (const item of Object.values(estado.biblioteca[tipo])) {
+      if (item.atualizado_em) dias.add(new Date(item.atualizado_em).toDateString());
+    }
+  }
+  let conta = 0;
+  const cursor = new Date();
+  while (dias.has(cursor.toDateString())) {
+    conta++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return conta;
+}
+
+const anel = (pct) => `<svg class="anel" viewBox="0 0 40 40">
+  <circle class="fundo" cx="20" cy="20" r="16"/>
+  <circle class="frente" cx="20" cy="20" r="16"
+    stroke-dasharray="${(2 * Math.PI * 16).toFixed(1)}"
+    stroke-dashoffset="${(2 * Math.PI * 16 * (1 - pct / 100)).toFixed(1)}"/>
+  <text x="20" y="20">${pct}</text>
+</svg>`;
+
+function desenharAprendizagem() {
+  const areas = vivos("areas");
+  const curso = estado.edicaoCurso;
+
+  const temasTotais = areas.reduce((n, a) => n + a.temas.length, 0);
+  const temasFeitos = areas.reduce((n, a) => n + a.temas.filter((t) => t.feito).length, 0);
+  const geral = temasTotais ? Math.round((temasFeitos / temasTotais) * 100) : 0;
+  const cartoesSabidos = vivos("cartoes").filter((c) => c.sm2.repeticoes > 0).length;
+
+  const mosaico = (icone, n, etiqueta) =>
+    `<div class="mosaico"><span class="icone">${icone}</span><span class="n">${n}</span><span class="et">${etiqueta}</span></div>`;
+
+  $("#aprender-numeros").innerHTML = [
+    mosaico(`<svg viewBox="0 0 24 24"><path d="M4 5h7a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4zM20 5h-7a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h7z"/></svg>`, areas.length, "Áreas ativas"),
+    `<div class="mosaico">${anel(geral)}<span class="et" style="margin-top:0.3rem">Progresso geral</span></div>`,
+    mosaico(`<svg viewBox="0 0 24 24"><path d="M12 2c1 4-2 5-2 8a4 4 0 0 0 8 0c0-1-.4-2-1-3 2 2 3 4 3 6a8 8 0 0 1-16 0c0-5 5-7 8-11z"/></svg>`, sequenciaDeDias(), "Dias seguidos"),
+    mosaico(`<svg viewBox="0 0 24 24"><path d="m12 3 2.6 5.6 6 .8-4.4 4.2 1.1 6L12 16.8 6.7 19.6l1.1-6L3.4 9.4l6-.8z"/></svg>`, temasFeitos + cartoesSabidos, "Conceitos sabidos"),
+  ].join("");
+
+  $("#aprender-curso").innerHTML = curso
+    ? `<button class="cartao-curso" data-abrir-curso>
+        <span class="rotulo" style="color:var(--indigo)">${esc(NOMES["inteligencia-artificial"])}</span>
+        <h3>${esc(curso.titulo)}</h3>
+        <span class="selos">${desenharProgresso(curso.progresso) || `<span class="selo">${curso.itens.length} capítulos</span>`}</span>
+      </button>`
+    : `<div class="grupo"><p class="linha"><span class="texto"><span>A aula de hoje ainda não foi publicada.</span></span></p></div>`;
+
+  $("#aprender-areas").innerHTML = areas.length
+    ? `<div class="grupo">${areas
+        .map((a) => {
+          const pct = progressoArea(a);
+          return `<button class="area" data-area="${esc(a.id)}" style="--ponto:${CORES_AREA[a.cor]}">
+            <span class="bloco-area">${esc(a.sigla || SIGLA(a.nome))}</span>
+            <span class="corpo">
+              <h4>${esc(a.nome)}</h4>
+              <span class="rotulo">${a.temas.length} temas · ${pct}%</span>
+              <span class="barra-progresso" style="margin-top:0.4rem"><i style="width:${pct}%"></i></span>
+            </span>
+          </button>`;
+        })
+        .join("")}</div>`
+    : vazio(
+        "Ainda sem áreas",
+        "Cria a primeira: Francês, História, o que quiseres seguir a par do curso de IA."
+      );
+}
+
+let areaAberta = null;
+
+function abrirArea(area) {
+  areaAberta = area || {
+    id: id(),
+    nome: "",
+    sigla: "",
+    cor: "latao",
+    temas: [],
+    criado_em: Date.now(),
+    apagado: false,
+  };
+  $("#area-rotulo").textContent = area ? "Editar área" : "Nova área";
+  $("#area-nome").value = areaAberta.nome;
+  $("#area-sigla").value = areaAberta.sigla;
+  $("#area-temas").value = areaAberta.temas.map((t) => (t.feito ? "x " : "") + t.nome).join("\n");
+  $("#area-apagar").style.display = area ? "" : "none";
+  marcarCorArea(areaAberta.cor);
+  $("#folha-area").showModal();
+}
+
+function marcarCorArea(cor) {
+  areaAberta.cor = cor;
+  $("#area-cores").innerHTML = Object.entries(CORES_AREA)
+    .map(
+      ([n, c]) =>
+        `<button class="ponto-cor" data-cor-area="${n}" aria-current="${n === cor}" style="background:${c}" aria-label="${n}"></button>`
+    )
+    .join("");
+}
+
+$("#area-cores").addEventListener("click", (e) => {
+  const cor = e.target.closest("[data-cor-area]");
+  if (cor) marcarCorArea(cor.dataset.corArea);
+});
+
+$("#btn-area-nova").addEventListener("click", () => abrirArea(null));
+$("#area-cancelar").addEventListener("click", () => $("#folha-area").close());
+
+$("#area-guardar").addEventListener("click", () => {
+  areaAberta.nome = $("#area-nome").value.trim();
+  if (!areaAberta.nome) return;
+  areaAberta.sigla = $("#area-sigla").value.trim().toUpperCase();
+  // "x " à cabeça marca o tema como feito; é a forma mais rápida de o fazer a escrever.
+  areaAberta.temas = $("#area-temas")
+    .value.split("\n")
+    .map((linha) => linha.trim())
+    .filter(Boolean)
+    .map((linha) => {
+      const feito = /^x\s+/i.test(linha);
+      return { nome: linha.replace(/^x\s+/i, ""), feito };
+    });
+  alterar("areas", areaAberta);
+  $("#folha-area").close();
+  desenharAprendizagem();
+});
+
+$("#area-apagar").addEventListener("click", () => {
+  areaAberta.apagado = true;
+  alterar("areas", areaAberta);
+  $("#folha-area").close();
+  desenharAprendizagem();
+});
+
+$("#aprender-areas").addEventListener("click", (e) => {
+  const alvo = e.target.closest("[data-area]");
+  if (alvo) abrirArea(estado.biblioteca.areas[alvo.dataset.area]);
+});
+
+$("#aprender-curso").addEventListener("click", () => {
+  const c = estado.edicaoCurso;
+  if (c) irPara("edicao", c.rotina, c.data);
+});
+
+document.querySelector('[data-ir="aprendizagem-arquivo"]').addEventListener("click", () => {
+  const arquivo = $("#aprender-arquivo");
+  arquivo.hidden = !arquivo.hidden;
+});
+
 /* ---------------------------------------------------------------- livros --- */
 
 const ESTADOS_LIVRO = { a_ler: "A ler", lido: "Lido", recomendado: "Recomendado" };
@@ -1424,6 +1592,7 @@ const copiaDeSeguranca = () => ({
   notas: Object.values(estado.biblioteca.notas),
   cartoes: Object.values(estado.biblioteca.cartoes),
   livros: Object.values(estado.biblioteca.livros || {}),
+  areas: Object.values(estado.biblioteca.areas || {}),
 });
 
 /**

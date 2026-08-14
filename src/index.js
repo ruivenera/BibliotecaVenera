@@ -488,7 +488,28 @@ function limparLivro(l) {
   };
 }
 
-const TIPOS = { notas: limparNota, cartoes: limparCartao, livros: limparLivro };
+/**
+ * Área de aprendizagem: um tema grande do Rui, com os seus subtemas. O progresso
+ * não é um campo — sai da conta dos subtemas feitos, para não haver duas verdades.
+ */
+function limparArea(a) {
+  if (!a?.id || typeof a.id !== "string" || a.id.length > 64) return null;
+  return {
+    id: a.id,
+    nome: String(a.nome || "").slice(0, 80),
+    sigla: String(a.sigla || "").slice(0, 4).toUpperCase(),
+    cor: ["latao", "indigo", "sobe", "rust"].includes(a.cor) ? a.cor : "latao",
+    temas: (Array.isArray(a.temas) ? a.temas : [])
+      .map((t) => ({ nome: String(t?.nome || "").slice(0, 120), feito: !!t?.feito }))
+      .filter((t) => t.nome)
+      .slice(0, 200),
+    criado_em: Number(a.criado_em) || agora(),
+    atualizado_em: Number(a.atualizado_em) || agora(),
+    apagado: !!a.apagado,
+  };
+}
+
+const TIPOS = { notas: limparNota, cartoes: limparCartao, livros: limparLivro, areas: limparArea };
 
 /**
  * Sincronização por diferenças. O cliente manda o que mudou desde a última vez
