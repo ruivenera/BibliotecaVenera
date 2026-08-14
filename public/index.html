@@ -75,6 +75,10 @@
 
   *, *::before, *::after { box-sizing: border-box; }
 
+  /* O [hidden] do browser é só display:none; qualquer display numa classe
+     ganha-lhe. A estante é flex, e por isso aparecia mesmo escondida. */
+  [hidden] { display: none !important; }
+
   html { -webkit-text-size-adjust: 100%; }
 
   body {
@@ -188,7 +192,7 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 1rem;
-    padding: 1.6rem var(--gap) 0;
+    padding: 2rem var(--gap) 0;
   }
   .cabecalho-pagina h1 {
     font-family: var(--display);
@@ -227,7 +231,7 @@
 
   .rotulo-seccao {
     display: block;
-    padding: 1.8rem var(--gap) 0.6rem;
+    padding: 2.4rem var(--gap) 0.8rem;
     font-family: var(--meta);
     font-size: 0.63rem;
     letter-spacing: 0.19em;
@@ -248,7 +252,7 @@
     align-items: center;
     gap: 0.85rem;
     width: 100%;
-    padding: 0.95rem 1rem;
+    padding: 1.1rem 1rem;
     background: none;
     border: 0;
     border-bottom: 1px solid var(--tinta-3);
@@ -366,7 +370,7 @@
 
   /* ---------------------------------------------------------------- vistas */
 
-  main { padding-bottom: calc(5rem + var(--seguro-baixo)); }
+  main { padding-bottom: calc(7rem + var(--seguro-baixo)); }
 
   .vista { display: none; }
   .vista[data-ativa="sim"] { display: block; animation: entrar 0.22s ease-out; }
@@ -432,6 +436,8 @@
     box-shadow: 0 0 0 1px var(--papel), 0 0 14px color-mix(in srgb, var(--papel) 22%, transparent);
   }
 
+  .lombada[aria-current="true"] { transform: translateY(-5px); box-shadow: 0 0 0 2px var(--papel); }
+
   .eixo-estante {
     display: flex;
     justify-content: space-between;
@@ -490,6 +496,33 @@
 
   /* Medida mais estreita: com corpo mais pequeno, a linha longa cansa. */
   .leitura { padding: 1.25rem var(--gap) 0; max-width: 36rem; margin: 0 auto; }
+
+  /* Cartão do resumo do dia escolhido na estante. */
+  .resumo-dia {
+    margin: 1.2rem var(--gap) 0;
+    padding: 1.4rem 1.3rem;
+    background: color-mix(in srgb, var(--tinta-2) 60%, transparent);
+    border: 1px solid var(--tinta-3);
+    border-left: 3px solid var(--marcador, var(--latao));
+    border-radius: 12px;
+  }
+  .resumo-dia .dia { display: block; color: var(--marcador, var(--latao)); margin-bottom: 0.7rem; }
+  .resumo-dia h3 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1.18rem;
+    line-height: 1.3;
+    margin: 0 0 0.9rem;
+  }
+  .resumo-dia p { margin: 0 0 1.2rem; color: var(--papel-fosco); font-size: 0.95rem; }
+  .resumo-dia .rodape-cartao {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--tinta-3);
+  }
 
   .resumo {
     font-size: 1rem;
@@ -934,9 +967,9 @@
   .separadores {
     display: flex;
     gap: 1.6rem;
-    padding: 1.1rem var(--gap) 0;
+    padding: 1.6rem var(--gap) 0;
     border-bottom: 1px solid var(--tinta-3);
-    margin-bottom: 1rem;
+    margin-bottom: 1.4rem;
   }
   .separador {
     background: none;
@@ -955,6 +988,7 @@
   /* Cartões de índice: sem gráfico, porque só temos o valor de hoje.
      Inventar uma linha de evolução seria desenhar dados que não existem. */
   .indices {
+    margin-top: 0.4rem;
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: minmax(9.5rem, 1fr);
@@ -1004,7 +1038,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    padding: 1.6rem var(--gap) 0.6rem;
+    padding: 2.2rem var(--gap) 0.8rem;
   }
   .cabecalho-lista .rotulo { display: flex; align-items: center; gap: 0.45rem; }
   .cabecalho-lista svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.6; }
@@ -1024,7 +1058,7 @@
     align-items: flex-start;
     gap: 0.85rem;
     width: 100%;
-    padding: 0.9rem 1rem;
+    padding: 1.15rem 1rem;
     background: none;
     border: 0;
     border-bottom: 1px solid var(--tinta-3);
@@ -1186,9 +1220,9 @@
         <h1>Notícias</h1>
         <p class="sub"><span class="ponto-rotina" style="--ponto:var(--latao)"></span> Investimentos &amp; Geopolítica</p>
       </div>
-      <button class="botao-icone" id="btn-arquivo-noticias" title="Edições anteriores">
-        <svg viewBox="0 0 24 24"><path d="M4 7h6m4 0h6M4 17h10m4 0h2"/><circle cx="12" cy="7" r="2"/><circle cx="16" cy="17" r="2"/></svg>
-      </button>
+      <a class="botao-icone" href="#resumo-dia" title="Resumo por dia">
+        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      </a>
     </div>
 
     <div class="separadores" role="tablist">
@@ -1199,11 +1233,14 @@
 
     <div id="noticias-corpo"></div>
 
-    <div class="estante" id="estante-noticias" hidden></div>
-    <div class="seccao" id="arquivo-noticias" hidden>
-      <span class="rotulo-seccao" style="padding-left:0">Edições anteriores</span>
-      <div class="dossies" id="dossies-noticias"></div>
+    <span class="rotulo-seccao">Resumo por dia</span>
+    <div class="estante" id="estante-noticias"></div>
+    <div class="eixo-estante">
+      <span class="rotulo">hoje</span>
+      <span class="rotulo">mais antigo →</span>
     </div>
+    <div id="resumo-dia"></div>
+    <div class="dossies" id="dossies-noticias" hidden></div>
   </section>
 
   <!-- ------------------------------------------------------- aprendizagem -->

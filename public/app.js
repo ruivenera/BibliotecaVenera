@@ -206,6 +206,8 @@ async function carregarModulo(rotina) {
       const hoje = feed.edicoes.find((e) => e.rotina === rotina);
       estado.edicaoNoticias = hoje || null;
       desenharNoticias();
+      const primeira = estanteDados.lombadas.find((l) => l.rotina === rotina);
+      if (primeira) mostrarResumoDoDia(rotina, primeira.data);
     }
   } catch {
     marcarEstado(navigator.onLine ? "sem ligação" : "offline", "offline");
@@ -374,12 +376,43 @@ document.querySelectorAll("[data-meia]").forEach((b) =>
   })
 );
 
-$("#btn-arquivo-noticias").addEventListener("click", () => {
-  const arquivo = $("#arquivo-noticias");
-  const estanteEl = $("#estante-noticias");
-  const escondido = arquivo.hidden;
-  arquivo.hidden = !escondido;
-  estanteEl.hidden = !escondido;
+/* Resumo do dia escolhido na estante. A estante só traz o título, por isso
+   o resumo completo tem de ser ido buscar à edição desse dia. */
+async function mostrarResumoDoDia(rotina, data) {
+  const alvo = $("#resumo-dia");
+  const cor = COR[rotina];
+  document.querySelectorAll("#estante-noticias .lombada").forEach((l) =>
+    l.setAttribute("aria-current", l.dataset.data === data ? "true" : "false")
+  );
+
+  alvo.innerHTML = `<div class="resumo-dia"><p class="rotulo">a abrir…</p></div>`;
+  try {
+    const edicao = await api(`/api/edicao/${rotina}/${data}`);
+    alvo.innerHTML = `<div class="resumo-dia" style="--marcador:${cor}">
+      <span class="rotulo dia">${esc(porExtensoComDia(edicao.data))}</span>
+      <h3>${esc(edicao.titulo)}</h3>
+      <p>${esc(edicao.resumo)}</p>
+      <div class="rodape-cartao">
+        <span class="rotulo">${edicao.itens.length} temas</span>
+        <button class="ver-mais" data-abrir-dia="${esc(data)}">Ler a edição ›</button>
+      </div>
+    </div>`;
+  } catch {
+    alvo.innerHTML = `<div class="resumo-dia">${vazio(
+      "Não foi possível abrir",
+      "Este dia ainda não está guardado neste aparelho e não há ligação."
+    )}</div>`;
+  }
+}
+
+$("#estante-noticias").addEventListener("click", (e) => {
+  const lombada = e.target.closest("[data-data]");
+  if (lombada) mostrarResumoDoDia(lombada.dataset.rotina, lombada.dataset.data);
+});
+
+$("#resumo-dia").addEventListener("click", (e) => {
+  const abrir = e.target.closest("[data-abrir-dia]");
+  if (abrir) irPara("edicao", "financas-geopolitica", abrir.dataset.abrirDia);
 });
 
 // Fonte sem favicon: tira-se a imagem e fica a sigla por baixo.
