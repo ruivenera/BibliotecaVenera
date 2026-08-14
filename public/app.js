@@ -208,7 +208,20 @@ async function carregarModulo(rotina) {
     if (modulo === "noticias") {
       const hoje = feed.edicoes.find((e) => e.rotina === rotina);
       estado.edicaoNoticias = hoje || null;
+      const dataMostrar = hoje?.data || estanteDados.lombadas.find((l) => l.rotina === rotina)?.data;
+      if (dataMostrar) {
+        const hojeIso = dataMostrar;
+        $("#data-noticias-dia").textContent = porExtenso(hojeIso);
+        $("#data-noticias-semana").textContent = new Date(hojeIso + "T12:00:00Z")
+          .toLocaleDateString("pt-PT", { weekday: "long" });
+      }
       desenharNoticias();
+      api(`/api/historico/${rotina}`)
+        .then((h) => {
+          estado.historico = h.series;
+          desenharNoticias();
+        })
+        .catch(() => {});
       const primeira = estanteDados.lombadas.find((l) => l.rotina === rotina);
       if (primeira) mostrarResumoDoDia(rotina, primeira.data);
     }
@@ -359,8 +372,29 @@ $("#artigo-passos").addEventListener("click", (e) => {
 
 /* -------------------------------------------------------------- notícias --- */
 
-/** As rubricas de mercado e as de geopolítica dividem a edição em duas metades. */
-const E_GEO = (item) => /geopol/i.test(item.rubrica || "");
+/** Linha do percurso do índice. Com menos de dois dias não se desenha nada. */
+function faisca(pontos, sinal) {
+  if (!pontos || pontos.length < 2) return "";
+  const niveis = pontos.map((p) => p.nivel);
+  const min = Math.min(...niveis);
+  const alcance = Math.max(...niveis) - min || 1;
+  const d = niveis
+    .map((n, i) => {
+      const x = (i / (niveis.length - 1)) * 100;
+      const y = 24 - ((n - min) / alcance) * 22;
+      return `${i ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`;
+    })
+    .join(" ");
+  return `<svg class="faisca" data-sinal="${sinal}" viewBox="0 0 100 26" preserveAspectRatio="none"><path d="${d}"/></svg>`;
+}
+
+/**
+ * A que metade pertence o item. O campo "modulo" manda; as edições antigas não
+ * o trazem, e para essas resta olhar para a rubrica.
+ */
+const REGIOES = /geopol|m[ée]dio oriente|europa|[áa]sia|am[ée]ricas|áfrica|africa/i;
+const E_GEO = (item) =>
+  item.modulo ? item.modulo === "geopolitica" : REGIOES.test(item.rubrica || "");
 
 /** Duas letras sempre: com a inicial só, "Mercados" e "Macro" ficavam iguais. */
 const SIGLA = (texto) => {
@@ -396,10 +430,10 @@ function linhaNoticia(item, i, cor) {
       <span class="meta">${esc(item.rubrica || "Tema")} <em>· impacto ${esc(item.impacto)}</em></span>
     </span>
     <span class="lado">
-      <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>
       <span class="marcador-nota" data-marcar="${i}" aria-pressed="${marcada}">
         <svg viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg>
       </span>
+      <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>
     </span>
   </button>`;
 }
@@ -441,11 +475,38 @@ function desenharNoticias() {
             return `<div class="cartao-indice">
               <span class="n">${esc(l.nome)}<span class="seta-var" data-sinal="${sinal}">${seta}</span></span>
               <span class="v">${esc(l.valor || "—")}</span>
-              ${variacao(l.variacao)}
+              <span class="rodape-indice">
+                ${variacao(l.variacao)}
+                ${faisca(estado.historico?.[l.nome]?.pontos, sinal)}
+              </span>
             </div>`;
           })
           .join("")}</div>`
       : "";
+
+  const semGeoAqui = "Esta edição não trouxe temas geopolíticos.";
+  const cartaoGeo = ({ item, i }) => `<button class="cartao-geo" data-item-noticia="${i}" style="--marcador:${cor}">
+      <span class="faixa-geo">${esc(SIGLA(item.rubrica || item.titulo))}</span>
+      <span class="dentro">
+        <span class="selo" style="color:${cor};align-self:flex-start">${esc(item.rubrica || "Tema")}</span>
+        <h3>${esc(item.titulo)}</h3>
+        <span class="pe">
+          <span class="rotulo">${esc(haQuanto(item, edicao))}</span>
+          <span class="marcador-nota" data-marcar="${i}"
+            aria-pressed="${vivos("notas").some((n) => n.origem?.chave === chaveItem(item))}">
+            <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7"><path d="M6 4h12v17l-6-4-6 4z"/></svg>
+          </span>
+        </span>
+      </span>
+    </button>`;
+
+  const carrossel = (conjunto) =>
+    conjunto.length
+      ? `<div class="carrossel">${conjunto.map(cartaoGeo).join("")}</div>
+         <div class="pontos-carrossel">${conjunto
+           .map((_, n) => `<i data-atual="${n === 0}"></i>`)
+           .join("")}</div>`
+      : `<div class="grupo"><p class="linha"><span class="texto"><span>${semGeoAqui}</span></span></p></div>`;
 
   const cabecalho = (titulo, icone = "") =>
     `<div class="cabecalho-lista">
@@ -486,13 +547,27 @@ function desenharNoticias() {
       cabecalho("Destaques de investimentos") +
       lista(mercado, semMercado) +
       cabecalho("Geopolítica", GLOBO) +
-      lista(geopoliticos, semGeo),
+      carrossel(geopoliticos),
     mercado: () => blocoIndices() + cabecalho("Investimentos") + lista(mercado, semMercado),
     geo: () => blocoRisco() + blocoAlertas() + cabecalho("Geopolítica", GLOBO) + lista(geopoliticos, semGeo),
   };
 
   alvo.innerHTML = (paginas[meia] || paginas.geral)();
 }
+
+$("#noticias-corpo").addEventListener(
+  "scroll",
+  (e) => {
+    const faixa = e.target.closest(".carrossel");
+    if (!faixa) return;
+    const largura = faixa.firstElementChild?.getBoundingClientRect().width || 1;
+    const atual = Math.round(faixa.scrollLeft / (largura + 11));
+    faixa.nextElementSibling
+      ?.querySelectorAll("i")
+      .forEach((p, n) => p.setAttribute("data-atual", n === atual));
+  },
+  true
+);
 
 document.querySelectorAll("[data-meia]").forEach((b) =>
   b.addEventListener("click", () => {

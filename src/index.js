@@ -256,6 +256,11 @@ function limparItem(i) {
   if (rubrica) item.rubrica = rubrica;
   else delete item.rubrica;
 
+  // A que metade pertence. Explícito, porque a rubrica passou a ser a região
+  // ("Médio Oriente") e já não dava para adivinhar pelo nome.
+  if (["mercado", "geopolitica"].includes(i.modulo)) item.modulo = i.modulo;
+  else delete item.modulo;
+
   // Os tópicos do resumo rápido, à cabeça da leitura.
   const pontos = textos(i.pontos, 6);
   if (pontos.length) item.pontos = pontos;
@@ -367,6 +372,37 @@ async function estante(env, limite = 40) {
   );
   const lombadas = porRotina.flat().sort((a, b) => (a.data < b.data ? 1 : -1));
   return resposta({ rotinas: ROTINAS, lombadas });
+}
+
+/**
+ * Série de cada índice ao longo dos últimos dias, para os gráficos da app.
+ *
+ * Sai das variações diárias, não dos valores: o "valor" vem como texto
+ * formatado à portuguesa e não dá para converter com segurança. Encadeando as
+ * variações a partir de uma base 100 fica-se com o percurso relativo, que é o
+ * que um gráfico destes mostra — e é tudo derivado de números verdadeiros.
+ */
+async function historico(env, rotina, dias = 14) {
+  if (!CHAVES.includes(rotina)) return resposta({ erro: "rotina_desconhecida" }, 404);
+
+  const datas = (await lerIndice(env, rotina)).slice(0, dias).reverse();
+  const edicoes = await Promise.all(datas.map((d) => lerEdicao(env, rotina, d)));
+
+  const series = {};
+  for (const edicao of edicoes) {
+    for (const linha of edicao?.painel?.indices || []) {
+      if (typeof linha.variacao !== "number") continue;
+      const serie = (series[linha.nome] ||= { pontos: [], base: 100 });
+      const anterior = serie.pontos.length ? serie.pontos[serie.pontos.length - 1].nivel : 100;
+      serie.pontos.push({
+        data: edicao.data,
+        variacao: linha.variacao,
+        nivel: Number((anterior * (1 + linha.variacao / 100)).toFixed(4)),
+      });
+    }
+  }
+
+  return resposta({ rotina, dias: datas.length, series });
 }
 
 /* ----------------------------------------------------------- biblioteca --- */
@@ -494,6 +530,8 @@ export default {
       if (caminho === "/api/chave") return resposta({ ok: true, rotinas: ROTINAS });
       if (caminho === "/api/feed") return feed(env);
       if (caminho === "/api/estante") return estante(env);
+
+      if (partes[1] === "historico" && partes.length === 3) return historico(env, partes[2]);
 
       if (partes[1] === "indice" && partes.length === 3) {
         if (!CHAVES.includes(partes[2])) return resposta({ erro: "rotina_desconhecida" }, 404);
