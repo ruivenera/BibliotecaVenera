@@ -150,7 +150,34 @@ const MODULO = {
 };
 const ROTINA_DO_MODULO = { noticias: "financas-geopolitica", aprendizagem: "inteligencia-artificial" };
 
+/**
+ * Navegar é duas coisas: mostrar a vista e deixar rasto no histórico. O rasto
+ * é o que faz o gesto de voltar do telemóvel recuar dentro da app em vez de a
+ * fechar — antes disto, sair de um artigo era impossível sem tocar no rodapé.
+ */
+const posicoes = {};
+
 function irPara(vista, ...args) {
+  if (estado.vista) posicoes[estado.vista] = window.scrollY;
+  const dados = { venera: true, vista, args };
+  // A primeira navegação substitui a entrada em branco; as seguintes empilham.
+  // Repetir a mesma vista também substitui, senão o histórico enchia-se de cópias.
+  if (history.state?.venera && !(history.state.vista === vista && !args.length)) {
+    history.pushState(dados, "");
+  } else {
+    history.replaceState(dados, "");
+  }
+  mostrar(vista, args);
+}
+
+window.addEventListener("popstate", (evento) => {
+  const dados = evento.state;
+  if (!dados?.venera) return; // já não é nosso: deixa o browser fazer o que quer
+  mostrar(dados.vista, dados.args || [], true);
+});
+
+function mostrar(vista, args = [], restaurar = false) {
+  if (estado.vista && estado.vista !== vista) posicoes[estado.vista] = window.scrollY;
   estado.vista = vista;
   VISTAS.forEach((v) => {
     const alvo = $(`#v-${v}`);
@@ -162,7 +189,9 @@ function irPara(vista, ...args) {
       ((vista === "edicao" || vista === "artigo") && aba.dataset.ir === (estado.moduloOrigem || "noticias"));
     aba.setAttribute("aria-current", ativa ? "page" : "false");
   });
-  window.scrollTo({ top: 0, behavior: "instant" });
+  // A voltar, recupera-se o sítio onde se ia; a entrar de novo, começa-se em cima.
+  const alvoScroll = restaurar ? posicoes[vista] || 0 : 0;
+  window.scrollTo({ top: alvoScroll, behavior: "instant" });
 
   if (ROTINA_DO_MODULO[vista]) carregarModulo(ROTINA_DO_MODULO[vista]);
   if (vista === "leitura") desenharLivros();
@@ -171,6 +200,13 @@ function irPara(vista, ...args) {
   if (vista === "definicoes") desenharDefinicoes();
   if (vista === "edicao") abrirEdicao(...args);
   if (vista === "artigo") abrirArtigo(...args);
+
+  // O conteúdo de algumas vistas só chega depois do pedido à rede, e nessa altura
+  // a página ainda não tem altura para lá chegar. Duas tentativas resolvem.
+  if (alvoScroll) {
+    requestAnimationFrame(() => window.scrollTo({ top: alvoScroll, behavior: "instant" }));
+    setTimeout(() => window.scrollTo({ top: alvoScroll, behavior: "instant" }), 300);
+  }
 }
 
 /* --------------------------------------------------------------- estante --- */
@@ -416,6 +452,93 @@ const REGIOES = /geopol|m[ée]dio oriente|europa|[áa]sia|am[ée]ricas|áfrica|a
 const E_GEO = (item) =>
   item.modulo ? item.modulo === "geopolitica" : REGIOES.test(item.rubrica || "");
 
+/* --------------------------------------------------------------- bandeiras --- */
+
+/**
+ * Nem toda a edição traz foto: as antigas não trazem nenhuma e o Commons às
+ * vezes não devolve nada. Nesses casos lê-se o país no título e desenha-se a
+ * bandeira. São emojis de indicador regional — o telemóvel e o Mac desenham-nas
+ * como imagem, não gastam pedido nenhum e funcionam sem rede.
+ */
+const PAISES = [
+  ["US", /\beua\b|estados unidos|washington|casa branca|reserva federal|\bfed\b|wall street/i],
+  ["CN", /\bchina\b|chin[êe]s|pequim|xi jinping/i],
+  ["RU", /\br[úu]ssia\b|russo|moscovo|kremlin|putin/i],
+  ["UA", /ucr[âa]nia|ucraniano|kiev|zelensky/i],
+  ["IR", /\bir[ãa]o\b|iraniano|teer[ãa]o|ormuz/i],
+  ["IL", /israel|israelita|telavive|netanyahu/i],
+  ["PS", /gaza|palestin|cisjord[âa]nia|hamas/i],
+  ["TW", /taiwan|formosa|tsmc/i],
+  ["JP", /jap[ãa]o|japon[êe]s|t[óo]quio|banco do jap[ãa]o/i],
+  ["KP", /coreia do norte|norte-coreano|pyongyang/i],
+  ["KR", /coreia do sul|sul-coreano|seul|samsung/i],
+  ["IN", /[íi]ndia\b|indiano|nova deli/i],
+  ["TR", /turquia|turco|ancara|erdogan/i],
+  ["SA", /ar[áa]bia saudita|saudita|riade|\bopep\b/i],
+  ["AE", /emirados|dubai|abu dhabi/i],
+  ["QA", /catar|qatar|doha/i],
+  ["YE", /i[ée]men|houthi|mar vermelho/i],
+  ["LB", /l[íi]bano|libanês|beirute|hezbollah/i],
+  ["SY", /s[íi]ria|damasco/i],
+  ["IQ", /iraque|bagdade/i],
+  ["EG", /egito|cairo|suez/i],
+  ["VE", /venezuela|caracas|maduro/i],
+  ["BR", /brasil|bras[íi]lia|petrobras/i],
+  ["MX", /m[ée]xico|cidade do m[ée]xico/i],
+  ["CA", /canad[áa]|otava/i],
+  ["GB", /reino unido|brit[âa]nico|londres|inglaterra|banco de inglaterra/i],
+  ["DE", /alemanha|alem[ãa]o|berlim|bundesbank/i],
+  ["FR", /fran[çc]a|franc[êe]s|paris/i],
+  ["IT", /it[áa]lia|italiano|roma\b/i],
+  ["ES", /espanha|espanhol|madrid/i],
+  ["PT", /portugal|portugu[êe]s|lisboa/i],
+  ["NL", /pa[íi]ses baixos|holanda|amesterd[ãa]o|\basml\b/i],
+  ["PL", /pol[óo]nia|vars[óo]via/i],
+  ["GR", /gr[ée]cia|atenas/i],
+  ["NO", /noruega|oslo/i],
+  ["SE", /su[ée]cia|estocolmo/i],
+  ["CH", /su[íi][çc]a|zurique|berna/i],
+  ["BY", /bielorr[úu]ssia|minsk/i],
+  ["HU", /hungria|budapeste|orb[áa]n/i],
+  ["RO", /rom[ée]nia|bucareste/i],
+  ["RS", /s[ée]rvia|belgrado/i],
+  ["NG", /nig[ée]ria|abuja|lagos/i],
+  ["ZA", /[áa]frica do sul|joanesburgo|pret[óo]ria/i],
+  ["DZ", /arg[ée]lia|argel\b/i],
+  ["LY", /l[íi]bia|tr[íi]poli/i],
+  ["SD", /sud[ãa]o|cartum/i],
+  ["ET", /eti[óo]pia|adis abeba/i],
+  ["MA", /marrocos|rabat/i],
+  ["PK", /paquist[ãa]o|islamabade/i],
+  ["AF", /afeganist[ãa]o|cabul|talib[ãa]/i],
+  ["ID", /indon[ée]sia|jacarta/i],
+  ["VN", /vietname|han[óo]i/i],
+  ["PH", /filipinas|manila/i],
+  ["TH", /tail[âa]ndia|banguecoque/i],
+  ["AU", /austr[áa]lia|camberra|sydney/i],
+  ["AR", /argentina|buenos aires|milei/i],
+  ["CL", /chile|santiago do chile|l[íi]tio/i],
+  ["CO", /col[ôo]mbia|bogot[áa]/i],
+  ["PE", /\bperu\b|lima\b/i],
+  ["KZ", /cazaquist[ãa]o|astana/i],
+  ["AZ", /azerbaij[ãa]o|baku/i],
+  ["AM", /arm[ée]nia|erevan/i],
+  ["SG", /singapura/i],
+  ["MY", /mal[áa]sia|kuala lumpur/i],
+  ["EU", /uni[ãa]o europeia|\bue\b|bruxelas|banco central europeu|\bbce\b|zona euro/i],
+];
+
+/** Duas letras ISO viram bandeira somando-lhes o bloco de indicadores regionais. */
+const emojiBandeira = (iso) =>
+  String.fromCodePoint(...[...iso].map((letra) => 0x1f1e6 + letra.charCodeAt(0) - 65));
+
+function bandeiraDe(...textos) {
+  const alvo = textos.filter(Boolean).join(" ");
+  if (!alvo) return "";
+  for (const [iso, padrao] of PAISES) if (padrao.test(alvo)) return emojiBandeira(iso);
+  return "";
+}
+
 /** Duas letras sempre: com a inicial só, "Mercados" e "Macro" ficavam iguais. */
 const SIGLA = (texto) => {
   const palavras = (texto || "?").replace(/[^\p{L}\p{N} ]/gu, "").split(/\s+/).filter(Boolean);
@@ -440,11 +563,17 @@ function iconeDaFonte(item) {
 
 function linhaNoticia(item, i, cor) {
   const marcada = vivos("notas").some((n) => n.origem?.chave === chaveItem(item));
+  // Nos temas de geopolítica o mosaico passa a ser o sítio: a foto do dia, ou a
+  // bandeira do país, ou — se nada disso houver — a sigla de sempre.
+  const geo = E_GEO(item);
+  const bandeira = geo ? bandeiraDe(item.titulo, item.rubrica) : "";
+  const mosaico = item.imagem
+    ? `<span class="mosaico-noticia com-foto"><img src="${esc(item.imagem.url)}" alt="" loading="lazy" decoding="async"></span>`
+    : bandeira
+      ? `<span class="mosaico-noticia com-bandeira"><b class="bandeira">${bandeira}</b></span>`
+      : `<span class="mosaico-noticia"><b>${esc(SIGLA(item.rubrica || item.titulo))}</b>${iconeDaFonte(item)}</span>`;
   return `<button class="noticia" data-item-noticia="${i}" style="--marcador:${cor}">
-    <span class="mosaico-noticia">
-      <b>${esc(SIGLA(item.rubrica || item.titulo))}</b>
-      ${iconeDaFonte(item)}
-    </span>
+    ${mosaico}
     <span class="corpo">
       <h3>${esc(item.titulo)}</h3>
       <span class="meta">${esc(item.rubrica || "Tema")} <em>· impacto ${esc(item.impacto)}</em></span>
@@ -512,7 +641,9 @@ function desenharNoticias() {
       ${
         item.imagem
           ? `<span class="faixa-geo com-foto"><img src="${esc(item.imagem.url)}" alt="" loading="lazy" decoding="async"><i class="credito">${esc(item.imagem.credito)}</i></span>`
-          : `<span class="faixa-geo">${esc(SIGLA(item.rubrica || item.titulo))}</span>`
+          : bandeiraDe(item.titulo, item.rubrica)
+            ? `<span class="faixa-geo com-bandeira"><b class="bandeira">${bandeiraDe(item.titulo, item.rubrica)}</b></span>`
+            : `<span class="faixa-geo">${esc(SIGLA(item.rubrica || item.titulo))}</span>`
       }
       <span class="dentro">
         <span class="selo" style="color:${cor};align-self:flex-start">${esc(item.rubrica || "Tema")}</span>
@@ -559,7 +690,10 @@ function desenharNoticias() {
       ? `<div class="cabecalho-lista"><span class="rotulo">Do dia</span></div>
          <div class="grupo" style="padding:0.4rem 1rem">
            <ul class="alertas">${geo.alertas
-             .map((a) => `<li data-nivel="${esc(a.nivel)}">${esc(a.texto)}</li>`)
+             .map((a) => {
+               const b = bandeiraDe(a.texto);
+               return `<li data-nivel="${esc(a.nivel)}">${b ? `<i class="bandeira-linha">${b}</i>` : ""}${esc(a.texto)}</li>`;
+             })
              .join("")}</ul>
          </div>`
       : "";
@@ -862,7 +996,10 @@ function geopoliticaHTML(g) {
     html += bloco(
       "Do dia",
       `<ul class="alertas">${g.alertas
-        .map((a) => `<li data-nivel="${esc(a.nivel)}">${esc(a.texto)}</li>`)
+        .map((a) => {
+          const b = bandeiraDe(a.texto);
+          return `<li data-nivel="${esc(a.nivel)}">${b ? `<i class="bandeira-linha">${b}</i>` : ""}${esc(a.texto)}</li>`;
+        })
         .join("")}</ul>`
     );
   }
@@ -873,7 +1010,7 @@ function geopoliticaHTML(g) {
       `<table class="tabela">${g.conflitos
         .map(
           (c) => `<tr>
-            <td class="nome">${esc(c.nome)}</td>
+            <td class="nome">${bandeiraDe(c.nome) ? `<i class="bandeira-linha">${bandeiraDe(c.nome)}</i>` : ""}${esc(c.nome)}</td>
             <td class="num">${esc(c.probabilidade || "")}</td>
             <td class="leitura">${esc(c.situacao || "")}</td>
           </tr>`

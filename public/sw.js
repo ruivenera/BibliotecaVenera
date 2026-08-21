@@ -1,6 +1,6 @@
 /* Venera — offline. O que já leste continua a abrir sem rede. */
 
-const VERSAO = "venera-v17";
+const VERSAO = "venera-v18";
 const CASCA = ["/", "/index.html", "/app.js", "/manifest.json", "/icone.svg"];
 
 self.addEventListener("install", (evento) => {
@@ -53,6 +53,27 @@ self.addEventListener("fetch", (evento) => {
             caches.open(VERSAO).then((c) => c.put(pedido, copia));
             return resposta;
           })
+      )
+    );
+    return;
+  }
+
+  // Fotos do Commons: cache primeiro. Uma vez vista, a imagem do tema volta a
+  // abrir no metro sem rede, e nunca se pede duas vezes o mesmo ficheiro.
+  if (url.hostname === "upload.wikimedia.org") {
+    evento.respondWith(
+      caches.match(pedido).then(
+        (guardado) =>
+          guardado ||
+          fetch(pedido)
+            .then((resposta) => {
+              if (resposta.ok) {
+                const copia = resposta.clone();
+                caches.open(VERSAO).then((c) => c.put(pedido, copia));
+              }
+              return resposta;
+            })
+            .catch(() => Response.error())
       )
     );
     return;
