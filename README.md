@@ -136,6 +136,17 @@ numeração dos capítulos.
 Cada um explica o acontecimento **e** o canal por onde ele chega ao mercado: petróleo,
 cadeias de abastecimento, taxas, moeda, defesa, semicondutores.
 
+**Cada item de geopolítica leva uma imagem.** Não procures o link: escreve só o que
+queres ver, em inglês, e o Worker vai buscá-la ao Wikimedia Commons e trata do crédito.
+
+  "imagem": { "procurar": "Strait of Hormuz" }
+
+Escolhe o termo mais concreto que servir o tema — o sítio ("Port of Shanghai"), o
+edifício ("Federal Reserve building"), o equipamento ("Leopard 2 tank"), o mapa
+("Map of the South China Sea") ou, quando nada disso encaixar, a bandeira do país
+("Flag of Iran"). Nada de imagens de violência, feridos ou mortos. Se o Commons não
+tiver nada, o tema publica na mesma e a app põe lá a bandeira.
+
 ## Painel, dentro de "geopolitica"
 
 - "risco": "indice" 0 a 100 e "nivel" pela escala Muito baixo 0-20, Baixo 21-40,

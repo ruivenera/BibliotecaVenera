@@ -157,12 +157,26 @@ Cada item pode dizer que capítulo é. A app mostra o número e a rubrica por ci
 
 ## Imagem do tema — opcional
 
+Duas maneiras. A primeira é a boa: dizer o que se quer ver e deixar o Worker procurar
+no Wikimedia Commons, guardar o endereço do thumbnail e montar o crédito a partir dos
+metadados de licença. Assim a rotina nunca inventa um link, porque nunca escreve nenhum.
+
+```json
+"imagem": { "procurar": "Strait of Hormuz" }
+```
+
+A segunda serve para quando já se tem o endereço exato:
+
 ```json
 "imagem": {
   "url": "https://upload.wikimedia.org/wikipedia/commons/…",
   "credito": "Autor / Wikimedia Commons, CC BY-SA 4.0"
 }
 ```
+
+A pesquisa fica em cache no KV durante um mês, por termo: o mesmo "Flag of Iran" só vai
+ao Commons uma vez. Se a pesquisa não devolver nada — ou se o Commons estiver em baixo —
+o tema publica na mesma e a app desenha a bandeira do país que apanhar no título.
 
 O Worker só aceita imagens de `upload.wikimedia.org`, `commons.wikimedia.org` e
 `images.unsplash.com`, em https, **e só com `credito` preenchido** — a app mostra-o por
