@@ -144,6 +144,86 @@ function limparImagem(img) {
   return { url, credito };
 }
 
+/* ------------------------------------------------------- imagens do Commons --- */
+
+/**
+ * A rotina não precisa de saber URLs. Manda o que quer ver — "Strait of Hormuz",
+ * "Flag of Iran", "Federal Reserve building" — e é o Worker que procura no
+ * Wikimedia Commons, guarda o endereço do thumbnail e monta o crédito a partir
+ * dos metadados de licença. Assim nenhum link é inventado: ou existe, ou o tema
+ * publica sem foto.
+ */
+const AGENTE = "VeneraBiblioteca/1.0 (biblioteca pessoal de estudo)";
+const CACHE_ACHOU = 60 * 60 * 24 * 30; // um mês: bandeiras e edifícios não mudam
+const CACHE_FALHOU = 60 * 60 * 24; // um dia: dá para tentar outra vez amanhã
+
+const semEtiquetas = (html) =>
+  String(html || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&[a-z]+;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+async function procurarNoCommons(termo) {
+  const busca = new URL("https://commons.wikimedia.org/w/api.php");
+  busca.search = new URLSearchParams({
+    action: "query",
+    format: "json",
+    formatversion: "2",
+    generator: "search",
+    gsrsearch: `${termo} filetype:bitmap|drawing`,
+    gsrnamespace: "6",
+    gsrlimit: "6",
+    prop: "imageinfo",
+    iiprop: "url|extmetadata",
+    iiurlwidth: "1200",
+  }).toString();
+
+  const resposta = await fetch(busca, {
+    headers: { "user-agent": AGENTE, accept: "application/json" },
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!resposta.ok) return null;
+
+  const dados = await resposta.json();
+  for (const pagina of dados?.query?.pages || []) {
+    const info = pagina?.imageinfo?.[0];
+    const url = info?.thumburl || info?.url;
+    if (!url) continue;
+    try {
+      const { protocol, hostname } = new URL(url);
+      if (protocol !== "https:" || !SITIOS_IMAGEM.test(hostname)) continue;
+    } catch {
+      continue;
+    }
+    const autor = semEtiquetas(info?.extmetadata?.Artist?.value).slice(0, 90);
+    const licenca = semEtiquetas(info?.extmetadata?.LicenseShortName?.value).slice(0, 40);
+    const credito = [autor || "Wikimedia Commons", licenca].filter(Boolean).join(" · ");
+    return { url, credito: frase(credito, 160) };
+  }
+  return null;
+}
+
+/** Uma pesquisa por termo e por mês: o KV poupa a API e acelera a ingestão. */
+async function resolverImagem(env, termo) {
+  const chave = `imagem:${termo.toLowerCase().slice(0, 120)}`;
+  const guardada = await env.VENERA.get(chave, "json").catch(() => null);
+  if (guardada) return guardada.url ? guardada : null;
+
+  let achada = null;
+  try {
+    achada = await procurarNoCommons(termo);
+  } catch {
+    return null; // uma falha de rede nunca trava a publicação da edição
+  }
+
+  await env.VENERA.put(chave, JSON.stringify(achada || { vazio: true }), {
+    expirationTtl: achada ? CACHE_ACHOU : CACHE_FALHOU,
+  }).catch(() => {});
+
+  return achada;
+}
+
 const textos = (lista, max) =>
   (Array.isArray(lista) ? lista : [])
     .map((t) => frase(t, 240))
@@ -294,8 +374,16 @@ function limparItem(i) {
   else delete item.pontos;
 
   const imagem = limparImagem(i.imagem);
-  if (imagem) item.imagem = imagem;
-  else delete item.imagem;
+  const procurar = frase(i.imagem?.procurar, 120);
+  if (imagem) {
+    item.imagem = imagem;
+    delete item.procurar_imagem;
+  } else {
+    delete item.imagem;
+    // Fica à espera da ingestão, que é quem pode ir ao Commons.
+    if (procurar) item.procurar_imagem = procurar;
+    else delete item.procurar_imagem;
+  }
 
   // Hora do acontecimento, para a app poder dizer "há 2 horas".
   const quando = Date.parse(i.publicado_em);
@@ -337,6 +425,17 @@ async function ingerir(request, env) {
   const edicao = { ...payload, recebido_em: new Date().toISOString() };
 
   edicao.itens = payload.itens.map(limparItem);
+
+  // As imagens pedidas por termo resolvem-se aqui, em paralelo. Se o Commons
+  // não responder ou não trouxer nada, o tema publica na mesma — sem foto.
+  await Promise.all(
+    edicao.itens.map(async (item) => {
+      if (!item.procurar_imagem) return;
+      const achada = await resolverImagem(env, item.procurar_imagem);
+      delete item.procurar_imagem;
+      if (achada) item.imagem = achada;
+    })
+  );
 
   // Limpos, não validados: um bloco torto sai da edição em vez de a recusar.
   const painel = limparPainel(payload.painel);
