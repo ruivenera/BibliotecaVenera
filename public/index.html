@@ -159,6 +159,24 @@
     .marca { font-size: 0.85rem; letter-spacing: 0.02em; }
   }
 
+  .topo-accoes { display: flex; align-items: center; gap: 0.55rem; }
+
+  /* As Definições saíram do rodapé: cinco abas respiram melhor do que seis,
+     e a engrenagem é coisa que se procura, não que se tenha à mão. */
+  .acao-topo {
+    display: grid;
+    place-items: center;
+    width: 34px; height: 34px;
+    background: none;
+    border: 1px solid var(--tinta-3);
+    border-radius: 9px;
+    color: var(--papel-fosco);
+    cursor: pointer;
+    padding: 0;
+  }
+  .acao-topo svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+  .acao-topo:active { color: var(--latao); border-color: var(--latao); }
+
   .estado {
     font-family: var(--meta);
     font-size: 0.66rem;
@@ -854,7 +872,7 @@
     bottom: 0; left: 0; right: 0;
     z-index: 20;
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     background: color-mix(in srgb, var(--tinta) 92%, transparent);
     backdrop-filter: blur(12px);
     border-top: 1px solid var(--tinta-3);
@@ -1072,7 +1090,7 @@
     display: grid;
     grid-auto-flow: column;
     align-items: stretch;
-    grid-auto-columns: 46%;
+    grid-auto-columns: min(58%, 250px);
     gap: 0.7rem;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
@@ -1096,7 +1114,7 @@
   }
   /* Faixa tipográfica no lugar da fotografia. */
   .faixa-geo {
-    height: 48px;
+    height: 92px;
     display: grid;
     place-items: center;
     background: linear-gradient(140deg, var(--tinta-3), var(--tinta-2));
@@ -1121,6 +1139,33 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  /* Bandeiras: emoji de indicador regional, desenhado pelo sistema. Não faz
+     pedido nenhum, funciona sem rede e serve de recurso quando não há foto. */
+  .bandeira {
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+    font-weight: 400;
+    line-height: 1;
+  }
+  .faixa-geo.com-bandeira {
+    background: radial-gradient(120% 120% at 50% 0%, var(--tinta-3), var(--tinta-2));
+  }
+  .faixa-geo .bandeira { font-size: 2.7rem; filter: drop-shadow(0 2px 6px var(--sombra)); }
+  .mosaico-noticia.com-foto,
+  .mosaico-noticia.com-bandeira { width: 44px; height: 44px; border-radius: 10px; }
+  .mosaico-noticia.com-foto img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .mosaico-noticia .bandeira { font-size: 1.5rem; }
+  .bandeira-linha {
+    font-style: normal;
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+    margin-right: 0.35rem;
   }
 
   .foto-artigo { margin: 0 0 1.8rem; }
@@ -1604,7 +1649,12 @@
 
 <header class="topo">
   <button class="marca" data-ir="noticias">Biblioteca de Rui Venera</button>
-  <button class="estado" id="estado" data-estado="parado" title="Sincronizar agora">a arrancar</button>
+  <div class="topo-accoes">
+    <button class="estado" id="estado" data-estado="parado" title="Sincronizar agora">a arrancar</button>
+    <button class="acao-topo" data-ir="definicoes" aria-label="Definições" title="Definições">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+  </div>
 </header>
 
 <main>
@@ -1941,10 +1991,6 @@
   <button class="aba" data-ir="revisao">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v4h-4"/></svg>
     <span>Revisão</span><span class="conta" id="conta-revisao" data-zero="sim"></span>
-  </button>
-  <button class="aba" data-ir="definicoes">
-    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10m4 0h2M4 17h4m4 0h8M16 4v6M8 14v6"/></svg>
-    <span>Definições</span>
   </button>
 </nav>
 
