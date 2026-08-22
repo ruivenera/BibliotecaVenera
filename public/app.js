@@ -38,6 +38,7 @@ const estado = {
   fila: [],
   cartaoAtual: null,
   versoVisivel: false,
+  focoGeo: "", // país escolhido no mapa da geopolítica
 };
 
 // Quem já usava a app tem uma biblioteca gravada sem a gaveta dos livros.
@@ -343,6 +344,24 @@ function abrirArtigo(indice) {
     <h1>${esc(item.titulo)}</h1>
     <p class="entrada">${esc(entrada)}</p>
 
+    ${(() => {
+      // Só quando não há fotografia própria: a foto do Commons manda sempre.
+      if (item.imagem) return "";
+      const empresa = empresaDe(item.titulo, item.rubrica);
+      if (!empresa) return "";
+      return `<div class="cartao-empresa">
+        <span class="logo">
+          <img src="https://www.google.com/s2/favicons?domain=${esc(empresa.dominio)}&sz=128"
+               alt="" loading="lazy" decoding="async"
+               onerror="this.closest('.cartao-empresa')?.remove()">
+        </span>
+        <span class="quem">
+          <b>${esc(empresa.nome)}</b>
+          ${empresa.ticker ? `<i>${esc(empresa.ticker)}</i>` : ""}
+        </span>
+      </div>`;
+    })()}
+
     ${
       item.imagem
         ? `<figure class="foto-artigo">
@@ -447,6 +466,132 @@ const REGIOES = /geopol|m[ée]dio oriente|europa|[áa]sia|am[ée]ricas|áfrica|a
 const E_GEO = (item) =>
   item.modulo ? item.modulo === "geopolitica" : REGIOES.test(item.rubrica || "");
 
+/* ------------------------------------------------------------ mapa do mundo --- */
+
+/**
+ * O mapa é desenhado aqui dentro, sem biblioteca nem tiles: uma máscara de terra
+ * de 180×71 células (2° de lado, dos 84°N aos 58°S) empacotada em bits e metida
+ * em base64. São 2 KB que dão 3885 pontos — e continua a abrir sem rede.
+ */
+const MAPA_COLS = 180;
+const MAPA_ROWS = 71;
+const MAPA_TERRA = "AAAAAAAAHwAfvAAAAAAAAAAAAAAAAAAAAAAAAx37///+AAAAAGoABAAAAAAAAAAAAAIe8P///wAA8AAAAAA0AAAAAAAAAAAwADw////4AAIAAAAAAHAAAAAAAAAAALivwAf//wAAAAADAAP/wAHIAAAAAADsj38AH/+gAAAAAEAH///OAAAAgBgAAfw3/gB/+gAAAgAMHe///+/9gBAP/7/nbdrwD/+AAAH/Ag7H////////8H//////g8H/gAAAf/6//f////////Mf/////9H4D4A+AA+ev///////////AP/////4A0B4AAAD5/////////////Af1////gHgA4AAAP5///////////LwAHgD///gH0AAAAAG4/////////+AMAABAC///4D+AAAAGCx/////////4A4AAAAB////n/gAAAOCR/////////4A4AAAAAf///3/wAAAbH//////////9AgAAAAAP/////gAAADf//////////9AAAAAAAF////0YAAAB///////////8AAAAAAAD////8EAAAB///v///////5AAAAAAAD////+AAAAB/f5f///////wAAAAAAAD////gAAAAfxnwP///////jgAAAAAAD///+AAAAAPCb3///////+AAAAAAAAD///8AAAAAfCJf//////+ECAAAAAAAB///8AAAAAGDRf///////mMAAAAAAAA///8AAAAAH+Ai///////E8AAAAAAAAf//wAAAAAP/AA///////BgAAAAAAAAP//gAAAAAf/73///////gAAAAAAAAAD/AQAAAAAf//9/f/////gAAAAAAAAAF+AQAAAAB///+/n/////AAAAAAAAAAC+AAAAAAB///+fwH///+AAAAAAAAAAAeAwAAAAD////f/D///8gAAAAAAAAAAeGEAAAAD////v+B/j/AAAAAAAAAAAAPMAwAAAD////n+AfB+gAAAAAAAAAAAD8AAAAAD////34AeBfAgAAAAAAAAAAAPAAAAAH////3gAcAfAgAAAAAAAAAAADAAAAAD////6AAcAfgwAAAAAAAAAAABBwAAAD////8wAMATAIAAAAAAAAAAAAr/AAAB/////gAIASAAAAAAAAAAAAAAH/gAAA/////gACAAAIAAAAAAAAAAAAH/8AAAYH///AAAAsGAAAAAAAAAAAAAH/+AAAAB//+AAAAUOAAAAAAAAAAAAAP/+AAAAB//8AAAAc+gAAAAAAAAAAAAP//gAAAD//4AAAAMeBgAAAAAAAAAAAP//8AAAB//wAAAAGdCuAAAAAAAAAAAf///AAAA//wAAAACAAHgAAAAAAAAAAP///gAAA//wAAAAB4AHggAAAAAAAAAH///AAAAf/wAAAAACIDQIAAAAAAAAAH//+AAAAf/wAAAAAAAAAAAAAAAAAAAD//+AAAA//wgAAAAABxAAAAAAAAAAAD//8AAAA//wgAAAAAHxgBAAAAAAAAAA//8AAAA//zgAAAAAf/gAAAAAAAAAAAf/8AAAA//DgAAAAAf/gAAAAAAAAAAAf/8AAAAf/DAAAAAD//4CAAAAAAAAAAf/wAAAAf/DAAAAAH//4AAAAAAAAAAAf/AAAAAf+DAAAAAH//8AAAAAAAAAAAf/AAAAAP8AAAAAAH//+AAAAAAAAAAA/+AAAAAP8AAAAAAH//+AAAAAAAAAAA/8AAAAAH4AAAAAAD//+AAAAAAAAAAA/8AAAAAHwAAAAAADwf8AAAAAAAAAAA/gAAAAAAAAAAAAACAP4AAAAAAAAAAB/wAAAAAAAAAAAAAAAD4AEAAAAAAAAB+AAAAAAAAAAAAAAAAAAAGAAAAAAAAB6AAAAAAAAAAAAAAAAAwAMAAAAAAAAA8AAAAAAAAAAAAAAAAAQAYAAAAAAAAB4AAAAAAAAAAAAAAAAAAAwAAAAAAAAB4AAAAAAAAAAAAAAAAAAAAAAAAAAAABwAAAAAAAAAACAAAAAAAAAAAAAAAAADgAAAAAAAAAAAAAAAAAAAAAAAAAAAABwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+
+let caminhoTerraCache = null;
+function caminhoTerra() {
+  if (caminhoTerraCache) return caminhoTerraCache;
+  const cru = atob(MAPA_TERRA);
+  let d = "";
+  for (let i = 0, n = MAPA_COLS * MAPA_ROWS; i < n; i++) {
+    // packbits é MSB primeiro: o bit mais à esquerda do byte é a primeira célula.
+    if (cru.charCodeAt(i >> 3) & (128 >> (i & 7))) {
+      const c = i % MAPA_COLS;
+      const r = (i / MAPA_COLS) | 0;
+      d += `M${c * 2 + 1} ${r * 2 + 1}h.01`;
+    }
+  }
+  return (caminhoTerraCache = d);
+}
+
+/** Projeção equirretangular: longitude para x, latitude para y. */
+const projX = (lon) => lon + 180;
+const projY = (lat) => 84 - lat;
+
+/* Onde pousar o ponto de cada país. Centróides aproximados — num mapa de 2° de
+   resolução, a capital exata não muda nada. */
+const COORD = {
+  US: [39.5, -98.5], CN: [35, 105], RU: [60, 90], UA: [49, 32], IR: [32, 53],
+  IL: [31.6, 35.1], PS: [31.4, 34.3], TW: [23.7, 121], JP: [36, 138], KP: [40, 127],
+  KR: [36.5, 127.8], IN: [22, 79], TR: [39, 35], SA: [24, 45], AE: [24, 54],
+  QA: [25.3, 51.2], YE: [15.5, 48], LB: [33.9, 35.9], SY: [35, 38], IQ: [33, 44],
+  EG: [26, 30], VE: [7, -66], BR: [-10, -52], MX: [23, -102], CA: [58, -106],
+  GB: [54, -2], DE: [51, 10], FR: [46.5, 2.5], IT: [42.8, 12.5], ES: [40, -3.5],
+  PT: [39.5, -8], NL: [52.2, 5.5], PL: [52, 19.5], GR: [39, 22], NO: [62, 10],
+  SE: [62, 15], CH: [46.8, 8.2], BY: [53.5, 28], HU: [47, 19.5], RO: [46, 25],
+  RS: [44, 20.8], NG: [9.5, 8], ZA: [-29, 24], DZ: [28, 3], LY: [27, 17],
+  SD: [15.5, 30], ET: [9, 39.5], MA: [32, -6], PK: [30, 70], AF: [34, 66],
+  ID: [-2, 118], VN: [16, 106], PH: [12.5, 122], TH: [15, 101], AU: [-25, 134],
+  AR: [-35, -64], CL: [-35, -71], CO: [4, -73], PE: [-10, -76], KZ: [48, 68],
+  AZ: [40.3, 47.7], AM: [40.2, 45], SG: [1.35, 103.8], MY: [4, 102], EU: [50.8, 4.4],
+};
+
+const NOME_PAIS = {
+  US: "Estados Unidos", CN: "China", RU: "Rússia", UA: "Ucrânia", IR: "Irão",
+  IL: "Israel", PS: "Palestina", TW: "Taiwan", JP: "Japão", KP: "Coreia do Norte",
+  KR: "Coreia do Sul", IN: "Índia", TR: "Turquia", SA: "Arábia Saudita",
+  AE: "Emirados", QA: "Catar", YE: "Iémen", LB: "Líbano", SY: "Síria", IQ: "Iraque",
+  EG: "Egito", VE: "Venezuela", BR: "Brasil", MX: "México", CA: "Canadá",
+  GB: "Reino Unido", DE: "Alemanha", FR: "França", IT: "Itália", ES: "Espanha",
+  PT: "Portugal", NL: "Países Baixos", PL: "Polónia", GR: "Grécia", NO: "Noruega",
+  SE: "Suécia", CH: "Suíça", BY: "Bielorrússia", HU: "Hungria", RO: "Roménia",
+  RS: "Sérvia", NG: "Nigéria", ZA: "África do Sul", DZ: "Argélia", LY: "Líbia",
+  SD: "Sudão", ET: "Etiópia", MA: "Marrocos", PK: "Paquistão", AF: "Afeganistão",
+  ID: "Indonésia", VN: "Vietname", PH: "Filipinas", TH: "Tailândia", AU: "Austrália",
+  AR: "Argentina", CL: "Chile", CO: "Colômbia", PE: "Peru", KZ: "Cazaquistão",
+  AZ: "Azerbaijão", AM: "Arménia", SG: "Singapura", MY: "Malásia", EU: "União Europeia",
+};
+
+/* --------------------------------------------------------------- empresas --- */
+
+/**
+ * Os temas de mercado não trazem fotografia — e uma fotografia genérica de bolsa
+ * não diz nada. O que diz é o logótipo de quem está em causa, por isso lê-se a
+ * empresa no título e mostra-se a marca no topo do artigo.
+ */
+const EMPRESAS = [
+  ["NVIDIA", "NVDA", /\bnvidia\b|\bnvda\b/i, "nvidia.com"],
+  ["Broadcom", "AVGO", /\bbroadcom\b|\bavgo\b/i, "broadcom.com"],
+  ["Amazon", "AMZN", /\bamazon\b|\bamzn\b|\baws\b/i, "amazon.com"],
+  ["IREN", "IREN", /\biren\b|iris energy/i, "iren.com"],
+  ["Rocket Lab", "RKLB", /rocket lab|\brklb\b/i, "rocketlabusa.com"],
+  ["Nebius", "NBIS", /\bnebius\b|\bnbis\b/i, "nebius.com"],
+  ["Microsoft", "MSFT", /\bmicrosoft\b|\bmsft\b|\bazure\b/i, "microsoft.com"],
+  ["Apple", "AAPL", /\bapple\b|\baapl\b/i, "apple.com"],
+  ["Alphabet", "GOOGL", /\balphabet\b|\bgoogle\b|\bgoogl\b/i, "abc.xyz"],
+  ["Meta", "META", /\bmeta platforms\b|\bmeta\b(?! descrit)|\bfacebook\b/i, "meta.com"],
+  ["Tesla", "TSLA", /\btesla\b|\btsla\b/i, "tesla.com"],
+  ["AMD", "AMD", /\bamd\b|advanced micro/i, "amd.com"],
+  ["Intel", "INTC", /\bintel\b|\bintc\b/i, "intel.com"],
+  ["TSMC", "TSM", /\btsmc\b|taiwan semiconductor/i, "tsmc.com"],
+  ["ASML", "ASML", /\basml\b/i, "asml.com"],
+  ["Palantir", "PLTR", /\bpalantir\b|\bpltr\b/i, "palantir.com"],
+  ["Oracle", "ORCL", /\boracle\b|\borcl\b/i, "oracle.com"],
+  ["Micron", "MU", /\bmicron\b/i, "micron.com"],
+  ["Marvell", "MRVL", /\bmarvell\b|\bmrvl\b/i, "marvell.com"],
+  ["Qualcomm", "QCOM", /\bqualcomm\b|\bqcom\b/i, "qualcomm.com"],
+  ["Arm", "ARM", /\barm holdings\b/i, "arm.com"],
+  ["Super Micro", "SMCI", /super micro|\bsmci\b/i, "supermicro.com"],
+  ["Vertiv", "VRT", /\bvertiv\b/i, "vertiv.com"],
+  ["Coinbase", "COIN", /\bcoinbase\b/i, "coinbase.com"],
+  ["Strategy", "MSTR", /\bmicrostrategy\b|\bmstr\b/i, "strategy.com"],
+  ["Netflix", "NFLX", /\bnetflix\b|\bnflx\b/i, "netflix.com"],
+  ["Walmart", "WMT", /\bwalmart\b|\bwmt\b/i, "walmart.com"],
+  ["Salesforce", "CRM", /\bsalesforce\b/i, "salesforce.com"],
+  ["Adobe", "ADBE", /\badobe\b/i, "adobe.com"],
+  ["Uber", "UBER", /\buber\b/i, "uber.com"],
+  ["Boeing", "BA", /\bboeing\b/i, "boeing.com"],
+  ["ExxonMobil", "XOM", /\bexxon\b/i, "exxonmobil.com"],
+  ["Chevron", "CVX", /\bchevron\b/i, "chevron.com"],
+  ["Shell", "SHEL", /\bshell\b/i, "shell.com"],
+  ["JPMorgan", "JPM", /\bjpmorgan\b|\bjp morgan\b/i, "jpmorganchase.com"],
+  ["Goldman Sachs", "GS", /goldman sachs/i, "goldmansachs.com"],
+  ["Berkshire", "BRK", /\bberkshire\b/i, "berkshirehathaway.com"],
+  ["OpenAI", "", /\bopenai\b|\bchatgpt\b/i, "openai.com"],
+  ["Anthropic", "", /\banthropic\b|\bclaude\b/i, "anthropic.com"],
+  ["Reserva Federal", "", /reserva federal|\bfed\b|\bfomc\b/i, "federalreserve.gov"],
+  ["BCE", "", /\bbce\b|banco central europeu/i, "ecb.europa.eu"],
+  ["Bitcoin", "BTC", /\bbitcoin\b|\bbtc\b/i, "bitcoin.org"],
+  ["Ethereum", "ETH", /\bethereum\b|\beth\b/i, "ethereum.org"],
+];
+
+function empresaDe(...textos) {
+  const alvo = textos.filter(Boolean).join(" ");
+  if (!alvo) return null;
+  for (const [nome, ticker, padrao, dominio] of EMPRESAS)
+    if (padrao.test(alvo)) return { nome, ticker, dominio };
+  return null;
+}
+
 /* --------------------------------------------------------------- bandeiras --- */
 
 /**
@@ -527,11 +672,26 @@ const PAISES = [
 const emojiBandeira = (iso) =>
   String.fromCodePoint(...[...iso].map((letra) => 0x1f1e6 + letra.charCodeAt(0) - 65));
 
-function bandeiraDe(...textos) {
+function isoDe(...textos) {
   const alvo = textos.filter(Boolean).join(" ");
   if (!alvo) return "";
-  for (const [iso, padrao] of PAISES) if (padrao.test(alvo)) return emojiBandeira(iso);
-  return "";
+  // Ganha quem for mencionado mais cedo. Pela ordem da tabela, "o Irão restringe
+  // o tráfego dos EUA" dava bandeira americana a uma notícia sobre o Irão.
+  let melhor = "";
+  let onde = Infinity;
+  for (const [iso, padrao] of PAISES) {
+    const achado = alvo.match(padrao);
+    if (achado && achado.index < onde) {
+      onde = achado.index;
+      melhor = iso;
+    }
+  }
+  return melhor;
+}
+
+function bandeiraDe(...textos) {
+  const iso = isoDe(...textos);
+  return iso ? emojiBandeira(iso) : "";
 }
 
 /** Duas letras sempre: com a inicial só, "Mercados" e "Macro" ficavam iguais. */
@@ -631,6 +791,83 @@ function desenharNoticias() {
           .join("")}</div>`
       : "";
 
+  /* Focos do dia: um por país detectado, com o peso a contar os temas e o grau
+     a guardar o pior impacto. É isto que acende os pontos no mapa. */
+  const focos = (() => {
+    const por = new Map();
+    for (const { item, i } of geopoliticos) {
+      const iso = isoDe(item.titulo, item.rubrica);
+      if (!iso || !COORD[iso]) continue;
+      const f = por.get(iso) || { iso, indices: [], alto: false };
+      f.indices.push(i);
+      if (item.impacto === "alto") f.alto = true;
+      por.set(iso, f);
+    }
+    // Os alertas do painel também contam, mesmo sem tema próprio no dia.
+    for (const a of geo.alertas || []) {
+      const iso = isoDe(a.texto);
+      if (!iso || !COORD[iso] || por.has(iso)) continue;
+      por.set(iso, { iso, indices: [], alto: a.nivel === "alto" });
+    }
+    return [...por.values()].sort((a, b) => b.indices.length - a.indices.length);
+  })();
+
+  const escolhido = estado.focoGeo && focos.some((f) => f.iso === estado.focoGeo) ? estado.focoGeo : "";
+
+  const mapaHTML = () => {
+    if (!focos.length && !geopoliticos.length) return "";
+    const pontos = focos
+      .map((f) => {
+        const [la, lo] = COORD[f.iso];
+        const x = projX(lo).toFixed(1);
+        const y = projY(la).toFixed(1);
+        const r = Math.min(5.2, 2.4 + f.indices.length * 0.75);
+        return `<g class="foco" data-foco="${f.iso}" data-alto="${f.alto ? "sim" : "nao"}"
+            aria-current="${escolhido === f.iso}"
+            data-x="${x}" data-y="${y}" style="transform:translate(${x}px,${y}px)">
+            <circle class="halo" r="${(r * 2.6).toFixed(1)}"/>
+            <circle class="anel" r="${(r * 1.5).toFixed(1)}"/>
+            <circle class="nucleo" r="${r.toFixed(1)}"/>
+            <title>${esc(NOME_PAIS[f.iso] || f.iso)}</title>
+          </g>`;
+      })
+      .join("");
+
+    return `<div class="mapa-caixa">
+      <div class="mapa-cabeca">
+        <span class="rotulo"><i class="emoji">🗺️</i>Mapa do dia</span>
+        <button class="ver-mais" data-foco="" ${escolhido ? "" : "hidden"}>Ver o mundo ›</button>
+      </div>
+      <div class="mapa-palco">
+        <svg class="mapa-mundo" viewBox="0 0 360 142" role="img"
+             aria-label="Mapa dos focos do dia" preserveAspectRatio="xMidYMid meet">
+          <g class="mundo" id="mapa-mundo">
+            <path class="terra" d="${caminhoTerra()}"/>
+            ${pontos}
+          </g>
+        </svg>
+      </div>
+      ${
+        focos.length
+          ? `<div class="fichas-foco">
+              ${focos
+                .map(
+                  (f) => `<button class="ficha" data-foco="${f.iso}" aria-current="${escolhido === f.iso}">
+                    <i class="emoji">${emojiBandeira(f.iso)}</i>${esc(NOME_PAIS[f.iso] || f.iso)}
+                    ${f.indices.length ? `<b>${f.indices.length}</b>` : ""}
+                  </button>`
+                )
+                .join("")}
+            </div>`
+          : `<p class="mapa-vazio rotulo">Esta edição não prende nenhum tema a um país.</p>`
+      }
+      <p class="mapa-legenda rotulo">
+        <i class="bolha alto"></i>impacto alto
+        <i class="bolha"></i>restantes · toca para filtrar
+      </p>
+    </div>`;
+  };
+
   const semGeoAqui = "Esta edição não trouxe temas geopolíticos.";
   const cartaoGeo = ({ item, i }) => `<button class="cartao-geo" data-item-noticia="${i}" style="--marcador:${cor}">
       ${
@@ -671,22 +908,27 @@ function desenharNoticias() {
       }>Ver tudo ›</button>
     </div>`;
 
-  const GLOBO = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/></svg>`;
+  const EMOJI = (e) => `<i class="emoji">${e}</i>`;
 
   const blocoRisco = () =>
     geo.risco && tem(geo.risco.indice)
-      ? `<div class="grupo" style="padding:1rem">
+      ? `<div class="grupo medidor-caixa" style="padding:0.85rem 1rem 1rem">
+          <div class="cabeca-medidor">
+            <span class="rotulo"><i class="emoji">⚔️</i>Índice de agressividade</span>
+            ${geo.risco.nivel ? `<span class="nivel-risco" data-alto="${geo.risco.indice >= 61 ? 1 : 0}">${esc(geo.risco.nivel)}</span>` : ""}
+          </div>
           <div class="medidor">
             <span class="valor">${geo.risco.indice}</span>
-            <span class="de">/ 100${geo.risco.nivel ? ` · ${esc(geo.risco.nivel)}` : ""}</span>
+            <span class="de">/ 100</span>
           </div>
           <div class="medidor-barra" data-alto="${geo.risco.indice >= 61 ? 1 : 0}"><i style="width:${geo.risco.indice}%"></i></div>
+          <div class="escala-risco"><span>0 · calmo</span><span>50</span><span>100 · crítico</span></div>
         </div>`
       : "";
 
   const blocoAlertas = () =>
     geo.alertas
-      ? `<div class="cabecalho-lista"><span class="rotulo">Do dia</span></div>
+      ? `<div class="cabecalho-lista"><span class="rotulo"><i class="emoji">⚠️</i>Do dia</span></div>
          <div class="grupo" style="padding:0.4rem 1rem">
            <ul class="alertas">${geo.alertas
              .map((a) => {
@@ -704,14 +946,26 @@ function desenharNoticias() {
     // Geral é a vista da maqueta: as duas metades seguidas, na mesma página.
     geral: () =>
       blocoIndices() +
-      cabecalho("Destaques de investimentos", "", "mercado") +
+      cabecalho("Destaques de investimentos", EMOJI("📈"), "mercado") +
       // Quatro chegam: com a lista toda, a geopolítica só aparecia a meio ecrã
       // de scroll. Quem quiser o resto tem o "ver tudo" logo ao lado.
       lista(mercado.slice(0, 4), semMercado) +
-      cabecalho("Geopolítica", GLOBO, "geo") +
+      cabecalho("Geopolítica", EMOJI("🌍"), "geo") +
       carrossel(geopoliticos),
-    mercado: () => blocoIndices() + cabecalho("Investimentos") + lista(mercado, semMercado),
-    geo: () => blocoRisco() + blocoAlertas() + cabecalho("Geopolítica", GLOBO) + lista(geopoliticos, semGeo),
+    mercado: () => blocoIndices() + cabecalho("Investimentos", EMOJI("📈")) + lista(mercado, semMercado),
+    geo: () => {
+      const filtrados = escolhido
+        ? geopoliticos.filter(({ i }) => focos.find((f) => f.iso === escolhido)?.indices.includes(i))
+        : geopoliticos;
+      const nome = escolhido ? NOME_PAIS[escolhido] || escolhido : "";
+      return (
+        mapaHTML() +
+        blocoRisco() +
+        blocoAlertas() +
+        cabecalho(escolhido ? `Temas · ${nome}` : "Geopolítica", EMOJI("🌍")) +
+        lista(filtrados, escolhido ? `Nada sobre ${nome} nesta edição.` : semGeo)
+      );
+    },
   };
 
   alvo.innerHTML = (paginas[meia] || paginas.geral)();
@@ -747,8 +1001,43 @@ document
 // O "ver tudo" das listas é desenhado a cada pintura, por isso vai por delegação.
 $("#noticias-corpo").addEventListener("click", (e) => {
   const ver = e.target.closest("[data-ver-meia]");
-  if (ver) mudarMeia(ver.dataset.verMeia);
+  if (ver) return mudarMeia(ver.dataset.verMeia);
+
+  const foco = e.target.closest("[data-foco]");
+  if (!foco) return;
+  const iso = foco.dataset.foco;
+  estado.focoGeo = iso === estado.focoGeo ? "" : iso;
+  desenharNoticias();
+  aproximarMapa();
 });
+
+/**
+ * Aproximar é mexer no transform do grupo, não no viewBox: assim o CSS trata da
+ * animação e os pontos de terra ficam do mesmo tamanho, graças ao non-scaling-stroke.
+ */
+function aproximarMapa() {
+  const g = $("#mapa-mundo");
+  if (!g) return;
+  const iso = estado.focoGeo;
+  const k = iso && COORD[iso] ? 2.6 : 1;
+
+  if (k === 1) g.style.transform = "none";
+  else {
+    const [la, lo] = COORD[iso];
+    g.style.transform = `translate(${(180 - k * projX(lo)).toFixed(1)}px, ${(
+      71 -
+      k * projY(la)
+    ).toFixed(1)}px) scale(${k})`;
+  }
+
+  // A terra cresce com a aproximação — é o que faz o mapa parecer mapa e não uma
+  // grelha esticada. Os pontos dos países é que não: levam a escala ao contrário
+  // para ficarem sempre do mesmo tamanho no ecrã.
+  const inverso = (1 / k).toFixed(3);
+  g.querySelectorAll(".foco").forEach((f) => {
+    f.style.transform = `translate(${f.dataset.x}px, ${f.dataset.y}px) scale(${inverso})`;
+  });
+}
 
 /* Resumo do dia escolhido na estante. A estante só traz o título, por isso
    o resumo completo tem de ser ido buscar à edição desse dia. */
@@ -762,12 +1051,55 @@ async function mostrarResumoDoDia(rotina, data) {
   alvo.innerHTML = `<div class="resumo-dia"><p class="rotulo">a abrir…</p></div>`;
   try {
     const edicao = await api(`/api/edicao/${rotina}/${data}`);
+    const itens = edicao.itens || [];
+    const geos = itens.filter(E_GEO).length;
+    const mercados = itens.length - geos;
+    const altos = itens.filter((i) => i.impacto === "alto").length;
+    const parte = (n) => (itens.length ? Math.round((n / itens.length) * 100) : 0);
+    // Índice da edição: os temas de impacto alto primeiro, que é por onde se começa.
+    const sumario = [...itens]
+      .sort((a, b) => (b.impacto === "alto") - (a.impacto === "alto"))
+      .slice(0, 3);
+
     alvo.innerHTML = `<div class="resumo-dia" style="--marcador:${cor}">
-      <span class="rotulo dia">${esc(porExtensoComDia(edicao.data))}</span>
+      <div class="capa-topo">
+        <span class="selo-rotina" style="color:${cor};border-color:${cor}">${esc(
+      NOMES[rotina] || rotina
+    )}</span>
+        <span class="rotulo dia">${esc(porExtensoComDia(edicao.data))}</span>
+      </div>
+
       <h3>${esc(edicao.titulo)}</h3>
-      <p>${esc(edicao.resumo)}</p>
+      <p class="entrada">${esc(edicao.resumo)}</p>
+
+      <div class="balanco">
+        <div class="barra-balanco" role="presentation">
+          <i class="mercado" style="width:${parte(mercados)}%"></i>
+          <i class="geo" style="width:${parte(geos)}%"></i>
+        </div>
+        <ul class="contas">
+          <li><b>${mercados}</b> investimentos</li>
+          <li><b>${geos}</b> geopolítica</li>
+          <li><b>${altos}</b> de impacto alto</li>
+        </ul>
+      </div>
+
+      ${
+        sumario.length
+          ? `<div class="sumario">
+              <span class="rotulo">Nesta edição</span>
+              <ol>${sumario
+                .map(
+                  (i) =>
+                    `<li data-impacto="${esc(i.impacto)}"><span>${esc(i.titulo)}</span></li>`
+                )
+                .join("")}</ol>
+            </div>`
+          : ""
+      }
+
       <div class="rodape-cartao">
-        <span class="rotulo">${edicao.itens.length} temas</span>
+        <span class="rotulo">${itens.length} temas</span>
         <button class="ver-mais" data-abrir-dia="${esc(data)}">Ler a edição ›</button>
       </div>
     </div>`;

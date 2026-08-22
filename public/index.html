@@ -240,6 +240,7 @@
   .cabecalho-pagina h1 {
     font-family: var(--display);
     font-weight: 700;
+    color: var(--latao);
     font-variation-settings: "WONK" 1;
     font-size: clamp(1.2rem, 5.2vw, 1.45rem);
     letter-spacing: 0.01em;
@@ -587,12 +588,107 @@
     border: 1px solid var(--tinta-3);
     border-radius: 14px;
   }
-  .resumo-dia .dia {
-    display: block;
-    color: var(--latao);
-    letter-spacing: 0.16em;
-    margin-bottom: 0.8rem;
+  /* O cartão do dia é a capa da edição: tarja da rotina, data, título, entrada
+     com capitular, o balanço da edição em barra e o índice dos três temas
+     por onde começar. */
+  .capa-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    padding-bottom: 0.7rem;
+    margin-bottom: 0.9rem;
+    border-bottom: 1px solid var(--tinta-3);
   }
+  .selo-rotina {
+    font-family: var(--meta);
+    font-size: 0.52rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0.18rem 0.45rem;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+  }
+  .resumo-dia .dia {
+    color: var(--papel-fosco);
+    letter-spacing: 0.12em;
+    font-size: 0.55rem;
+  }
+
+  /* Capitular à moda do miolo de um livro: só na entrada, e só se houver texto. */
+  .resumo-dia .entrada::first-letter {
+    float: left;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 2.8rem;
+    line-height: 0.86;
+    padding: 0.12rem 0.3rem 0 0;
+    color: var(--latao);
+  }
+
+  .balanco { margin: 0 0 1.1rem; }
+  .barra-balanco {
+    display: flex;
+    height: 5px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: var(--tinta-3);
+  }
+  .barra-balanco i { display: block; height: 100%; }
+  .barra-balanco .mercado { background: var(--marcador, var(--latao)); }
+  .barra-balanco .geo { background: color-mix(in srgb, var(--marcador, var(--latao)) 40%, var(--tinta-3)); }
+  .contas {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 1rem;
+    margin: 0.55rem 0 0;
+    padding: 0;
+    font-family: var(--meta);
+    font-size: 0.56rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--papel-fosco);
+  }
+  .contas b { color: var(--papel); font-size: 0.72rem; margin-right: 0.15rem; }
+
+  .sumario { margin: 0 0 1.2rem; }
+  .sumario .rotulo { display: block; margin-bottom: 0.5rem; font-size: 0.55rem; letter-spacing: 0.16em; }
+  .sumario ol {
+    list-style: none;
+    counter-reset: sumario;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.45rem;
+  }
+  .sumario li {
+    counter-increment: sumario;
+    display: flex;
+    gap: 0.6rem;
+    align-items: baseline;
+    font-size: 0.82rem;
+    line-height: 1.35;
+    color: var(--papel-fosco);
+  }
+  /* Duas linhas por título: com manchetes longas o índice crescia sem fim. */
+  .sumario li span {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .sumario li::before {
+    content: counter(sumario, decimal-leading-zero);
+    flex: none;
+    font-family: var(--meta);
+    font-size: 0.58rem;
+    color: var(--marcador, var(--latao));
+    letter-spacing: 0.08em;
+  }
+  /* Os de impacto alto ficam com a tinta cheia: são o que se lê primeiro. */
+  .sumario li[data-impacto="alto"] { color: var(--papel); }
   .resumo-dia h3 {
     color: var(--titulo, var(--papel));
     font-family: var(--display);
@@ -1241,6 +1337,200 @@
   /* Sem o bloco de avaliação a seguir, as fontes precisam de fôlego em baixo. */
   .artigo .fontes { margin-bottom: 2.2rem; }
 
+  /* ------------------------------------------------------ mapa do mundo --- */
+  .mapa-caixa {
+    margin: 0.6rem var(--gap) 0.2rem;
+    padding: 0.7rem 0.75rem 0.75rem;
+    background: var(--tinta-2);
+    border: 1px solid var(--tinta-3);
+    border-radius: 14px;
+  }
+  .mapa-cabeca {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    margin-bottom: 0.5rem;
+  }
+  .mapa-cabeca .rotulo { font-size: 0.58rem; letter-spacing: 0.16em; }
+  .mapa-palco {
+    background:
+      radial-gradient(120% 140% at 50% 0%, color-mix(in srgb, var(--latao) 7%, transparent), transparent 70%),
+      var(--tinta);
+    border: 1px solid var(--tinta-3);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .mapa-mundo { display: block; width: 100%; height: auto; }
+  /* O grupo inteiro é que se aproxima — o traço da terra não engorda porque
+     leva non-scaling-stroke. */
+  .mapa-mundo .mundo {
+    transform-origin: 0 0;
+    transition: transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+  .mapa-mundo .terra {
+    fill: none;
+    stroke: color-mix(in srgb, var(--papel) 42%, transparent);
+    stroke-width: 1.25;
+    stroke-linecap: round;
+  }
+  .mapa-mundo .foco {
+    cursor: pointer;
+    transition: transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+  .mapa-mundo .foco .nucleo { fill: var(--latao); }
+  .mapa-mundo .foco .anel { fill: none; stroke: var(--latao); stroke-width: 0.6; opacity: 0.55; }
+  .mapa-mundo .foco .halo { fill: var(--latao); opacity: 0.1; }
+  /* Impacto alto pulsa: é o que se procura primeiro num mapa cheio de pontos. */
+  .mapa-mundo .foco[data-alto="sim"] .nucleo,
+  .mapa-mundo .foco[data-alto="sim"] .anel { fill: var(--rust); stroke: var(--rust); }
+  .mapa-mundo .foco[data-alto="sim"] .halo {
+    fill: var(--rust);
+    animation: pulsar 2.4s ease-out infinite;
+    transform-origin: center;
+  }
+  @keyframes pulsar {
+    0% { opacity: 0.28; transform: scale(0.6); }
+    70% { opacity: 0; transform: scale(1.35); }
+    100% { opacity: 0; transform: scale(1.35); }
+  }
+  .mapa-mundo .foco[aria-current="true"] .nucleo { fill: var(--papel); }
+  .mapa-mundo .foco[aria-current="true"] .anel { stroke: var(--papel); opacity: 1; stroke-width: 0.9; }
+
+  .fichas-foco {
+    display: flex;
+    gap: 0.4rem;
+    overflow-x: auto;
+    padding-top: 0.6rem;
+    scrollbar-width: none;
+  }
+  .fichas-foco::-webkit-scrollbar { display: none; }
+  .ficha {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 0.1rem;
+    padding: 0.3rem 0.55rem;
+    background: var(--tinta);
+    border: 1px solid var(--tinta-3);
+    border-radius: 999px;
+    color: var(--papel-fosco);
+    font-family: var(--meta);
+    font-size: 0.57rem;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .ficha b {
+    margin-left: 0.35rem;
+    padding: 0 0.28rem;
+    border-radius: 999px;
+    background: var(--tinta-2);
+    color: var(--papel);
+    font-size: 0.55rem;
+  }
+  .ficha[aria-current="true"] {
+    color: var(--papel);
+    border-color: var(--latao);
+    box-shadow: inset 0 0 0 1px var(--latao);
+  }
+  .mapa-vazio { display: block; padding-top: 0.6rem; font-size: 0.58rem; }
+  .mapa-legenda {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0.55rem 0 0;
+    font-size: 0.52rem;
+    letter-spacing: 0.1em;
+  }
+  .mapa-legenda .bolha {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--latao);
+    display: inline-block;
+  }
+  .mapa-legenda .bolha.alto { background: var(--rust); }
+  .mapa-legenda .bolha + i { margin-left: 0.5rem; }
+
+  .medidor-caixa { margin-top: 0.6rem; }
+  .cabeca-medidor {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    margin-bottom: 0.4rem;
+  }
+  .cabeca-medidor .rotulo { font-size: 0.58rem; letter-spacing: 0.16em; }
+  .nivel-risco {
+    font-family: var(--meta);
+    font-size: 0.55rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    color: var(--latao);
+    background: color-mix(in srgb, var(--latao) 12%, transparent);
+  }
+  .nivel-risco[data-alto="1"] { color: var(--rust); background: color-mix(in srgb, var(--rust) 12%, transparent); }
+  .escala-risco {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.4rem;
+    font-family: var(--meta);
+    font-size: 0.5rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--papel-fosco);
+  }
+
+  /* Emojis: fonte do sistema, para não herdarem a mono nem a display. */
+  .emoji {
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    margin-right: 0.4rem;
+    letter-spacing: 0;
+  }
+  h1 .emoji { margin-right: 0.5rem; font-size: 0.82em; vertical-align: 0.04em; }
+  .rotulo .emoji, .rotulo-seccao .emoji { font-size: 1.05em; margin-right: 0.35rem; }
+
+  /* Sem fotografia, o artigo de mercado abre com a marca de quem está em causa. */
+  .cartao-empresa {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin: 0 0 1.8rem;
+    padding: 0.85rem 1rem;
+    background: var(--tinta-2);
+    border: 1px solid var(--tinta-3);
+    border-radius: 12px;
+  }
+  .cartao-empresa .logo {
+    flex: none;
+    width: 48px; height: 48px;
+    display: grid;
+    place-items: center;
+    background: var(--tinta);
+    border: 1px solid var(--tinta-3);
+    border-radius: 11px;
+    overflow: hidden;
+  }
+  .cartao-empresa .logo img { width: 30px; height: 30px; object-fit: contain; }
+  .cartao-empresa .quem { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+  .cartao-empresa .quem b {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--titulo, var(--papel));
+  }
+  .cartao-empresa .quem i {
+    font-style: normal;
+    font-family: var(--meta);
+    font-size: 0.58rem;
+    letter-spacing: 0.14em;
+    color: var(--papel-fosco);
+  }
+
   .foto-artigo { margin: 0 0 1.8rem; }
   .foto-artigo img { width: 100%; border-radius: 12px; display: block; }
   .foto-artigo figcaption {
@@ -1735,7 +2025,7 @@
 <body>
 
 <header class="topo">
-  <button class="marca" data-ir="noticias">Biblioteca do Rui</button>
+  <button class="marca" data-ir="noticias">Biblioteca de R.Venera</button>
   <div class="topo-accoes">
     <button class="estado" id="estado" data-estado="parado" title="Sincronizar agora">a arrancar</button>
     <button class="acao-topo" id="btn-atualizar" aria-label="Atualizar" title="Atualizar agora">
@@ -1765,7 +2055,7 @@
   <section class="vista" id="v-noticias" aria-label="Notícias">
     <div class="cabecalho-pagina">
       <div>
-        <h1>Notícias</h1>
+        <h1><i class="emoji">🗞️</i>Notícias</h1>
         <p class="sub"><span class="ponto-rotina" style="--ponto:var(--latao)"></span> Investimentos &amp; Geopolítica</p>
       </div>
       <a class="botao-icone" href="#resumo-dia" title="Estante de notícias">
@@ -1791,7 +2081,7 @@
 
     <div id="noticias-corpo"></div>
 
-    <span class="rotulo-seccao">Estante de notícias</span>
+    <span class="rotulo-seccao"><i class="emoji">📚</i>Estante de notícias</span>
     <div class="estante" id="estante-noticias"></div>
     <div class="eixo-estante">
       <span class="rotulo">hoje</span>
@@ -1805,7 +2095,7 @@
   <section class="vista" id="v-aprendizagem" aria-label="Aprender">
     <div class="cabecalho-pagina">
       <div>
-        <h1>Aprender</h1>
+        <h1><i class="emoji">🎓</i>Aprender</h1>
         <p class="sub" id="data-aprendizagem"></p>
       </div>
       <span class="botao-icone" aria-hidden="true">
@@ -1903,7 +2193,7 @@
     <div id="revisao-painel">
       <div class="cabecalho-pagina">
         <div>
-          <h1>Revisão</h1>
+          <h1><i class="emoji">🔁</i>Revisão</h1>
           <p class="sub rotulo">Aprendizagem ativa</p>
         </div>
         <span class="botao-icone" aria-hidden="true">
@@ -1957,7 +2247,7 @@
   <section class="vista" id="v-definicoes" aria-label="Definições">
     <div class="cabecalho-pagina">
       <div>
-        <h1>Definições</h1>
+        <h1><i class="emoji">⚙️</i>Definições</h1>
         <p class="sub">Personaliza a tua experiência.</p>
       </div>
       <span class="botao-icone" aria-hidden="true">
