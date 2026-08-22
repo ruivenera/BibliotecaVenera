@@ -470,19 +470,32 @@ const E_GEO = (item) =>
 
 /**
  * O mapa é desenhado aqui dentro, sem biblioteca nem tiles: uma máscara de terra
- * de 180×71 células (2° de lado, dos 84°N aos 58°S) empacotada em bits e metida
- * em base64. São 2 KB que dão 3885 pontos — e continua a abrir sem rede.
+ * de 360×144 células — um grau de lado, dos 84°N aos 60°S — empacotada em bits e
+ * metida em base64. São 8 KB de fonte que dão 15 483 células de terra, pintadas
+ * num canvas e esticadas com suavização. Continua a abrir sem rede.
  */
-const MAPA_COLS = 180;
-const MAPA_ROWS = 71;
-const MAPA_TERRA = "AAAAAAAAHwAfvAAAAAAAAAAAAAAAAAAAAAAAAx37///+AAAAAGoABAAAAAAAAAAAAAIe8P///wAA8AAAAAA0AAAAAAAAAAAwADw////4AAIAAAAAAHAAAAAAAAAAALivwAf//wAAAAADAAP/wAHIAAAAAADsj38AH/+gAAAAAEAH///OAAAAgBgAAfw3/gB/+gAAAgAMHe///+/9gBAP/7/nbdrwD/+AAAH/Ag7H////////8H//////g8H/gAAAf/6//f////////Mf/////9H4D4A+AA+ev///////////AP/////4A0B4AAAD5/////////////Af1////gHgA4AAAP5///////////LwAHgD///gH0AAAAAG4/////////+AMAABAC///4D+AAAAGCx/////////4A4AAAAB////n/gAAAOCR/////////4A4AAAAAf///3/wAAAbH//////////9AgAAAAAP/////gAAADf//////////9AAAAAAAF////0YAAAB///////////8AAAAAAAD////8EAAAB///v///////5AAAAAAAD////+AAAAB/f5f///////wAAAAAAAD////gAAAAfxnwP///////jgAAAAAAD///+AAAAAPCb3///////+AAAAAAAAD///8AAAAAfCJf//////+ECAAAAAAAB///8AAAAAGDRf///////mMAAAAAAAA///8AAAAAH+Ai///////E8AAAAAAAAf//wAAAAAP/AA///////BgAAAAAAAAP//gAAAAAf/73///////gAAAAAAAAAD/AQAAAAAf//9/f/////gAAAAAAAAAF+AQAAAAB///+/n/////AAAAAAAAAAC+AAAAAAB///+fwH///+AAAAAAAAAAAeAwAAAAD////f/D///8gAAAAAAAAAAeGEAAAAD////v+B/j/AAAAAAAAAAAAPMAwAAAD////n+AfB+gAAAAAAAAAAAD8AAAAAD////34AeBfAgAAAAAAAAAAAPAAAAAH////3gAcAfAgAAAAAAAAAAADAAAAAD////6AAcAfgwAAAAAAAAAAABBwAAAD////8wAMATAIAAAAAAAAAAAAr/AAAB/////gAIASAAAAAAAAAAAAAAH/gAAA/////gACAAAIAAAAAAAAAAAAH/8AAAYH///AAAAsGAAAAAAAAAAAAAH/+AAAAB//+AAAAUOAAAAAAAAAAAAAP/+AAAAB//8AAAAc+gAAAAAAAAAAAAP//gAAAD//4AAAAMeBgAAAAAAAAAAAP//8AAAB//wAAAAGdCuAAAAAAAAAAAf///AAAA//wAAAACAAHgAAAAAAAAAAP///gAAA//wAAAAB4AHggAAAAAAAAAH///AAAAf/wAAAAACIDQIAAAAAAAAAH//+AAAAf/wAAAAAAAAAAAAAAAAAAAD//+AAAA//wgAAAAABxAAAAAAAAAAAD//8AAAA//wgAAAAAHxgBAAAAAAAAAA//8AAAA//zgAAAAAf/gAAAAAAAAAAAf/8AAAA//DgAAAAAf/gAAAAAAAAAAAf/8AAAAf/DAAAAAD//4CAAAAAAAAAAf/wAAAAf/DAAAAAH//4AAAAAAAAAAAf/AAAAAf+DAAAAAH//8AAAAAAAAAAAf/AAAAAP8AAAAAAH//+AAAAAAAAAAA/+AAAAAP8AAAAAAH//+AAAAAAAAAAA/8AAAAAH4AAAAAAD//+AAAAAAAAAAA/8AAAAAHwAAAAAADwf8AAAAAAAAAAA/gAAAAAAAAAAAAACAP4AAAAAAAAAAB/wAAAAAAAAAAAAAAAD4AEAAAAAAAAB+AAAAAAAAAAAAAAAAAAAGAAAAAAAAB6AAAAAAAAAAAAAAAAAwAMAAAAAAAAA8AAAAAAAAAAAAAAAAAQAYAAAAAAAAB4AAAAAAAAAAAAAAAAAAAwAAAAAAAAB4AAAAAAAAAAAAAAAAAAAAAAAAAAAABwAAAAAAAAAACAAAAAAAAAAAAAAAAADgAAAAAAAAAAAAAAAAAAAAAAAAAAAABwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+const MAPA_COLS = 360;
+const MAPA_ROWS = 144;
+const MAPA_LAT_TOPO = 84;
+const MAPA_TERRA = "AAAAAAAAAAAAAAAAAAAAAAAB/gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP//8AFb///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA///+x/////76fAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/gD/p////////AAAAAAAAAACxBwAAAAHgAAAAAAAAAAAAAAAAAAAAAAAAAAA///uAf//////+AAAABrvwAAAAAAAAAAH8AAAAAAAAAAAAAAAAAAAAAAAAeHznn/h////////4AAAABXsAAAAAAAAAAAAD4AAAAAAAAAAAAAAAAAAAAAAEcIA5MfAI///////8AAAAAPFAAAAAAAAAAAAAcAAAAAAAAAAAAAAAAAAAAABoCGc8X/AH///////4AAAAAAAAAAAAAB4AAAAB9+AAAAAAAAAAAAAAAAAAAAAD/wMzz8AAAP/////2AAAAAAAAAAAAD4AAAA////AAAB/oAAAAAAAAAAAAAACAwACAcAAAAP/////+AAAAAAAAAAAAMAAAAX///6AAAAAAAAAAAAAAAAAAAAP+Ac8+M/gAAD////+8AAAAAAAAAAAA4AAAH///+O+HAAHAAAAAAAAAAAAAAAf/+4/Y/94AAD////+wAAAAAAAAAAABwAHhH///////8AHwAAAAAwAAAAAAAAON/8E4//9AADf////gAAAAAAAAAAABwAPZ+///////4nv/gAAAAAAAH8gAAAAAP+A8f//8AA3///ogAAAAAABtgAAAAAfv/////////////8AAAAAB///+B/2H/+DnDxf8AAz////AAAAAAA//wAAAA8Pv//////////////9H8wAP////////QsDPzwD8AAf///wAAAAAAG///wIBe/3+/////////////////+AD////////+//fz4Y/wA7//4AAAAAAAD///+I////v//////////////////4EP///////////5gD/8A///gAAAAAAAf//5+P///8//////////////////7w/////////////qAD+QAP/wABr8AAAAf8f+D///////////////////////AwAf///////////zwx/AAP/wAAP8AAAB/4/+f//////////////////////4AMAf//////////+DBAbwAH/AAADAAAAN/j/////////////////////////+AAH///////////4AwgHQAD/AAAAAAAAf/H///////////////////////n/6AAP///////////wAA/AAAB+AAAAAAAB/+H//////////////////////jP+AAAH/9z////////gAA/wAAAMAAAAAACB//D7////////////////////+A/YAAAA/xAD///////gAA/wQAAAAAAAAAAB9/Ab///////////////////+ODgAAAAAB0AAX//////4AA/94AAAAAAAAAYA5+C///////////////////4AAHQAAAAABcAAP//////8AAf/+AAAAAAAAB8AA+i///////////////////wAAfgAAAAAMAAAC///////wAf/+AAAAAAAAAYAOeH///////////////////AAA/gAAAABQAAADf//////8Af//AAAAAAAAAcAPQH//////////////////8AAA/AAAAAEAAAAAP///////z///4AAAAAAADuAEDv//////////////////+AAA+AAAAAAAAAABP///////x///8AAAAAAAPHAf/////////////////////4AA8AAAAAAAAAAAn///////x///8AAAAAAAPPx//////////////////////6AA4AAAAAAAAAAAD///////////6AAAAAAAAPH//////////////////////6AAwAAAAAAAAAAAC///////////kAAAAAAAAQP//////////////////////zAAAAAAAAAAAAAABv////////+MMAAAAAAAAC///////////////////////7AAAAAAAAAAAAAAAL////////7wPgAAAAAAAf///////////////////////yAAAAAAAAAAAAAAAP/////////gCgAAAAAAAD///////////////////////iAAAAAAAAAAAAAAAP/////////pAAAAAAAAAD/////vP////////////////BAAAAAAAAAAAAAAAP/////////+AAAAAAAAAB//v//GP///////////////+AAAAAAAAAAAAAAAAP////////8wAAAAAAAAAB//P/+EP///////////////8CAAAAAAAAAAAAAAAP////////wgAAAAAAAADj/jz/+AD///////////////4HgAAAAAAAAAAAAAAP////////gAAAAAAAAAH/4Fw/4AA//////////////+ACAAAAAAAAAAAAAAAP////////gAAAAAAAAAH/wAcP8PA//////////////8AAAAAAAAAAAAAAAAAP///////8AAAAAAAAAAH/gMHfV///////////////v4AMAAAAAAAAAAAAAAAP///////8AAAAAAAAAAH/IMCOH//////////////+ZwAMAAAAAAAAAAAAAAAH///////oAAAAAAAQAAH/AACGP//////////////8BwAMAAAAAAAAAAAAAAAH///////wAAAAAAAAAAH+AAYDH//////////////+g4AYAAAAAAAAAAAAAAAD///////wAAAAAAAAAAAgf+AABs//////////////g4D4AAAAAAAAAAAAAAAB///////wAAAAAAAAAAAh/+AAAA//////////////A4fwAAAAAAAAAAAAAAAB///////gAAAAAAAAAAB//8AAAA//////////////Ah2AAAAAAAAAAAAAAAAAP/////+AAAAAAAAAAAD//+AAAB//////////////gjwAAAAAAAAAAAAAAAAAH/////4AAAAAAAAAAQH///4GAB//////////////gBAAAAAAAAAAAAAAAAAAG/////4AAAAAAAAAAAP///8PwD//////////////gCAAAAAAAAAAAAAAAAAACf////4AAAAAAAAAAAP////v////////////////gAAAAAAAAAAAAAAAAAAABv//xAYAAAAAAAAAAAP//////3//H///////////gAAAAAAAAAAAAAAAAAAAAv//AAYAAAAAAAAAAAf/////////H///////////wAAAAAAAAAAAAAAAAAAAB3/+AAcAAAAAAAAAAB///////8//h///////////gAAAAAAAAAAAAAAAAAAAAZ/+AAMAAAAAAAAAAD///////8//wH//////////AAAAAAAAAAAAAAAAAAAAAJ/+AAEAAAAAAAAAAH///////+f/wB/f////////AAAAAAAAAAAAAAAAAAAAAI/8AAAAAAAAAAAAAH///////+f/44Af///////8QAAAAAAAAAAAAAAAAAAAACf8AAAAAAAAAAAAAP///////+H//+AP///////4gAAAAAAAAAAAAAAAAAAAAAP8AAvAAAAAAAAAAP////////H///AD///////ggAAAAAAAAAAAAAAAAAAAAAH8AQBggAAAAAAAAf////////n//+ADf/4P//YAAAAAAAAAAAAAAAAAAAAAAAH+A4AYAAAAAAAAAP////////j//+AAf/4H/+IAAAAAAAAAAAAAAAgAAAAAAAH/B4ABwAAAAAAAAP////////h//8AAf/gD/8YAAAAAAAAAAAAAAAAAAAAAAAD/lwAD8AAAAAAAAP////////x//4AAf/AD/8QAAAAAAAAAAAAAAAAAAAAAAAAf/wAAAAAAAAAAAP////////4//gAAf+AB/+AAwAAAAAAAAAAAAAAAAAAAAAAH/wAAAAAAAAAAAP////////4f+AAAf8AD//AAwAAAAAAAAAAAAAAAAAAAAAAAH/AAAAAAAAAAAf////////8/8AAAPwAAP/gAgAAAAAAAAAAAAAAAAAAAAAAAD/gAAAAAAAAAAf////////+fgAAAPwAAP/gAwAAAAAAAAAAAAAAAAAAAAAAAA/AAAAAAAAAAAf/////////eAAAAHwAAP/gAsAAAAAAAAAAAAAAAAAAAAAAAAHAAAAAAAAAAAf/////////gBAAAHwAAM/gAKAAAAAAAAAAAAAAAAAAAAAAAADABIAAAAAAAAH/////////gIAAADwAAEfgALAAAAAAAAAAAAAAAAAAAAAAAADgPfIAAAAAAAH/////////34AAADwAAIPABIAAAAAAAAAAAAAAAAAAAAAAAAAyPf+AAAAAAAD//////////4AAADoAAIEACBAAAAAAAAAAAAAAAAAAAAAAAAA8///AAAAAAAB//////////wAAABIAAMAAEHAAAAAAAAAAAAAAAAAAAAAAAAAE///gAAAAAAB//////////wAAAAMAAEAAADgIAAAAAAAAAAAAAAAAAAAAAAAAf//wAAAAAAAf/////////gAAAAMAADAAMDAAAAAAAAAAAAAAAAAAAAAAAAAA////gAAAAAAP/B///////gAAAAAABDgAeAAAAAAAAAAAAAAAAAAAAAAAAAAAf///wAAAAAACAA3//////AAAAAAAAxgA+AAAAAAAAAAAAAAAAAAAAAAAAAAAf///4AAAAAAAAAD/////+AAAAAAAAZgB8BAAAAAAAAAAAAAAAAAAAAAAAAAB////4AAAAAAAAAD/////8AAAAAAAAMwH8AIAAAAAAAAAAAAAAAAAAAAAAAAB////8AAAAAAAAAD/////wAAAAAAAAHQf8AIAAAAAAAAAAAAAAAAAAAAAAAAD////4AAAAAAAAAH/////gAAAAAAAAHgf8cIAAAAAAAAAAAAAAAAAAAAAAAAD/////AAAAAAAAAH/////AAAAAAAAAD4f8ASgAAAAAAAAAAAAAAAAAAAAAAAH////+4AAAAAAAAH/////AAAAAAAAABwP50QwAAAAAAAAAAAAAAAAAAAAAAAH/////+AAAAAAAAD////+AAAAAAAAAB8P5wAL4AgAAAAAAAAAAAAAAAAAAAAD//////4AAAAAAAB////8AAAAAAAAAA8AxQif/AAAAAAAAAAAAAAAAAAAAAAH//////8AAAAAAAA////4AAAAAAAAAAcAAQAD/gAAAAAAAAAAAAAAAAAAAAAH///////gAAAAAAA////4AAAAAAAAAAMABAAI/ywAAAAAAAAAAAAAAAAAAAAD///////gAAAAAAA////4AAAAAAAAAADgAAAIf8BAAAAAAAAAAAAAAAAAAAAD///////gAAAAAAAf///4AAAAAAAAAAB+AABA/4AAAAAAAAAAAAAAAAAAAAAB///////gAAAAAAAf///4AAAAAAAAAAAAfsgAOMAAAAAAAAAAAAAAAAAAAAAA///////AAAAAAAAf///8AAAAAAAAAAAABCAAAGgAAAAAAAAAAAAAAAAAAAAA///////AAAAAAAAP///+AAAAAAAAAAAAAAAAAAgBAAAAAAAAAAAAAAAAAAAAf/////+AAAAAAAAP///8AAAAAAAAAAAAAACgCAEAAAAAAAAAAAAAAAAAAAAAf/////8AAAAAAAAf///8AQAAAAAAAAAAAAB+CAAAAAAAQAAAAAAAAAAAAAAAP/////4AAAAAAAAf///+AQAAAAAAAAAAAAD8DAAAAAAAAAAAAAAAAAAAAAAAP/////4AAAAAAAA////+AwAAAAAAAAAAAA38DgAAAAAAAAAAAAAAAAAAAAAAH/////4AAAAAAAA////+BwAAAAAAAAAAAD/8HgAAAAAAAAAAAAAAAAAAAAAAB/////4AAAAAAAA////8PwAAAAAAAAAAAH//XgAABABAAAAAgAAAAAAAAAAAAf////4AAAAAAAA////wPgAAAAAAAAAAAP//3wAAAAAAAAAAAAAAAAAAAAAAAP////wAAAAAAAA////gPgAAAAAAAAAAAP///wAAAAAAAAAAAAAAAAAAAAAAAP////wAAAAAAAAf//+APgAAAAAAAAAAAf///8AAAAAAAAAAAAAAAAAAAAAAAP////wAAAAAAAAf//+APgEAAAAAAAAAD////+AAIAAAAAAAAAIAAAAAAAAAAP////gAAAAAAAAP//+AfAAAAAAAAAAAf////+AAEAAAAAAAAAAAAAAAAAAAAP////AAAAAAAAAP///AfAAAAAAAAAAA//////AAAAAAAAAAAAAAAAAAAAAAAP///4AAAAAAAAAP//+APAAAAAAAAAAA//////gAAAAAAAAAAAAAAAAAAAAAAf///gAAAAAAAAAH//+AOAAAAAAAAAAB//////wAAAAAAAAAAAAAAAAAAAAAAf//+AAAAAAAAAAH//4AEAAAAAAAAAAA//////4AAAAAAAAAAAAAAAAAAAAAAf//+AAAAAAAAAAH//4AAAAAAAAAAAAB//////4AAAAAAAAAAAAAAAAAAAAAAf///AAAAAAAAAAH//4AAAAAAAAAAAAA//////8AAAAAAAAAAAAAAAAAAAAAAf//+AAAAAAAAAAD//wAAAAAAAAAAAAAf/////8AAAAAAAAAAAAAAAAAAAAAAf//8AAAAAAAAAAB//gAAAAAAAAAAAAAf/////4AAAAAAAAAAAAAAAAAAAAAA///8AAAAAAAAAAB//gAAAAAAAAAAAAAf/////4AAAAAAAAAAAAAAAAAAAAAA///wAAAAAAAAAAA//AAAAAAAAAAAAAAP/////4AAAAAAAAAAAAAAAAAAAAAAf//wAAAAAAAAAAA/+AAAAAAAAAAAAAAP/AP//wAAAAAAAAAAAAAAAAAAAAAA//vgAAAAAAAAAAA/4AAAAAAAAAAAAAAP8AG//gAAAAAAAAAAAAAAAAAAAAAA//3AAAAAAAAAAAAQAAAAAAAAAAAAAAAOAAF//gAAAAAAAAAAAAAAAAAAAAAB//4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//AAABAAAAAAAAAAAAAAAAAAB//4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/AAAAgAAAAAAAAAAAAAAAAAD//4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/AAAAQAAAAAAAAAAAAAAAAAD//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABYAAAAcAAAAAAAAAAAAAAAAAB/8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4AAAAAAAAAAAAAAAAAD/8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYAAAAAAAAAAAAAAAAAD/gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAcAAADQAAAAAAAAAAAAAAAAAD/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAcAAAHAAAAAAAAAAAAAAAAAAB/gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAOAAAAAAAAAAAAAAAAAAF/gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4AAAAAAAAAAAAAAAAAAH+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB4AAAAAAAAAAAAAAAAAAH+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAAAAAD/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP8AAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD4AwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/AAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
-/**
- * A máscara só diz terra ou água. A cor do terreno é deduzida da latitude e de
- * caixas de longitude — os grandes desertos, as florestas equatoriais e o gelo
- * polar. Não é ciência, é cartografia à vista: a 2° de resolução chega bem para
- * o Sara sair amarelo e a Amazónia sair verde-escura.
- */
+/** Projeção equirretangular: longitude para x, latitude para y. */
+const projX = (lon) => lon + 180;
+const projY = (lat) => MAPA_LAT_TOPO - lat;
+
+/* Cores tiradas de uma fotografia de globo: oceano azul-forte, plataforma
+   continental mais clara, verde de floresta, castanho-areia no deserto, branco
+   no gelo. */
+const CORES_MAPA = {
+  oceano: [37, 92, 158],
+  plataforma: [66, 129, 190],
+  verde: [76, 116, 58],
+  tropico: [48, 92, 42],
+  deserto: [198, 165, 108],
+  tundra: [110, 124, 84],
+  gelo: [238, 243, 246],
+};
+
 const DESERTOS = [
   [15, 32, -17, 35],    // Sara
   [13, 32, 35, 60],     // Península Arábica
@@ -503,41 +516,100 @@ const TROPICOS = [
   [-22, -8, 30, 41],   // Zambeze
 ];
 
-const dentro = (lat, lon, [la0, la1, lo0, lo1]) =>
-  lat >= la0 && lat <= la1 && lon >= lo0 && lon <= lo1;
+/* Caixas com bordo esbatido. Com fronteiras rígidas via-se o retângulo do Sara
+   desenhado a esquadro no meio de África; com margem de seis graus, o deserto
+   entra no verde como entra na realidade. */
+const suave = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 
-function classeTerra(lat, lon) {
-  // Gronelândia e as calotes: gelo mesmo abaixo do círculo polar.
-  if (lat > 66 || lat < -60 || (lat > 59 && lon > -73 && lon < -20)) return "gelo";
-  if (DESERTOS.some((caixa) => dentro(lat, lon, caixa))) return "deserto";
-  if (TROPICOS.some((caixa) => dentro(lat, lon, caixa))) return "tropico";
-  if (lat > 56) return "tundra";
-  return "verde";
+function pesoCaixa(lat, lon, [la0, la1, lo0, lo1], margem = 7) {
+  const dLat = Math.min(lat - la0, la1 - lat);
+  const dLon = Math.min(lon - lo0, lo1 - lon);
+  return suave((Math.min(dLat, dLon) + margem) / (2 * margem));
 }
 
-let caminhosTerraCache = null;
-function caminhosTerra() {
-  if (caminhosTerraCache) return caminhosTerraCache;
+const pesoMaximo = (lat, lon, caixas) =>
+  caixas.reduce((m, caixa) => Math.max(m, pesoCaixa(lat, lon, caixa)), 0);
+
+const misturar = (a, b, t) => [
+  a[0] + (b[0] - a[0]) * t,
+  a[1] + (b[1] - a[1]) * t,
+  a[2] + (b[2] - a[2]) * t,
+];
+
+/** A cor de cada célula de terra, já com as transições feitas. */
+function corTerra(lat, lon) {
+  let cor = CORES_MAPA.verde;
+  cor = misturar(cor, CORES_MAPA.tropico, pesoMaximo(lat, lon, TROPICOS));
+  cor = misturar(cor, CORES_MAPA.deserto, pesoMaximo(lat, lon, DESERTOS));
+  // O frio entra devagar entre os 54° e os 68°, e o gelo a partir daí.
+  cor = misturar(cor, CORES_MAPA.tundra, suave((lat - 54) / 14));
+  const gronelandia = lat > 58 && lon > -73 && lon < -20 ? suave((lat - 58) / 6) : 0;
+  cor = misturar(cor, CORES_MAPA.gelo, Math.max(suave((lat - 68) / 6), gronelandia, suave((-56 - lat) / 4)));
+  return cor;
+}
+
+/** Ruído estável por célula: sem ele o verde fica uma mancha de tinta plana.
+    No mar quase não se usa — ali o grão lia-se como tecido. */
+const granulado = (i, forca) => (((i * 2654435761) % 4096) / 4096 - 0.5) * forca;
+
+let imagemMapaCache = null;
+function imagemMapa() {
+  if (imagemMapaCache) return imagemMapaCache;
+
   const cru = atob(MAPA_TERRA);
-  const caminhos = { verde: "", tropico: "", deserto: "", tundra: "", gelo: "" };
-  for (let i = 0, n = MAPA_COLS * MAPA_ROWS; i < n; i++) {
-    // packbits é MSB primeiro: o bit mais à esquerda do byte é a primeira célula.
-    if (!(cru.charCodeAt(i >> 3) & (128 >> (i & 7)))) continue;
-    const c = i % MAPA_COLS;
-    const r = (i / MAPA_COLS) | 0;
-    const lon = -180 + 2 * c + 1;
-    const lat = 84 - 2 * r - 1;
-    caminhos[classeTerra(lat, lon)] += `M${c * 2 + 1} ${r * 2 + 1}h.01`;
+  const terra = (c, r) => {
+    if (c < 0 || c >= MAPA_COLS || r < 0 || r >= MAPA_ROWS) return false;
+    const i = r * MAPA_COLS + c;
+    return !!(cru.charCodeAt(i >> 3) & (128 >> (i & 7)));
+  };
+
+  const pequena = document.createElement("canvas");
+  pequena.width = MAPA_COLS;
+  pequena.height = MAPA_ROWS;
+  const ctx = pequena.getContext("2d");
+  const img = ctx.createImageData(MAPA_COLS, MAPA_ROWS);
+
+  for (let r = 0; r < MAPA_ROWS; r++) {
+    for (let c = 0; c < MAPA_COLS; c++) {
+      const i = r * MAPA_COLS + c;
+      const lon = -180 + c + 0.5;
+      const lat = MAPA_LAT_TOPO - r - 0.5;
+      let cor;
+      if (terra(c, r)) {
+        cor = corTerra(lat, lon);
+      } else {
+        // Água encostada a terra fica mais clara: é a plataforma continental,
+        // e é o que dá relevo à linha de costa.
+        const perto =
+          terra(c - 1, r) || terra(c + 1, r) || terra(c, r - 1) || terra(c, r + 1) ||
+          terra(c - 1, r - 1) || terra(c + 1, r - 1) || terra(c - 1, r + 1) || terra(c + 1, r + 1);
+        cor = perto ? CORES_MAPA.plataforma : CORES_MAPA.oceano;
+      }
+      const ruido = granulado(i, terra(c, r) ? 13 : 3);
+      const p = i * 4;
+      img.data[p] = Math.max(0, Math.min(255, cor[0] + ruido));
+      img.data[p + 1] = Math.max(0, Math.min(255, cor[1] + ruido));
+      img.data[p + 2] = Math.max(0, Math.min(255, cor[2] + ruido));
+      img.data[p + 3] = 255;
+    }
   }
-  return (caminhosTerraCache = caminhos);
+  ctx.putImageData(img, 0, 0);
+
+  // Esticar com suavização tira o efeito de mosaico e aproxima o aspeto de um
+  // mapa de satélite visto de longe.
+  const grande = document.createElement("canvas");
+  grande.width = MAPA_COLS * 3;
+  grande.height = MAPA_ROWS * 3;
+  const ctx2 = grande.getContext("2d");
+  ctx2.imageSmoothingEnabled = true;
+  ctx2.imageSmoothingQuality = "high";
+  ctx2.drawImage(pequena, 0, 0, grande.width, grande.height);
+
+  return (imagemMapaCache = grande.toDataURL("image/png"));
 }
 
-/** Projeção equirretangular: longitude para x, latitude para y. */
-const projX = (lon) => lon + 180;
-const projY = (lat) => 84 - lat;
-
-/* Onde pousar o ponto de cada país. Centróides aproximados — num mapa de 2° de
-   resolução, a capital exata não muda nada. */
+/* Onde pousar o ponto de cada país. Centróides aproximados — a capital exata não
+   mudava nada a esta escala. */
 const COORD = {
   US: [39.5, -98.5], CN: [35, 105], RU: [60, 90], UA: [49, 32], IR: [32, 53],
   IL: [31.6, 35.1], PS: [31.4, 34.3], TW: [23.7, 121], JP: [36, 138], KP: [40, 127],
@@ -887,12 +959,10 @@ function desenharNoticias() {
         <button class="ver-mais" data-foco="" ${escolhido ? "" : "hidden"}>Ver o mundo ›</button>
       </div>
       <div class="mapa-palco">
-        <svg class="mapa-mundo" viewBox="0 0 360 142" role="img"
+        <svg class="mapa-mundo" viewBox="0 0 360 144" role="img"
              aria-label="Mapa dos focos do dia" preserveAspectRatio="xMidYMid meet">
           <g class="mundo" id="mapa-mundo">
-            ${Object.entries(caminhosTerra())
-              .map(([tipo, d]) => (d ? `<path class="terra" data-terreno="${tipo}" d="${d}"/>` : ""))
-              .join("")}
+            <image href="${imagemMapa()}" x="0" y="0" width="360" height="144" preserveAspectRatio="none"/>
             ${pontos}
           </g>
         </svg>
@@ -929,6 +999,14 @@ function desenharNoticias() {
      também nas abas, que é onde se lê o dia sem abrir mais nada. */
   const emPainel = (html) => (html ? `<div class="painel painel-aba">${html}</div>` : "");
 
+  /* Nas abas fica a primeira frase; o texto completo é para quando se abre mesmo
+     a notícia ou a edição. */
+  const primeiraFrase = (texto) => {
+    const limpo = String(texto || "").trim();
+    const fim = limpo.search(/[.!?](\s|$)/);
+    return fim > 0 ? limpo.slice(0, fim + 1) : limpo;
+  };
+
   const blocoDestaque = () =>
     painel.destaque
       ? `<div class="cabecalho-lista"><span class="rotulo">${EMOJI("📌")}Destaque do dia</span></div>
@@ -943,7 +1021,7 @@ function desenharNoticias() {
               ${painel.destaque.valor ? `<div class="desc">${esc(painel.destaque.valor)}</div>` : ""}
             </div>
           </div>
-          ${painel.destaque.texto ? `<p class="texto">${esc(painel.destaque.texto)}</p>` : ""}
+          ${painel.destaque.texto ? `<p class="texto">${esc(primeiraFrase(painel.destaque.texto))}</p>` : ""}
         </div>`
       : "";
 
@@ -1031,6 +1109,25 @@ function desenharNoticias() {
       : "";
   };
 
+  const blocoVeredicto = (fonte, titulo, emoji) =>
+    fonte?.veredicto
+      ? bloco(
+          `${EMOJI(emoji)}${titulo}`,
+          `<div class="veredicto veredicto-aba" data-tom="${esc(fonte.veredicto.tom)}">
+            ${fonte.veredicto.titulo ? `<div class="tom">${esc(fonte.veredicto.titulo)}</div>` : ""}
+            <p>${esc(primeiraFrase(fonte.veredicto.texto))}</p>
+          </div>`
+        )
+      : "";
+
+  /* Três chegam para dar o sentido do dia; a lista toda está na edição. */
+  const cortar = (lista, quantos = 3) => (lista ? lista.slice(0, quantos) : lista);
+  const avaliacaoCurta = (fonte, titulo, emoji) =>
+    avaliacaoHTML(
+      { oportunidades: cortar(fonte.oportunidades), riscos: cortar(fonte.riscos) },
+      `${EMOJI(emoji)}${titulo}`
+    );
+
   const semGeoAqui = "Esta edição não trouxe temas geopolíticos.";
   const cartaoGeo = ({ item, i }) => `<button class="cartao-geo" data-item-noticia="${i}" style="--marcador:${cor}">
       ${
@@ -1095,6 +1192,7 @@ function desenharNoticias() {
       ? `<div class="cabecalho-lista"><span class="rotulo"><i class="emoji">⚠️</i>Do dia</span></div>
          <div class="grupo" style="padding:0.4rem 1rem">
            <ul class="alertas">${geo.alertas
+             .slice(0, 4)
              .map((a) => {
                const b = bandeiraDe(a.texto);
                return `<li data-nivel="${esc(a.nivel)}">${b ? `<i class="bandeira-linha">${b}</i>` : ""}${esc(a.texto)}</li>`;
@@ -1108,41 +1206,29 @@ function desenharNoticias() {
 
   const paginas = {
     // Geral é a vista da maqueta: as duas metades seguidas, na mesma página.
+    // A geral é a vista de relance: índices, quatro destaques, geopolítica e as
+    // duas leituras do dia numa frase cada. O resto vive nas outras abas.
     geral: () =>
       blocoIndices() +
       cabecalho("Destaques de investimentos", EMOJI("📈"), "mercado") +
-      // Quatro chegam: com a lista toda, a geopolítica só aparecia a meio ecrã
-      // de scroll. Quem quiser o resto tem o "ver tudo" logo ao lado.
       lista(mercado.slice(0, 4), semMercado) +
       cabecalho("Geopolítica", EMOJI("🌍"), "geo") +
       carrossel(geopoliticos) +
-      blocoDestaque() +
       emPainel(
-        (painel.veredicto
-          ? bloco(
-              `${EMOJI("📈")}Leitura de mercado`,
-              `<div class="veredicto" data-tom="${esc(painel.veredicto.tom)}">
-                ${painel.veredicto.titulo ? `<div class="tom">${esc(painel.veredicto.titulo)}</div>` : ""}
-                <p>${esc(painel.veredicto.texto)}</p>
-              </div>`
-            )
-          : "") +
-          (geo.veredicto
-            ? bloco(
-                `${EMOJI("🌍")}Leitura geopolítica`,
-                `<div class="veredicto" data-tom="${esc(geo.veredicto.tom)}">
-                  ${geo.veredicto.titulo ? `<div class="tom">${esc(geo.veredicto.titulo)}</div>` : ""}
-                  <p>${esc(geo.veredicto.texto)}</p>
-                </div>`
-              )
-            : "")
+        blocoVeredicto(painel, "Leitura de mercado", "📈") +
+          blocoVeredicto(geo, "Leitura geopolítica", "🌍")
       ),
     mercado: () =>
       blocoIndices() +
-      blocoDestaque() +
       cabecalho("Investimentos", EMOJI("📈")) +
       lista(mercado, semMercado) +
-      emPainel(blocoCarteira() + blocoAccoes() + avaliacaoHTML(painel, `${EMOJI("⚖️")}Leitura de mercado`)),
+      blocoDestaque() +
+      emPainel(
+        blocoCarteira() +
+          blocoAccoes() +
+          avaliacaoCurta(painel, "Leitura de mercado", "⚖️") +
+          blocoVeredicto(painel, "Veredicto", "🧾")
+      ),
     geo: () => {
       const filtrados = escolhido
         ? geopoliticos.filter(({ i }) => focos.find((f) => f.iso === escolhido)?.indices.includes(i))
@@ -1154,7 +1240,12 @@ function desenharNoticias() {
         blocoAlertas() +
         cabecalho(escolhido ? `Temas · ${nome}` : "Geopolítica", EMOJI("🌍")) +
         lista(filtrados, escolhido ? `Nada sobre ${nome} nesta edição.` : semGeo) +
-        emPainel(blocoTeatros() + blocoImpactoCarteira() + avaliacaoHTML(geo, `${EMOJI("⚖️")}Leitura geopolítica`))
+        emPainel(
+          blocoTeatros() +
+            blocoImpactoCarteira() +
+            avaliacaoCurta(geo, "Leitura geopolítica", "⚖️") +
+            blocoVeredicto(geo, "Veredicto", "🧾")
+        )
       );
     },
   };
@@ -1194,6 +1285,13 @@ $("#noticias-corpo").addEventListener("click", (e) => {
   const ver = e.target.closest("[data-ver-meia]");
   if (ver) return mudarMeia(ver.dataset.verMeia);
 
+  // Tocar no mar, fora de qualquer ponto, afasta o mapa.
+  if (e.target.closest(".mapa-palco") && !e.target.closest("[data-foco]") && estado.focoGeo) {
+    estado.focoGeo = "";
+    desenharNoticias();
+    return aproximarMapa();
+  }
+
   const foco = e.target.closest("[data-foco]");
   if (!foco) return;
   const iso = foco.dataset.foco;
@@ -1227,7 +1325,7 @@ function aproximarMapa() {
   else {
     const [la, lo] = COORD[iso];
     g.style.transform = `translate(${(180 - k * projX(lo)).toFixed(1)}px, ${(
-      71 -
+      72 -
       k * projY(la)
     ).toFixed(1)}px) scale(${k})`;
   }

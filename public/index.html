@@ -1355,67 +1355,21 @@
     margin-bottom: 0.5rem;
   }
   .mapa-cabeca .rotulo { font-size: 0.58rem; letter-spacing: 0.16em; }
-  /* Oceano: um azul com fundo mais escuro em baixo, como nas cartas antigas. */
   .mapa-palco {
-    --oceano: #bcd6ec;
-    --oceano-fundo: #9dc0de;
-    --terra-verde: #43813f;
-    --terra-tropico: #27602f;
-    --terra-deserto: #d3a531;
-    --terra-tundra: #7f9b74;
-    --terra-gelo: #d8e4ec;
-    background: linear-gradient(to bottom, var(--oceano), var(--oceano-fundo));
     border: 1px solid var(--tinta-3);
     border-radius: 10px;
     overflow: hidden;
-  }
-  :root[data-tema="escuro"] .mapa-palco,
-  :root:not([data-tema]) .mapa-palco {
-    --oceano: #12283d;
-    --oceano-fundo: #0b1a2a;
-    --terra-verde: #5f9a5f;
-    --terra-tropico: #3f8049;
-    --terra-deserto: #c9a94a;
-    --terra-tundra: #7d9578;
-    --terra-gelo: #b9cdda;
-  }
-  @media (prefers-color-scheme: light) {
-    :root:not([data-tema]) .mapa-palco {
-      --oceano: #cfe0ef;
-      --oceano-fundo: #b4cde3;
-      --terra-verde: #43813f;
-      --terra-tropico: #27602f;
-      --terra-deserto: #d3a531;
-      --terra-tundra: #7f9b74;
-      --terra-gelo: #d8e4ec;
-    }
-  }
-  :root[data-tema="claro"] .mapa-palco {
-    --oceano: #bcd6ec;
-    --oceano-fundo: #9dc0de;
-    --terra-verde: #43813f;
-    --terra-tropico: #27602f;
-    --terra-deserto: #d3a531;
-    --terra-tundra: #7f9b74;
-    --terra-gelo: #d8e4ec;
+    line-height: 0;
   }
   .mapa-mundo { display: block; width: 100%; height: auto; }
-  /* O grupo inteiro é que se aproxima — o traço da terra não engorda porque
-     leva non-scaling-stroke. */
-  .mapa-mundo .mundo {
-    transform-origin: 0 0;
-    transition: transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
+  /* A imagem do mapa é pintada num canvas e vem já com as cores todas. No tema
+     escuro só se baixa o brilho, para não competir com o resto da página. */
+  :root[data-tema="escuro"] .mapa-mundo image,
+  :root:not([data-tema]) .mapa-mundo image { filter: brightness(0.82) saturate(0.95); }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-tema]) .mapa-mundo image { filter: none; }
   }
-  .mapa-mundo .terra {
-    fill: none;
-    stroke-width: 1.45;
-    stroke-linecap: round;
-  }
-  .mapa-mundo .terra[data-terreno="verde"] { stroke: var(--terra-verde); }
-  .mapa-mundo .terra[data-terreno="tropico"] { stroke: var(--terra-tropico); }
-  .mapa-mundo .terra[data-terreno="deserto"] { stroke: var(--terra-deserto); }
-  .mapa-mundo .terra[data-terreno="tundra"] { stroke: var(--terra-tundra); }
-  .mapa-mundo .terra[data-terreno="gelo"] { stroke: var(--terra-gelo); }
+  :root[data-tema="claro"] .mapa-mundo image { filter: none; }
   .mapa-mundo .foco {
     cursor: pointer;
     transition: transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
