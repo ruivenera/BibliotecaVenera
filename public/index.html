@@ -29,38 +29,42 @@
     --sobe:       #7F9E72;
     --desce:      #C2604A;
     --sombra:     rgba(0, 0, 0, 0.5);
+    /* Os títulos deixam de ser da cor do texto: ouro no escuro, azul no claro. */
+    --titulo:     #D9BB7C;
   }
 
   /* Os acentos escurecem no claro: o latão e o índigo de cima, sobre papel,
      não chegavam ao contraste mínimo. */
   :root[data-tema="claro"] {
-    --tinta:      #F4F1E6;
-    --tinta-2:    #E9E4D3;
-    --tinta-3:    #D3CDB8;
-    --papel:      #16262B;
-    --papel-fosco:#5E6E6C;
-    --latao:      #8A6420;
-    --indigo:     #41529F;
+    --tinta:      #FFFFFF;
+    --tinta-2:    #F7F8FA;
+    --tinta-3:    #E5E8EE;
+    --papel:      #101828;
+    --papel-fosco:#667085;
+    --latao:      #8A6B22;
+    --indigo:     #2B3E6B;
     --rust:       #A34527;
-    --sobe:       #4C6A41;
-    --desce:      #A34527;
-    --sombra:     rgba(20, 38, 42, 0.16);
+    --sobe:       #3F7D58;
+    --desce:      #B4472C;
+    --sombra:     rgba(16, 24, 40, 0.08);
+    --titulo:     #16264A;
   }
 
   /* Sem escolha guardada, manda o sistema. */
   @media (prefers-color-scheme: light) {
     :root:not([data-tema]) {
-      --tinta:      #F4F1E6;
-      --tinta-2:    #E9E4D3;
-      --tinta-3:    #D3CDB8;
-      --papel:      #16262B;
-      --papel-fosco:#5E6E6C;
-      --latao:      #8A6420;
-      --indigo:     #41529F;
+      --tinta:      #FFFFFF;
+      --tinta-2:    #F7F8FA;
+      --tinta-3:    #E5E8EE;
+      --papel:      #101828;
+      --papel-fosco:#667085;
+      --latao:      #8A6B22;
+      --indigo:     #2B3E6B;
       --rust:       #A34527;
-      --sobe:       #4C6A41;
-      --desce:      #A34527;
-      --sombra:     rgba(20, 38, 42, 0.16);
+      --sobe:       #3F7D58;
+      --desce:      #B4472C;
+      --sombra:     rgba(16, 24, 40, 0.08);
+      --titulo:     #16264A;
     }
   }
 
@@ -132,8 +136,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    padding: 0.85rem var(--gap);
+    gap: 0.6rem;
+    padding: 0.8rem var(--gap);
     background: color-mix(in srgb, var(--tinta) 88%, transparent);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--tinta-3);
@@ -143,9 +147,13 @@
     font-family: var(--display);
     font-weight: 700;
     font-variation-settings: "WONK" 1;
-    font-size: 1.05rem;
-    letter-spacing: 0.06em;
+    font-size: 0.95rem;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
     background: none;
     border: 0;
     color: var(--papel);
@@ -154,9 +162,12 @@
     text-align: left;
     line-height: 1.15;
   }
-  /* O nome por extenso não cabe a 375px ao lado do indicador de estado. */
+  /* Numa linha só, a 375px, ao lado do estado e dos dois botões. */
   @media (max-width: 26rem) {
-    .marca { font-size: 0.85rem; letter-spacing: 0.02em; }
+    .marca { font-size: 0.72rem; letter-spacing: 0.01em; }
+  }
+  @media (max-width: 22rem) {
+    .marca { font-size: 0.66rem; }
   }
 
   .topo-accoes { display: flex; align-items: center; gap: 0.55rem; }
@@ -176,6 +187,10 @@
   }
   .acao-topo svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.5; }
   .acao-topo:active { color: var(--latao); border-color: var(--latao); }
+  /* Enquanto sincroniza, a seta roda. É a única confirmação de que carregou. */
+  .acao-topo[data-girar="sim"] { color: var(--latao); border-color: var(--latao); }
+  .acao-topo[data-girar="sim"] svg { animation: girar 0.9s linear infinite; }
+  @keyframes girar { to { transform: rotate(360deg); } }
 
   .estado {
     font-family: var(--meta);
@@ -250,7 +265,7 @@
 
   .rotulo-seccao {
     display: block;
-    padding: 0.6rem var(--gap) 0.35rem;
+    padding: 1.4rem var(--gap) 0.5rem;
     font-family: var(--meta);
     font-size: 0.58rem;
     letter-spacing: 0.19em;
@@ -408,60 +423,98 @@
 
   /* --------------------------------------------- estante (elemento âncora) */
 
+  /* A estante é a metáfora da app: cada dia é um volume encadernado, com a
+     altura a valer o número de temas. Ganhou topo de capa, contagem visível e
+     uma sombra de prateleira por baixo — antes era só uma fila de barras. */
   .estante {
     display: flex;
     align-items: flex-end;
-    gap: 3px;
+    gap: 4px;
     overflow-x: auto;
-    padding: 0 var(--gap) 0.5rem;
+    padding: 0 var(--gap) 0.55rem;
     scrollbar-width: none;
-    /* linha da prateleira */
+    scroll-snap-type: x proximity;
     background:
-      linear-gradient(to right, var(--tinta-3), var(--tinta-3)) 0 100% / 100% 2px no-repeat;
-    min-height: 130px;
+      linear-gradient(to right, var(--tinta-3), var(--tinta-3)) 0 100% / 100% 2px no-repeat,
+      linear-gradient(to bottom, transparent, color-mix(in srgb, var(--papel) 6%, transparent))
+        0 100% / 100% 12px no-repeat;
+    min-height: 150px;
   }
   .estante::-webkit-scrollbar { display: none; }
 
   .lombada {
     flex: 0 0 auto;
-    width: 27px;
+    scroll-snap-align: center;
+    width: 30px;
     border: 0;
-    border-radius: var(--raio) var(--raio) 0 0;
-    padding: 0.5rem 0 0.55rem;
+    border-radius: 5px 5px 0 0;
+    padding: 0.45rem 0 0.6rem;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     flex-direction: column;
+    gap: 0.4rem;
     cursor: pointer;
     color: var(--tinta);
     font-family: var(--meta);
-    font-size: 0.6rem;
+    font-size: 0.58rem;
     font-weight: 600;
     letter-spacing: 0.06em;
+    /* A lombada é horizontal e só a data é que se deita: com writing-mode no
+       botão, o "column" do flex seguia o eixo do texto e punha o número ao lado
+       da data em vez de por cima. */
+    writing-mode: horizontal-tb;
+    transition: transform 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease;
+    /* nervuras da encadernação: duas guardas escuras e um brilho ao centro */
+    background-image:
+      linear-gradient(
+        to right,
+        rgba(0,0,0,0.26) 0 2px,
+        rgba(255,255,255,0.10) 3px 5px,
+        transparent 5px calc(100% - 4px),
+        rgba(0,0,0,0.18) calc(100% - 4px) 100%
+      );
+    box-shadow: 0 1px 2px var(--sombra);
+  }
+  /* A contagem de temas fica no topo da lombada, deitada, como um número de tomo. */
+  .lombada .n {
+    writing-mode: horizontal-tb;
+    font-size: 0.5rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    padding: 0.05rem 0.2rem;
+    border-radius: 2px;
+    background: rgba(0,0,0,0.22);
+    opacity: 0.85;
+  }
+  .lombada .d {
     writing-mode: vertical-rl;
     text-orientation: mixed;
-    transition: transform 0.18s ease, filter 0.18s ease;
-    /* nervura de livro encadernado */
-    background-image: linear-gradient(
-      to right,
-      rgba(0,0,0,0.22) 0 2px,
-      transparent 2px calc(100% - 3px),
-      rgba(0,0,0,0.14) calc(100% - 3px) 100%
-    );
+    font-weight: 600;
   }
-  .lombada:hover, .lombada:focus-visible { transform: translateY(-5px); filter: brightness(1.12); }
-  /* O halo da lombada de hoje segue a cor do texto, senão desaparecia no claro. */
+  .lombada:hover, .lombada:focus-visible { transform: translateY(-6px); filter: brightness(1.12); }
+  /* Hoje: filete claro em toda a lombada, para se achar sem contar dias. */
   .lombada[data-hoje="sim"] {
-    box-shadow: 0 0 0 1px var(--papel), 0 0 14px color-mix(in srgb, var(--papel) 22%, transparent);
+    box-shadow: 0 0 0 1px var(--papel), 0 2px 12px color-mix(in srgb, var(--papel) 18%, transparent);
+  }
+  .lombada[aria-current="true"] {
+    transform: translateY(-6px);
+    box-shadow: 0 0 0 2px var(--papel), 0 4px 14px var(--sombra);
   }
 
-  .lombada[aria-current="true"] { transform: translateY(-5px); box-shadow: 0 0 0 2px var(--papel); }
-
+  /* Régua da estante: um traço, duas pontas, nada mais. */
   .eixo-estante {
     display: flex;
     justify-content: space-between;
-    padding: 0.5rem var(--gap) 0;
+    align-items: center;
+    padding: 0.55rem var(--gap) 0;
+    margin: 0 var(--gap);
+    border-top: 1px solid var(--tinta-3);
+    padding-left: 0;
+    padding-right: 0;
   }
+  .eixo-estante .rotulo { font-size: 0.55rem; letter-spacing: 0.18em; }
+  .eixo-estante .rotulo:first-child { color: var(--latao); }
 
   .legenda { display: flex; gap: 0.9rem; margin: 0; }
   .legenda span { display: inline-flex; align-items: center; gap: 0.35rem; }
@@ -493,6 +546,7 @@
   .dossie:hover { border-color: var(--marcador, var(--latao)); transform: translateY(-2px); }
 
   .dossie h3 {
+    color: var(--titulo, var(--papel));
     font-family: var(--display);
     font-variation-settings: "SOFT" 20, "WONK" 1;
     font-weight: 600;
@@ -518,22 +572,34 @@
 
   /* Cartão do resumo do dia escolhido na estante. */
   .resumo-dia {
-    margin: 1.2rem var(--gap) 0;
-    padding: 1.4rem 1.3rem;
-    background: color-mix(in srgb, var(--tinta-2) 60%, transparent);
+    margin: 1rem var(--gap) 0;
+    padding: 1.5rem 1.4rem 1.2rem;
+    background: var(--tinta-2);
     border: 1px solid var(--tinta-3);
-    border-left: 3px solid var(--marcador, var(--latao));
-    border-radius: 12px;
+    border-radius: 14px;
   }
-  .resumo-dia .dia { display: block; color: var(--marcador, var(--latao)); margin-bottom: 0.7rem; }
+  .resumo-dia .dia {
+    display: block;
+    color: var(--latao);
+    letter-spacing: 0.16em;
+    margin-bottom: 0.8rem;
+  }
   .resumo-dia h3 {
+    color: var(--titulo, var(--papel));
     font-family: var(--display);
+    font-variation-settings: "SOFT" 20, "WONK" 1;
     font-weight: 600;
-    font-size: 1.18rem;
-    line-height: 1.3;
-    margin: 0 0 0.9rem;
+    font-size: 1.32rem;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.8rem;
   }
-  .resumo-dia p { margin: 0 0 1.2rem; color: var(--papel-fosco); font-size: 0.95rem; }
+  .resumo-dia p {
+    margin: 0 0 1.3rem;
+    color: var(--papel-fosco);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
   .resumo-dia .rodape-cartao {
     display: flex;
     align-items: center;
@@ -1098,6 +1164,7 @@
     scrollbar-width: none;
   }
   .carrossel::-webkit-scrollbar { display: none; }
+  .cartao-geo h3 { color: var(--titulo, var(--papel)); }
   .cartao-geo {
     scroll-snap-align: start;
     display: flex;
@@ -1114,7 +1181,7 @@
   }
   /* Faixa tipográfica no lugar da fotografia. */
   .faixa-geo {
-    height: 92px;
+    height: 104px;
     display: grid;
     place-items: center;
     background: linear-gradient(140deg, var(--tinta-3), var(--tinta-2));
@@ -1126,16 +1193,17 @@
   }
   .faixa-geo.com-foto { position: relative; padding: 0; }
   .faixa-geo.com-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .faixa-geo .credito {
-    position: absolute;
-    left: 0; right: 0; bottom: 0;
-    padding: 0.2rem 0.45rem;
-    background: color-mix(in srgb, var(--tinta) 72%, transparent);
+  /* O crédito era uma tarja por cima da fotografia. Passou para baixo dela,
+     em linha própria: a licença continua cumprida e a imagem fica limpa. */
+  .credito-foto {
+    display: block;
+    padding: 0.35rem 0.85rem 0;
     color: var(--papel-fosco);
     font-family: var(--meta);
-    font-size: 0.5rem;
+    font-size: 0.48rem;
     font-style: normal;
     letter-spacing: 0.04em;
+    opacity: 0.75;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1250,7 +1318,9 @@
     font-weight: 700;
     font-size: 1.15rem;
   }
-  /* O ícone da fonte tapa a sigla; se não carregar, o JS remove-o e a sigla fica. */
+  /* O ícone da fonte tapa a sigla; se não carregar, o JS remove-o e a sigla fica.
+     Enquanto lá está, a sigla esconde-se — as duas juntas eram um borrão. */
+  .mosaico-noticia:has(img) b { opacity: 0; }
   .mosaico-noticia img {
     position: absolute;
     inset: 0;
@@ -1263,7 +1333,8 @@
   .noticia h3 {
     font-family: var(--display);
     font-weight: 600;
-    font-size: 0.88rem;
+    color: var(--titulo, var(--papel));
+    font-size: 0.9rem;
     line-height: 1.24;
     margin: 0 0 0.15rem;
     /* Duas linhas no máximo: à terceira, a lista deixava de caber no ecrã. */
@@ -1279,7 +1350,16 @@
     text-transform: uppercase;
     color: var(--marcador, var(--latao));
   }
-  .noticia .meta em { font-style: normal; color: var(--papel-fosco); }
+  .noticia .meta em {
+    font-style: normal;
+    margin-left: 0.4rem;
+    padding: 0.05rem 0.3rem;
+    border-radius: 3px;
+    color: var(--papel-fosco);
+    background: var(--tinta-2);
+  }
+  .noticia .meta em[data-nivel="alto"] { color: var(--rust); background: color-mix(in srgb, var(--rust) 12%, transparent); }
+  .noticia .meta em[data-nivel="medio"] { color: var(--latao); background: color-mix(in srgb, var(--latao) 12%, transparent); }
   /* Marcador e seta lado a lado, como na maqueta. */
   .noticia .lado { display: flex; align-items: center; gap: 0.7rem; color: var(--papel-fosco); align-self: center; }
   .noticia .lado svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.7; }
@@ -1326,6 +1406,7 @@
   .artigo .etiqueta .quando { font-family: var(--meta); font-size: 0.68rem; color: var(--papel-fosco); }
 
   .artigo h1 {
+    color: var(--titulo, var(--papel));
     font-family: var(--display);
     font-weight: 700;
     font-variation-settings: "SOFT" 20, "WONK" 1;
@@ -1651,6 +1732,9 @@
   <button class="marca" data-ir="noticias">Biblioteca de Rui Venera</button>
   <div class="topo-accoes">
     <button class="estado" id="estado" data-estado="parado" title="Sincronizar agora">a arrancar</button>
+    <button class="acao-topo" id="btn-atualizar" aria-label="Atualizar" title="Atualizar agora">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v4h-4"/></svg>
+    </button>
     <button class="acao-topo" data-ir="definicoes" aria-label="Definições" title="Definições">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
     </button>
@@ -1678,7 +1762,7 @@
         <h1>Notícias</h1>
         <p class="sub"><span class="ponto-rotina" style="--ponto:var(--latao)"></span> Investimentos &amp; Geopolítica</p>
       </div>
-      <a class="botao-icone" href="#resumo-dia" title="Resumo por dia">
+      <a class="botao-icone" href="#resumo-dia" title="Estante de notícias">
         <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
       </a>
     </div>
@@ -1701,7 +1785,7 @@
 
     <div id="noticias-corpo"></div>
 
-    <span class="rotulo-seccao">Resumo por dia</span>
+    <span class="rotulo-seccao">Estante de notícias</span>
     <div class="estante" id="estante-noticias"></div>
     <div class="eixo-estante">
       <span class="rotulo">hoje</span>

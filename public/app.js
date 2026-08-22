@@ -93,6 +93,22 @@ function agendarSync() {
   temporizador = setTimeout(sincronizar, 1200);
 }
 
+/**
+ * O botão do topo: sincroniza e volta a pedir a edição, em vez de esperar pelo
+ * temporizador. A seta roda enquanto isso acontece, senão ninguém sabe se pegou.
+ */
+async function atualizarTudo() {
+  const botao = $("#btn-atualizar");
+  botao.dataset.girar = "sim";
+  try {
+    cacheEstante = { quando: 0, dados: null }; // força ir buscar de novo
+    await sincronizar();
+    if (ROTINA_DO_MODULO[estado.vista]) await carregarModulo(ROTINA_DO_MODULO[estado.vista]);
+  } finally {
+    botao.dataset.girar = "nao";
+  }
+}
+
 async function sincronizar() {
   if (!estado.chave) return;
   if (!navigator.onLine) return marcarEstado("offline", "offline");
@@ -576,7 +592,7 @@ function linhaNoticia(item, i, cor) {
     ${mosaico}
     <span class="corpo">
       <h3>${esc(item.titulo)}</h3>
-      <span class="meta">${esc(item.rubrica || "Tema")} <em>· impacto ${esc(item.impacto)}</em></span>
+      <span class="meta">${esc(item.rubrica || "Tema")} <em data-nivel="${esc(item.impacto)}">${esc(item.impacto)}</em></span>
     </span>
     <span class="lado">
       <span class="marcador-nota" data-marcar="${i}" aria-pressed="${marcada}">
@@ -640,7 +656,7 @@ function desenharNoticias() {
   const cartaoGeo = ({ item, i }) => `<button class="cartao-geo" data-item-noticia="${i}" style="--marcador:${cor}">
       ${
         item.imagem
-          ? `<span class="faixa-geo com-foto"><img src="${esc(item.imagem.url)}" alt="" loading="lazy" decoding="async"><i class="credito">${esc(item.imagem.credito)}</i></span>`
+          ? `<span class="faixa-geo com-foto"><img src="${esc(item.imagem.url)}" alt="" loading="lazy" decoding="async"></span><i class="credito-foto">${esc(item.imagem.credito)}</i>`
           : bandeiraDe(item.titulo, item.rubrica)
             ? `<span class="faixa-geo com-bandeira"><b class="bandeira">${bandeiraDe(item.titulo, item.rubrica)}</b></span>`
             : `<span class="faixa-geo">${esc(SIGLA(item.rubrica || item.titulo))}</span>`
@@ -834,12 +850,16 @@ function desenharEstante(lombadas, modulo) {
 
   alvo.innerHTML = lombadas
     .map((l) => {
-      const altura = Math.min(126, 74 + l.itens * 8);
+      // Mais temas, volume mais alto. O número vai impresso no topo da lombada.
+      const altura = Math.min(140, 78 + l.itens * 8);
       return `<button class="lombada"
         style="height:${altura}px;background-color:${COR[l.rotina] || "var(--latao)"}"
         data-hoje="${l.data === hoje ? "sim" : "nao"}"
         data-rotina="${esc(l.rotina)}" data-data="${esc(l.data)}"
-        title="${esc(NOMES[l.rotina])} — ${esc(l.titulo)}">${esc(dataCurta(l.data))}</button>`;
+        title="${esc(NOMES[l.rotina])} — ${esc(l.titulo)}"
+        aria-label="${esc(dataCurta(l.data))}, ${l.itens} temas"><i class="n">${l.itens}</i><b class="d">${esc(
+        dataCurta(l.data)
+      )}</b></button>`;
     })
     .join("");
 }
@@ -1506,6 +1526,8 @@ document.addEventListener("click", (evento) => {
     }
     case "estado":
       return sincronizar();
+    case "btn-atualizar":
+      return atualizarTudo();
   }
 });
 
