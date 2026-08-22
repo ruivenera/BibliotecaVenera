@@ -317,7 +317,6 @@ function haQuanto(item, edicao) {
   return porExtenso(edicao.data);
 }
 
-const avaliacoes = () => guardado("venera:avaliacoes", {});
 
 function abrirArtigo(indice) {
   const edicao = estado.edicaoNoticias;
@@ -335,7 +334,6 @@ function abrirArtigo(indice) {
   const marcada = vivos("notas").some((n) => n.origem?.chave === chaveItem(item));
   $("#artigo-marcar").setAttribute("aria-pressed", marcada);
 
-  const nota = avaliacoes()[chaveItem(item)];
 
   $("#artigo-corpo").innerHTML = `
     <p class="etiqueta">
@@ -375,15 +373,7 @@ function abrirArtigo(indice) {
         (f) =>
           `<a class="fonte" href="${esc(f.url)}" target="_blank" rel="noopener noreferrer">${esc(f.titulo)} ↗</a>`
       )
-      .join("")}</div>
-
-    <div class="avaliar">
-      <span>Como avalias este tema?</span>
-      <span class="botoes">
-        <button class="btn" data-avaliar="util" aria-current="${nota === "util"}">Útil</button>
-        <button class="btn" data-avaliar="nao" aria-current="${nota === "nao"}">Não útil</button>
-      </span>
-    </div>`;
+      .join("")}</div>`;
 
   const passo = (i, rotulo, alinhar) => {
     const outro = edicao.itens[i];
@@ -420,17 +410,6 @@ $("#artigo-partilhar").addEventListener("click", async () => {
   } else {
     navigator.clipboard?.writeText(texto);
   }
-});
-
-$("#artigo-corpo").addEventListener("click", (e) => {
-  const avaliar = e.target.closest("[data-avaliar]");
-  if (!avaliar) return;
-  const item = estado.edicaoNoticias?.itens[estado.artigoIndice];
-  const guardadas = avaliacoes();
-  const chave = chaveItem(item);
-  guardadas[chave] = guardadas[chave] === avaliar.dataset.avaliar ? undefined : avaliar.dataset.avaliar;
-  localStorage.setItem("venera:avaliacoes", JSON.stringify(guardadas));
-  abrirArtigo(estado.artigoIndice);
 });
 
 $("#artigo-passos").addEventListener("click", (e) => {
@@ -656,7 +635,7 @@ function desenharNoticias() {
   const cartaoGeo = ({ item, i }) => `<button class="cartao-geo" data-item-noticia="${i}" style="--marcador:${cor}">
       ${
         item.imagem
-          ? `<span class="faixa-geo com-foto"><img src="${esc(item.imagem.url)}" alt="" loading="lazy" decoding="async"></span><i class="credito-foto">${esc(item.imagem.credito)}</i>`
+          ? `<span class="faixa-geo com-foto"><img src="${esc(item.imagem.url)}" alt="" loading="lazy" decoding="async"></span>`
           : bandeiraDe(item.titulo, item.rubrica)
             ? `<span class="faixa-geo com-bandeira"><b class="bandeira">${bandeiraDe(item.titulo, item.rubrica)}</b></span>`
             : `<span class="faixa-geo">${esc(SIGLA(item.rubrica || item.titulo))}</span>`

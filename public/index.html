@@ -200,9 +200,18 @@
     display: flex;
     align-items: center;
     gap: 0.4rem;
+    flex: none;
+    white-space: nowrap;
     background: none;
     border: 0;
     cursor: pointer;
+  }
+  /* No telemóvel fica só o ponto. O texto ("a sincronizar") comia meia barra e
+     empurrava o nome da biblioteca para uma segunda linha; quem quer forçar a
+     sincronização tem agora o botão da seta ao lado. */
+  @media (max-width: 30rem) {
+    .estado { font-size: 0; gap: 0; padding: 0.42rem; }
+    .estado::before { width: 8px; height: 8px; }
   }
   .estado::before {
     content: "";
@@ -1156,8 +1165,8 @@
     display: grid;
     grid-auto-flow: column;
     align-items: stretch;
-    grid-auto-columns: min(58%, 250px);
-    gap: 0.7rem;
+    grid-auto-columns: min(66%, 260px);
+    gap: 0.75rem;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     padding: 0 var(--gap) 0.25rem;
@@ -1181,7 +1190,9 @@
   }
   /* Faixa tipográfica no lugar da fotografia. */
   .faixa-geo {
-    height: 104px;
+    flex: none;
+    height: 128px;
+    overflow: hidden;
     display: grid;
     place-items: center;
     background: linear-gradient(140deg, var(--tinta-3), var(--tinta-2));
@@ -1192,22 +1203,13 @@
     letter-spacing: 0.1em;
   }
   .faixa-geo.com-foto { position: relative; padding: 0; }
-  .faixa-geo.com-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  /* O crédito era uma tarja por cima da fotografia. Passou para baixo dela,
-     em linha própria: a licença continua cumprida e a imagem fica limpa. */
-  .credito-foto {
-    display: block;
-    padding: 0.35rem 0.85rem 0;
-    color: var(--papel-fosco);
-    font-family: var(--meta);
-    font-size: 0.48rem;
-    font-style: normal;
-    letter-spacing: 0.04em;
-    opacity: 0.75;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+  /* Altura em pixéis, não em percentagem: com percentagem a imagem crescia para
+     lá da faixa e ia cair por cima da etiqueta e do título. */
+  .faixa-geo.com-foto img { width: 100%; height: 128px; object-fit: cover; display: block; }
+  /* O crédito não aparece no cartão — fica no artigo, por baixo da fotografia
+     em tamanho grande, que é onde a licença pede que esteja. A regra apanha
+     também a classe antiga, caso o telemóvel ainda tenha o JS em cache. */
+  .credito-foto, .faixa-geo .credito { display: none; }
 
   /* Bandeiras: emoji de indicador regional, desenhado pelo sistema. Não faz
      pedido nenhum, funciona sem rede e serve de recurso quando não há foto. */
@@ -1236,6 +1238,9 @@
     margin-right: 0.35rem;
   }
 
+  /* Sem o bloco de avaliação a seguir, as fontes precisam de fôlego em baixo. */
+  .artigo .fontes { margin-bottom: 2.2rem; }
+
   .foto-artigo { margin: 0 0 1.8rem; }
   .foto-artigo img { width: 100%; border-radius: 12px; display: block; }
   .foto-artigo figcaption {
@@ -1245,23 +1250,37 @@
     color: var(--papel-fosco);
   }
 
-  .cartao-geo .dentro { padding: 0.4rem 0.5rem 0.45rem; display: flex; flex-direction: column; gap: 0.22rem; flex: 1; }
+  .cartao-geo .dentro {
+    padding: 0.75rem 0.85rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    flex: 1;
+  }
   .cartao-geo h3 {
     font-family: var(--display);
     font-weight: 600;
-    font-size: 0.79rem;
-    line-height: 1.26;
+    font-size: 0.86rem;
+    line-height: 1.3;
     margin: 0;
     flex: 1;
     /* Três linhas fixas: com número variável, os rodapés desalinhavam entre
        cartões e a fila deixava de assentar. */
-    min-height: calc(3 * 1.26em);
+    min-height: calc(3 * 1.3em);
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  .cartao-geo .pe { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+  .cartao-geo .pe {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: auto;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--tinta-3);
+  }
   .cartao-geo .pe .rotulo { font-size: 0.54rem; }
   .pontos-carrossel { display: flex; justify-content: center; gap: 0.3rem; padding: 0.15rem 0 0; }
   .pontos-carrossel i { width: 6px; height: 6px; border-radius: 50%; background: var(--tinta-3); }
@@ -1465,19 +1484,6 @@
   .resumo-rapido ol { counter-reset: ponto; }
 
   .artigo .corpo p { margin: 0 0 1.3rem; }
-
-  .avaliar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin: 2.4rem 0 0;
-    padding: 1.2rem 0;
-    border-top: 1px solid var(--tinta-3);
-  }
-  .avaliar span { color: var(--papel-fosco); font-size: 0.9rem; }
-  .avaliar .botoes { display: flex; gap: 0.5rem; }
 
   .passo-artigo {
     display: grid;
@@ -1729,7 +1735,7 @@
 <body>
 
 <header class="topo">
-  <button class="marca" data-ir="noticias">Biblioteca de Rui Venera</button>
+  <button class="marca" data-ir="noticias">Biblioteca do Rui</button>
   <div class="topo-accoes">
     <button class="estado" id="estado" data-estado="parado" title="Sincronizar agora">a arrancar</button>
     <button class="acao-topo" id="btn-atualizar" aria-label="Atualizar" title="Atualizar agora">
