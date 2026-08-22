@@ -913,7 +913,14 @@ function desenharNoticias() {
       }
       <p class="mapa-legenda rotulo">
         <i class="bolha alto"></i>impacto alto
-        <i class="bolha"></i>restantes · toca para abrir
+        <i class="bolha"></i>restantes
+        <b class="dica">${
+          escolhido
+            ? focos.find((f) => f.iso === escolhido)?.indices.length === 1
+              ? "toca outra vez para abrir"
+              : "toca outra vez para afastar"
+            : "toca para aproximar"
+        }</b>
       </p>
     </div>`;
   };
@@ -924,7 +931,8 @@ function desenharNoticias() {
 
   const blocoDestaque = () =>
     painel.destaque
-      ? `<div class="destaque destaque-aba">
+      ? `<div class="cabecalho-lista"><span class="rotulo">${EMOJI("📌")}Destaque do dia</span></div>
+        <div class="destaque destaque-aba">
           <div class="topo">
             <div>
               <div class="tick">${esc(painel.destaque.nome)}</div>
@@ -952,7 +960,7 @@ function desenharNoticias() {
   const blocoCarteira = () =>
     painel.carteira
       ? bloco(
-          "A tua carteira hoje",
+          `${EMOJI("💼")}A tua carteira hoje`,
           `<div class="lista-aba">${painel.carteira
             .map((l) => linhaAba(esc(l.nome), l.valor, variacao(l.variacao), l.leitura))
             .join("")}</div>`
@@ -962,7 +970,7 @@ function desenharNoticias() {
   const blocoAccoes = () =>
     painel.accoes
       ? bloco(
-          "Ações em foco",
+          `${EMOJI("📊")}Ações em foco`,
           `<div class="lista-aba">${painel.accoes
             .map((l) => linhaAba(esc(l.nome), l.valor, variacao(l.variacao), l.leitura))
             .join("")}</div>`
@@ -972,7 +980,7 @@ function desenharNoticias() {
   const blocoTeatros = () =>
     geo.conflitos
       ? bloco(
-          "Teatros",
+          `${EMOJI("🛰️")}Teatros`,
           `<div class="lista-aba">${geo.conflitos
             .map((c) => {
               const b = bandeiraDe(c.nome);
@@ -991,7 +999,7 @@ function desenharNoticias() {
     if (!geo.impacto_carteira) return "";
     const sinais = { positivo: "▲", neutro: "→", negativo: "▼" };
     return bloco(
-      "Impacto na carteira",
+      `${EMOJI("🧭")}Impacto na carteira`,
       `<div class="lista-aba">${geo.impacto_carteira
         .map((i) =>
           linhaAba(
@@ -1036,7 +1044,7 @@ function desenharNoticias() {
         <span class="selo" style="color:${cor};align-self:flex-start">${esc(item.rubrica || "Tema")}</span>
         <h3>${esc(item.titulo)}</h3>
         <span class="pe">
-          <span class="rotulo">${esc(haQuanto(item, edicao))} · ${minutos(item)} min</span>
+          <span class="rotulo">${minutos(item)} min de leitura</span>
           <span class="marcador-nota" data-marcar="${i}"
             aria-pressed="${vivos("notas").some((n) => n.origem?.chave === chaveItem(item))}">
             <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7"><path d="M6 4h12v17l-6-4-6 4z"/></svg>
@@ -1112,7 +1120,7 @@ function desenharNoticias() {
       emPainel(
         (painel.veredicto
           ? bloco(
-              "Leitura de mercado",
+              `${EMOJI("📈")}Leitura de mercado`,
               `<div class="veredicto" data-tom="${esc(painel.veredicto.tom)}">
                 ${painel.veredicto.titulo ? `<div class="tom">${esc(painel.veredicto.titulo)}</div>` : ""}
                 <p>${esc(painel.veredicto.texto)}</p>
@@ -1121,7 +1129,7 @@ function desenharNoticias() {
           : "") +
           (geo.veredicto
             ? bloco(
-                "Leitura geopolítica",
+                `${EMOJI("🌍")}Leitura geopolítica`,
                 `<div class="veredicto" data-tom="${esc(geo.veredicto.tom)}">
                   ${geo.veredicto.titulo ? `<div class="tom">${esc(geo.veredicto.titulo)}</div>` : ""}
                   <p>${esc(geo.veredicto.texto)}</p>
@@ -1134,7 +1142,7 @@ function desenharNoticias() {
       blocoDestaque() +
       cabecalho("Investimentos", EMOJI("📈")) +
       lista(mercado, semMercado) +
-      emPainel(blocoCarteira() + blocoAccoes() + avaliacaoHTML(painel, "Leitura de mercado")),
+      emPainel(blocoCarteira() + blocoAccoes() + avaliacaoHTML(painel, `${EMOJI("⚖️")}Leitura de mercado`)),
     geo: () => {
       const filtrados = escolhido
         ? geopoliticos.filter(({ i }) => focos.find((f) => f.iso === escolhido)?.indices.includes(i))
@@ -1146,7 +1154,7 @@ function desenharNoticias() {
         blocoAlertas() +
         cabecalho(escolhido ? `Temas · ${nome}` : "Geopolítica", EMOJI("🌍")) +
         lista(filtrados, escolhido ? `Nada sobre ${nome} nesta edição.` : semGeo) +
-        emPainel(blocoTeatros() + blocoImpactoCarteira() + avaliacaoHTML(geo, "Leitura geopolítica"))
+        emPainel(blocoTeatros() + blocoImpactoCarteira() + avaliacaoHTML(geo, `${EMOJI("⚖️")}Leitura geopolítica`))
       );
     },
   };
@@ -1189,21 +1197,20 @@ $("#noticias-corpo").addEventListener("click", (e) => {
   const foco = e.target.closest("[data-foco]");
   if (!foco) return;
   const iso = foco.dataset.foco;
+  const alvo = focosDoDia.find((f) => f.iso === iso);
 
-  // Um país com um tema só não precisa de filtro nenhum: abre-se o tema.
-  const unico = focosDoDia.find((f) => f.iso === iso);
-  if (iso && unico?.indices.length === 1 && estado.focoGeo !== iso) {
-    return irPara("artigo", unico.indices[0]);
+  // Dois tempos: o primeiro toque aproxima e filtra; o segundo, já aproximado,
+  // abre o tema. Com mais do que um tema o segundo toque afasta outra vez —
+  // escolher qual abrir seria adivinhar.
+  if (iso && iso === estado.focoGeo) {
+    if (alvo?.indices.length === 1) return irPara("artigo", alvo.indices[0]);
+    estado.focoGeo = "";
+  } else {
+    estado.focoGeo = iso;
   }
 
-  estado.focoGeo = iso === estado.focoGeo ? "" : iso;
   desenharNoticias();
   aproximarMapa();
-  if (estado.focoGeo) {
-    $("#noticias-corpo")
-      .querySelector(".cabecalho-lista:last-of-type")
-      ?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }
 });
 
 /**
