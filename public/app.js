@@ -661,10 +661,14 @@ function desenharNoticias() {
            .join("")}</div>`
       : `<div class="grupo"><p class="linha"><span class="texto"><span>${semGeoAqui}</span></span></p></div>`;
 
-  const cabecalho = (titulo, icone = "") =>
+  // Na vista geral o "ver tudo" salta para a meia correspondente; nas outras
+  // continua a abrir a edição inteira.
+  const cabecalho = (titulo, icone = "", meiaDestino = "") =>
     `<div class="cabecalho-lista">
       <span class="rotulo">${icone}${titulo}</span>
-      <button class="ver-mais" data-abrir-edicao>Ver tudo ›</button>
+      <button class="ver-mais" ${
+        meiaDestino ? `data-ver-meia="${meiaDestino}"` : "data-abrir-edicao"
+      }>Ver tudo ›</button>
     </div>`;
 
   const GLOBO = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/></svg>`;
@@ -700,9 +704,11 @@ function desenharNoticias() {
     // Geral é a vista da maqueta: as duas metades seguidas, na mesma página.
     geral: () =>
       blocoIndices() +
-      cabecalho("Destaques de investimentos") +
-      lista(mercado, semMercado) +
-      cabecalho("Geopolítica", GLOBO) +
+      cabecalho("Destaques de investimentos", "", "mercado") +
+      // Quatro chegam: com a lista toda, a geopolítica só aparecia a meio ecrã
+      // de scroll. Quem quiser o resto tem o "ver tudo" logo ao lado.
+      lista(mercado.slice(0, 4), semMercado) +
+      cabecalho("Geopolítica", GLOBO, "geo") +
       carrossel(geopoliticos),
     mercado: () => blocoIndices() + cabecalho("Investimentos") + lista(mercado, semMercado),
     geo: () => blocoRisco() + blocoAlertas() + cabecalho("Geopolítica", GLOBO) + lista(geopoliticos, semGeo),
@@ -725,15 +731,24 @@ $("#noticias-corpo").addEventListener(
   true
 );
 
-document.querySelectorAll("[data-meia]").forEach((b) =>
-  b.addEventListener("click", () => {
-    estado.meiaNoticias = b.dataset.meia;
-    document
-      .querySelectorAll("[data-meia]")
-      .forEach((o) => o.setAttribute("aria-selected", o.dataset.meia === b.dataset.meia));
-    desenharNoticias();
-  })
-);
+function mudarMeia(meia) {
+  estado.meiaNoticias = meia;
+  document
+    .querySelectorAll("[data-meia]")
+    .forEach((o) => o.setAttribute("aria-selected", o.dataset.meia === meia));
+  desenharNoticias();
+  window.scrollTo({ top: 0, behavior: "instant" });
+}
+
+document
+  .querySelectorAll("[data-meia]")
+  .forEach((b) => b.addEventListener("click", () => mudarMeia(b.dataset.meia)));
+
+// O "ver tudo" das listas é desenhado a cada pintura, por isso vai por delegação.
+$("#noticias-corpo").addEventListener("click", (e) => {
+  const ver = e.target.closest("[data-ver-meia]");
+  if (ver) mudarMeia(ver.dataset.verMeia);
+});
 
 /* Resumo do dia escolhido na estante. A estante só traz o título, por isso
    o resumo completo tem de ser ido buscar à edição desse dia. */

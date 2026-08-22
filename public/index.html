@@ -235,19 +235,19 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 1rem;
-    padding: 0.45rem var(--gap) 0;
+    padding: 0.35rem var(--gap) 0;
   }
   .cabecalho-pagina h1 {
     font-family: var(--display);
     font-weight: 700;
     font-variation-settings: "WONK" 1;
-    font-size: clamp(1.35rem, 5.8vw, 1.62rem);
+    font-size: clamp(1.2rem, 5.2vw, 1.45rem);
     letter-spacing: 0.01em;
     text-transform: uppercase;
     line-height: 1.05;
     margin: 0;
   }
-  .cabecalho-pagina .sub { margin: 0.3rem 0 0; color: var(--papel-fosco); font-size: 0.86rem; }
+  .cabecalho-pagina .sub { margin: 0.22rem 0 0; color: var(--papel-fosco); font-size: 0.8rem; }
   .cabecalho-pagina .sub.rotulo { color: var(--latao); }
 
   .botao-icone {
@@ -1061,15 +1061,15 @@
   .separadores {
     display: flex;
     gap: 1.6rem;
-    padding: 0.6rem var(--gap) 0;
+    padding: 0.45rem var(--gap) 0;
     border-bottom: 1px solid var(--tinta-3);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.35rem;
   }
   .separador {
     background: none;
     border: 0;
     border-bottom: 2px solid transparent;
-    padding: 0 0 0.6rem;
+    padding: 0 0 0.5rem;
     color: var(--papel-fosco);
     font-family: var(--meta);
     font-size: 0.72rem;
@@ -1082,13 +1082,13 @@
   /* Cartões de índice: sem gráfico, porque só temos o valor de hoje.
      Inventar uma linha de evolução seria desenhar dados que não existem. */
   .indices {
-    margin-top: 0.4rem;
+    margin-top: 0.2rem;
     display: grid;
     grid-auto-flow: column;
     grid-auto-columns: minmax(8rem, 1fr);
     gap: 0.6rem;
     overflow-x: auto;
-    padding: 0 var(--gap) 0.4rem;
+    padding: 0 var(--gap) 0.3rem;
     scrollbar-width: none;
   }
   .indices::-webkit-scrollbar { display: none; }
@@ -1097,7 +1097,7 @@
     background: color-mix(in srgb, var(--tinta-2) 60%, transparent);
     border: 1px solid var(--tinta-3);
     border-radius: 10px;
-    padding: 0.4rem 0.5rem;
+    padding: 0.35rem 0.45rem;
   }
   .cartao-indice .n {
     display: flex;
@@ -1114,11 +1114,11 @@
     display: block;
     font-family: var(--display);
     font-weight: 700;
-    font-size: 1.14rem;
-    margin: 0.35rem 0 0.15rem;
+    font-size: 0.95rem;
+    margin: 0.15rem 0 0.05rem;
   }
   .seta-var {
-    width: 22px; height: 22px;
+    width: 19px; height: 19px;
     display: grid;
     place-items: center;
     border-radius: 50%;
@@ -1131,28 +1131,28 @@
   .caixa-data {
     display: flex;
     align-items: center;
-    gap: 0.8rem;
-    padding: 0.3rem var(--gap) 0;
+    gap: 0.7rem;
+    padding: 0.15rem var(--gap) 0;
   }
   .icone-data {
     flex: none;
-    width: 34px; height: 34px;
+    width: 28px; height: 28px;
     display: grid;
     place-items: center;
     border: 1px solid var(--tinta-3);
     border-radius: 10px;
     color: var(--papel-fosco);
   }
-  .icone-data svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+  .icone-data svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.6; }
   .datas { font-family: var(--meta); line-height: 1.45; }
-  .datas b { display: block; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500; }
+  .datas b { display: block; font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500; }
   .datas i { display: block; font-style: normal; font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--papel-fosco); }
 
   /* Gráfico do índice: encadeia as variações diárias a partir de base 100.
      Com um só dia não há linha, e é assim que deve ser. */
   /* overflow escondido e a linha desenhada com margem dentro do viewBox:
      com overflow visível o traço saltava para fora do cartão. */
-  .faisca { display: block; width: 100%; height: 15px; overflow: hidden; }
+  .faisca { display: block; width: 100%; height: 13px; overflow: hidden; }
   .faisca path { fill: none; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
   .faisca[data-sinal="sobe"] path { stroke: var(--sobe); }
   .faisca[data-sinal="desce"] path { stroke: var(--desce); }
@@ -1165,8 +1165,8 @@
     display: grid;
     grid-auto-flow: column;
     align-items: stretch;
-    grid-auto-columns: min(66%, 260px);
-    gap: 0.75rem;
+    grid-auto-columns: min(52%, 205px);
+    gap: 0.6rem;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     padding: 0 var(--gap) 0.25rem;
@@ -1191,7 +1191,7 @@
   /* Faixa tipográfica no lugar da fotografia. */
   .faixa-geo {
     flex: none;
-    height: 128px;
+    height: 92px;
     overflow: hidden;
     display: grid;
     place-items: center;
@@ -1205,7 +1205,7 @@
   .faixa-geo.com-foto { position: relative; padding: 0; }
   /* Altura em pixéis, não em percentagem: com percentagem a imagem crescia para
      lá da faixa e ia cair por cima da etiqueta e do título. */
-  .faixa-geo.com-foto img { width: 100%; height: 128px; object-fit: cover; display: block; }
+  .faixa-geo.com-foto img { width: 100%; height: 92px; object-fit: cover; display: block; }
   /* O crédito não aparece no cartão — fica no artigo, por baixo da fotografia
      em tamanho grande, que é onde a licença pede que esteja. A regra apanha
      também a classe antiga, caso o telemóvel ainda tenha o JS em cache. */
@@ -1251,24 +1251,24 @@
   }
 
   .cartao-geo .dentro {
-    padding: 0.75rem 0.85rem 0.85rem;
+    padding: 0.5rem 0.6rem 0.5rem;
     display: flex;
     flex-direction: column;
-    gap: 0.45rem;
+    gap: 0.35rem;
     flex: 1;
   }
   .cartao-geo h3 {
     font-family: var(--display);
     font-weight: 600;
-    font-size: 0.86rem;
-    line-height: 1.3;
+    font-size: 0.78rem;
+    line-height: 1.28;
     margin: 0;
     flex: 1;
-    /* Três linhas fixas: com número variável, os rodapés desalinhavam entre
-       cartões e a fila deixava de assentar. */
-    min-height: calc(3 * 1.3em);
+    /* Duas linhas fixas: chega para o cartão pequeno e mantém os rodapés
+       alinhados de cartão para cartão. */
+    min-height: calc(2 * 1.28em);
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
@@ -1276,9 +1276,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.5rem;
+    gap: 0.4rem;
     margin-top: auto;
-    padding-top: 0.5rem;
+    padding-top: 0.4rem;
     border-top: 1px solid var(--tinta-3);
   }
   .cartao-geo .pe .rotulo { font-size: 0.54rem; }
@@ -1291,7 +1291,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    padding: 0.42rem var(--gap) 0.28rem;
+    padding: 0.45rem var(--gap) 0.25rem;
   }
   .cabecalho-lista .rotulo { display: flex; align-items: center; gap: 0.45rem; }
   .cabecalho-lista svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.6; }
@@ -1309,9 +1309,9 @@
   .noticia {
     display: flex;
     align-items: flex-start;
-    gap: 0.85rem;
+    gap: 0.65rem;
     width: 100%;
-    padding: 0.22rem 0.7rem;
+    padding: 0.3rem 0.7rem;
     background: none;
     border: 0;
     border-bottom: 1px solid var(--tinta-3);
@@ -1353,8 +1353,8 @@
     font-family: var(--display);
     font-weight: 600;
     color: var(--titulo, var(--papel));
-    font-size: 0.9rem;
-    line-height: 1.24;
+    font-size: 0.83rem;
+    line-height: 1.2;
     margin: 0 0 0.15rem;
     /* Duas linhas no máximo: à terceira, a lista deixava de caber no ecrã. */
     display: -webkit-box;
@@ -1364,7 +1364,7 @@
   }
   .noticia .meta {
     font-family: var(--meta);
-    font-size: 0.58rem;
+    font-size: 0.54rem;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--marcador, var(--latao));
