@@ -830,7 +830,7 @@ function iconeDaFonte(item) {
   }
 }
 
-function linhaNoticia(item, i, cor) {
+function linhaNoticia(item, i, cor, semRubrica = false) {
   const marcada = vivos("notas").some((n) => n.origem?.chave === chaveItem(item));
   // Nos temas de geopolítica o mosaico passa a ser o sítio: a foto do dia, ou a
   // bandeira do país, ou — se nada disso houver — a sigla de sempre.
@@ -845,9 +845,9 @@ function linhaNoticia(item, i, cor) {
     ${mosaico}
     <span class="corpo">
       <h3>${esc(item.titulo)}</h3>
-      <span class="meta">${esc(item.rubrica || "Tema")} <em data-nivel="${esc(item.impacto)}">${esc(
+      <span class="meta">${semRubrica ? "" : `${esc(item.rubrica || "Tema")} `}<em data-nivel="${esc(
         item.impacto
-      )}</em> <span class="min">${minutos(item)} min</span></span>
+      )}">${esc(item.impacto)}</em> <span class="min">${minutos(item)} min</span></span>
     </span>
     <span class="lado">
       <span class="marcador-nota" data-marcar="${i}" aria-pressed="${marcada}">
@@ -888,9 +888,37 @@ function desenharNoticias() {
       `<p class="linha"><span class="texto"><span>${semNada}</span></span></p>`
     }</div>`;
 
+  /* Por tópicos: a rubrica passa a ser cabeçalho e cada assunto fica junto do
+     seu. Uma lista de doze linhas seguidas lê-se muito pior do que quatro
+     grupos de três. */
+  const listaPorTopico = (conjunto, semNada) => {
+    if (!conjunto.length) return lista(conjunto, semNada);
+    const grupos = new Map();
+    for (const entrada of conjunto) {
+      const chave = entrada.item.rubrica || "Outros";
+      if (!grupos.has(chave)) grupos.set(chave, []);
+      grupos.get(chave).push(entrada);
+    }
+    // Primeiro os tópicos com mais temas: dá uma hierarquia natural ao dia.
+    return [...grupos.entries()]
+      .sort((a, b) => b[1].length - a[1].length)
+      .map(
+        ([topico, itens]) =>
+          `<p class="topico"><span>${esc(topico)}</span><i>${itens.length}</i></p>` +
+          `<div class="grupo">${itens
+            .map(({ item, i }) => linhaNoticia(item, i, cor, true))
+            .join("")}</div>`
+      )
+      .join("");
+  };
+
+  // O VIX é um índice de medo, não um preço: o número absoluto não diz nada a
+  // quem olha de relance, e roubava um terço da fila aos índices que interessam.
+  const indicesUteis = (painel.indices || []).filter((l) => !/\bvix\b/i.test(l.nome || ""));
+
   const blocoIndices = () =>
-    painel.indices
-      ? `<div class="indices">${painel.indices
+    indicesUteis.length
+      ? `<div class="indices">${indicesUteis
           .map((l) => {
             const sinal =
               typeof l.variacao !== "number" ? "igual" : l.variacao > 0 ? "sobe" : l.variacao < 0 ? "desce" : "igual";
@@ -1007,22 +1035,47 @@ function desenharNoticias() {
     return fim > 0 ? limpo.slice(0, fim + 1) : limpo;
   };
 
-  const blocoDestaque = () =>
-    painel.destaque
-      ? `<div class="cabecalho-lista"><span class="rotulo">${EMOJI("📌")}Destaque do dia</span></div>
-        <div class="destaque destaque-aba">
-          <div class="topo">
-            <div>
-              <div class="tick">${esc(painel.destaque.nome)}</div>
-              ${painel.destaque.descricao ? `<div class="desc">${esc(painel.destaque.descricao)}</div>` : ""}
-            </div>
-            <div style="text-align:right">
-              ${variacao(painel.destaque.variacao)}
-              ${painel.destaque.valor ? `<div class="desc">${esc(painel.destaque.valor)}</div>` : ""}
-            </div>
+  const blocoDestaque = () => {
+    const d = painel.destaque;
+    if (!d) return "";
+    const sinal = typeof d.variacao !== "number" ? "igual" : d.variacao > 0 ? "sobe" : "desce";
+    return `<div class="cabecalho-lista"><span class="rotulo">${EMOJI("📌")}Destaque do dia</span></div>
+      <div class="cartao-destaque" data-sinal="${sinal}">
+        <div class="linha-topo">
+          <div class="quem">
+            <b>${esc(d.nome)}</b>
+            ${d.descricao ? `<span>${esc(d.descricao)}</span>` : ""}
           </div>
-          ${painel.destaque.texto ? `<p class="texto">${esc(primeiraFrase(painel.destaque.texto))}</p>` : ""}
-        </div>`
+          <div class="numeros">
+            ${variacao(d.variacao)}
+            ${d.valor ? `<span class="preco">${esc(d.valor)}</span>` : ""}
+          </div>
+        </div>
+        ${d.texto ? `<p>${esc(primeiraFrase(d.texto))}</p>` : ""}
+      </div>`;
+  };
+
+  /* Posições em mosaico: quatro fichas por ecrã, cada uma com o ticker, a
+     variação e a razão numa linha. A lista corrida obrigava a ler tudo. */
+  const mosaicoPosicoes = (linhas, titulo, emoji) =>
+    linhas?.length
+      ? bloco(
+          `${EMOJI(emoji)}${titulo}`,
+          `<div class="mosaico-posicoes">${linhas
+            .map((l) => {
+              const sinal =
+                typeof l.variacao !== "number" ? "igual" : l.variacao > 0 ? "sobe" : "desce";
+              return `<div class="ficha-posicao" data-sinal="${sinal}">
+                <div class="cabeca">
+                  <b>${esc(l.nome)}</b>
+                  ${variacao(l.variacao)}
+                </div>
+                ${l.valor ? `<span class="preco">${esc(l.valor)}</span>` : ""}
+                ${l.leitura ? `<p>${esc(l.leitura)}</p>` : ""}
+              </div>`;
+            })
+            .join("")}</div>`
+        )
       : "";
 
   /* Nas abas as tabelas são listas: o `table` deixava cair a explicação no
@@ -1035,25 +1088,8 @@ function desenharNoticias() {
       ${explicacao ? `<p class="explica">${esc(explicacao)}</p>` : ""}
     </div>`;
 
-  const blocoCarteira = () =>
-    painel.carteira
-      ? bloco(
-          `${EMOJI("💼")}A tua carteira hoje`,
-          `<div class="lista-aba">${painel.carteira
-            .map((l) => linhaAba(esc(l.nome), l.valor, variacao(l.variacao), l.leitura))
-            .join("")}</div>`
-        )
-      : "";
-
-  const blocoAccoes = () =>
-    painel.accoes
-      ? bloco(
-          `${EMOJI("📊")}Ações em foco`,
-          `<div class="lista-aba">${painel.accoes
-            .map((l) => linhaAba(esc(l.nome), l.valor, variacao(l.variacao), l.leitura))
-            .join("")}</div>`
-        )
-      : "";
+  const blocoCarteira = () => mosaicoPosicoes(painel.carteira, "A tua carteira hoje", "💼");
+  const blocoAccoes = () => mosaicoPosicoes(painel.accoes, "Ações em foco", "📊");
 
   const blocoTeatros = () =>
     geo.conflitos
@@ -1122,11 +1158,22 @@ function desenharNoticias() {
 
   /* Três chegam para dar o sentido do dia; a lista toda está na edição. */
   const cortar = (lista, quantos = 3) => (lista ? lista.slice(0, quantos) : lista);
-  const avaliacaoCurta = (fonte, titulo, emoji) =>
-    avaliacaoHTML(
-      { oportunidades: cortar(fonte.oportunidades), riscos: cortar(fonte.riscos) },
-      `${EMOJI(emoji)}${titulo}`
+  const avaliacaoCurta = (fonte, titulo, emoji) => {
+    const op = cortar(fonte.oportunidades);
+    const ri = cortar(fonte.riscos);
+    if (!op && !ri) return "";
+    const cartao = (rotulo, itens, tom) =>
+      itens?.length
+        ? `<div class="cartao-avaliacao" data-tom="${tom}">
+            <span class="rotulo">${rotulo}</span>
+            <ul>${itens.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
+          </div>`
+        : "";
+    return bloco(
+      `${EMOJI(emoji)}${titulo}`,
+      `<div class="par-avaliacao">${cartao("Oportunidades", op, "bom")}${cartao("Riscos", ri, "mau")}</div>`
     );
+  };
 
   const semGeoAqui = "Esta edição não trouxe temas geopolíticos.";
   const cartaoGeo = ({ item, i }) => `<button class="cartao-geo" data-item-noticia="${i}" style="--marcador:${cor}">
@@ -1221,7 +1268,7 @@ function desenharNoticias() {
     mercado: () =>
       blocoIndices() +
       cabecalho("Investimentos", EMOJI("📈")) +
-      lista(mercado, semMercado) +
+      listaPorTopico(mercado, semMercado) +
       blocoDestaque() +
       emPainel(
         blocoCarteira() +
@@ -1239,7 +1286,7 @@ function desenharNoticias() {
         blocoRisco() +
         blocoAlertas() +
         cabecalho(escolhido ? `Temas · ${nome}` : "Geopolítica", EMOJI("🌍")) +
-        lista(filtrados, escolhido ? `Nada sobre ${nome} nesta edição.` : semGeo) +
+        listaPorTopico(filtrados, escolhido ? `Nada sobre ${nome} nesta edição.` : semGeo) +
         emPainel(
           blocoTeatros() +
             blocoImpactoCarteira() +

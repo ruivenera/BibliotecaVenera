@@ -16,37 +16,38 @@
      --papel é sempre o texto. Por isso o tema claro troca-lhes os valores e
      tudo o resto segue atrás, sem uma única regra duplicada. */
   :root, :root[data-tema="escuro"] {
-    /* Quase preto: o fundo recua e as edições ficam à frente. */
-    --tinta:      #030405;
-    --tinta-2:    #0C1114;
-    --tinta-3:    #1A2226;
-    --papel:      #E9E5D8;
-    --papel-fosco:#94A29E;
-    --latao:      #C69749;
-    --indigo:     #8091DC;
-    --rust:       #C2604A;
-    /* Sobe e desce. Verde-sálvia abafado para não destoar do papel; o rust já servia. */
-    --sobe:       #7F9E72;
-    --desce:      #C2604A;
-    --sombra:     rgba(0, 0, 0, 0.5);
+    /* Ardósia muito escura em vez de preto puro: o preto absoluto num OLED
+       corta os cartões a direito e faz a página parecer dois ecrãs colados. */
+    --tinta:      #0A0E13;
+    --tinta-2:    #131A21;
+    --tinta-3:    #202B34;
+    --papel:      #E8EDF2;
+    --papel-fosco:#8D9BAA;
+    --latao:      #D2AC6A;
+    --indigo:     #8AA0E0;
+    --rust:       #D2735A;
+    /* Sobe e desce sem berrar: verde e terracota abafados. */
+    --sobe:       #63A583;
+    --desce:      #D2735A;
+    --sombra:     rgba(0, 0, 0, 0.45);
     /* Os títulos deixam de ser da cor do texto: ouro no escuro, azul no claro. */
-    --titulo:     #D9BB7C;
+    --titulo:     #E0C085;
   }
 
   /* Os acentos escurecem no claro: o latão e o índigo de cima, sobre papel,
      não chegavam ao contraste mínimo. */
   :root[data-tema="claro"] {
     --tinta:      #FFFFFF;
-    --tinta-2:    #F7F8FA;
-    --tinta-3:    #E5E8EE;
-    --papel:      #101828;
-    --papel-fosco:#667085;
-    --latao:      #8A6B22;
+    --tinta-2:    #F8FAFC;
+    --tinta-3:    #E6EAF0;
+    --papel:      #0F172A;
+    --papel-fosco:#64748B;
+    --latao:      #8A6B2E;
     --indigo:     #2B3E6B;
-    --rust:       #A34527;
-    --sobe:       #3F7D58;
-    --desce:      #B4472C;
-    --sombra:     rgba(16, 24, 40, 0.08);
+    --rust:       #A9523A;
+    --sobe:       #2F7D5B;
+    --desce:      #B5533C;
+    --sombra:     rgba(15, 23, 42, 0.07);
     --titulo:     #16264A;
   }
 
@@ -54,16 +55,16 @@
   @media (prefers-color-scheme: light) {
     :root:not([data-tema]) {
       --tinta:      #FFFFFF;
-      --tinta-2:    #F7F8FA;
-      --tinta-3:    #E5E8EE;
-      --papel:      #101828;
-      --papel-fosco:#667085;
-      --latao:      #8A6B22;
+      --tinta-2:    #F8FAFC;
+      --tinta-3:    #E6EAF0;
+      --papel:      #0F172A;
+      --papel-fosco:#64748B;
+      --latao:      #8A6B2E;
       --indigo:     #2B3E6B;
-      --rust:       #A34527;
-      --sobe:       #3F7D58;
-      --desce:      #B4472C;
-      --sombra:     rgba(16, 24, 40, 0.08);
+      --rust:       #A9523A;
+      --sobe:       #2F7D5B;
+      --desce:      #B5533C;
+      --sombra:     rgba(15, 23, 42, 0.07);
       --titulo:     #16264A;
     }
   }
@@ -1548,6 +1549,151 @@
     opacity: 0.85;
   }
 
+  /* ------------------------------------------------- tópicos e cartões --- */
+
+  /* Cabeçalho de tópico dentro da lista: risco fino, nome e contagem. */
+  .topico {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 1.1rem var(--gap) 0.4rem;
+    font-family: var(--meta);
+    font-size: 0.56rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--papel-fosco);
+  }
+  .topico::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--tinta-3);
+  }
+  .topico i {
+    order: 3;
+    font-style: normal;
+    color: var(--latao);
+  }
+
+  /* Destaque do dia: um cartão só, com o sinal a dar a cor à barra de cima. */
+  .cartao-destaque {
+    margin: 0 var(--gap);
+    padding: 0.95rem 1rem 1rem;
+    background: var(--tinta-2);
+    border: 1px solid var(--tinta-3);
+    border-radius: 14px;
+    border-top: 2px solid var(--papel-fosco);
+  }
+  .cartao-destaque[data-sinal="sobe"] { border-top-color: var(--sobe); }
+  .cartao-destaque[data-sinal="desce"] { border-top-color: var(--desce); }
+  .cartao-destaque .linha-topo {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .cartao-destaque .quem b {
+    display: block;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 1.3rem;
+    letter-spacing: 0.01em;
+    color: var(--titulo, var(--papel));
+  }
+  .cartao-destaque .quem span,
+  .cartao-destaque .numeros .preco {
+    font-family: var(--meta);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    color: var(--papel-fosco);
+  }
+  .cartao-destaque .numeros { text-align: right; display: grid; gap: 0.2rem; }
+  .cartao-destaque .numeros .var { font-size: 0.95rem; }
+  .cartao-destaque p {
+    margin: 0.75rem 0 0;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--papel-fosco);
+    text-wrap: pretty;
+  }
+
+  /* Posições em mosaico: duas colunas de fichas. */
+  .mosaico-posicoes {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+  .ficha-posicao {
+    padding: 0.6rem 0.7rem 0.65rem;
+    background: var(--tinta-2);
+    border: 1px solid var(--tinta-3);
+    border-radius: 11px;
+    border-left: 2px solid var(--tinta-3);
+  }
+  .ficha-posicao[data-sinal="sobe"] { border-left-color: var(--sobe); }
+  .ficha-posicao[data-sinal="desce"] { border-left-color: var(--desce); }
+  .ficha-posicao .cabeca {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.4rem;
+  }
+  .ficha-posicao .cabeca b { font-size: 0.92rem; font-weight: 600; }
+  .ficha-posicao .var { font-size: 0.72rem; }
+  .ficha-posicao .preco {
+    display: block;
+    margin-top: 0.1rem;
+    font-family: var(--meta);
+    font-size: 0.62rem;
+    color: var(--papel-fosco);
+  }
+  .ficha-posicao p {
+    margin: 0.4rem 0 0;
+    font-size: 0.74rem;
+    line-height: 1.45;
+    color: var(--papel-fosco);
+    text-wrap: pretty;
+  }
+
+  /* Oportunidades e riscos: dois cartões, um por tom. */
+  .par-avaliacao { display: grid; gap: 0.55rem; }
+  .cartao-avaliacao {
+    padding: 0.7rem 0.85rem 0.75rem;
+    background: var(--tinta-2);
+    border: 1px solid var(--tinta-3);
+    border-radius: 11px;
+  }
+  .cartao-avaliacao .rotulo { display: block; margin-bottom: 0.45rem; font-size: 0.55rem; }
+  .cartao-avaliacao[data-tom="bom"] .rotulo { color: var(--sobe); }
+  .cartao-avaliacao[data-tom="mau"] .rotulo { color: var(--desce); }
+  .cartao-avaliacao ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.4rem; }
+  .cartao-avaliacao li {
+    position: relative;
+    padding-left: 0.85rem;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+  .cartao-avaliacao li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.55em;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.5;
+  }
+  .cartao-avaliacao[data-tom="bom"] li::before { background: var(--sobe); opacity: 1; }
+  .cartao-avaliacao[data-tom="mau"] li::before { background: var(--desce); opacity: 1; }
+
+  /* Veredicto nas abas: cartão baixo, com o tom só num filete. */
+  .veredicto-aba {
+    padding: 0.8rem 0.9rem 0.85rem;
+    border-radius: 11px;
+  }
+  .veredicto-aba p { margin: 0.35rem 0 0; font-size: 0.88rem; line-height: 1.55; }
+
   /* Emojis: fonte do sistema, para não herdarem a mono nem a display. */
   .emoji {
     font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
@@ -1738,8 +1884,9 @@
     color: var(--papel-fosco);
     background: var(--tinta-2);
   }
-  .noticia .meta em[data-nivel="alto"] { color: var(--rust); background: color-mix(in srgb, var(--rust) 12%, transparent); }
-  .noticia .meta em[data-nivel="medio"] { color: var(--latao); background: color-mix(in srgb, var(--latao) 12%, transparent); }
+  .noticia .meta em[data-nivel="alto"] { color: var(--rust); background: color-mix(in srgb, var(--rust) 9%, transparent); }
+  .noticia .meta em[data-nivel="medio"] { color: var(--latao); background: color-mix(in srgb, var(--latao) 9%, transparent); }
+  .noticia .meta em[data-nivel="baixo"] { opacity: 0.75; }
   /* Marcador e seta lado a lado, como na maqueta. */
   .noticia .lado { display: flex; align-items: center; gap: 0.7rem; color: var(--papel-fosco); align-self: center; }
   .noticia .lado svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.7; }
