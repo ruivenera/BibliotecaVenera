@@ -477,20 +477,59 @@ const MAPA_COLS = 180;
 const MAPA_ROWS = 71;
 const MAPA_TERRA = "AAAAAAAAHwAfvAAAAAAAAAAAAAAAAAAAAAAAAx37///+AAAAAGoABAAAAAAAAAAAAAIe8P///wAA8AAAAAA0AAAAAAAAAAAwADw////4AAIAAAAAAHAAAAAAAAAAALivwAf//wAAAAADAAP/wAHIAAAAAADsj38AH/+gAAAAAEAH///OAAAAgBgAAfw3/gB/+gAAAgAMHe///+/9gBAP/7/nbdrwD/+AAAH/Ag7H////////8H//////g8H/gAAAf/6//f////////Mf/////9H4D4A+AA+ev///////////AP/////4A0B4AAAD5/////////////Af1////gHgA4AAAP5///////////LwAHgD///gH0AAAAAG4/////////+AMAABAC///4D+AAAAGCx/////////4A4AAAAB////n/gAAAOCR/////////4A4AAAAAf///3/wAAAbH//////////9AgAAAAAP/////gAAADf//////////9AAAAAAAF////0YAAAB///////////8AAAAAAAD////8EAAAB///v///////5AAAAAAAD////+AAAAB/f5f///////wAAAAAAAD////gAAAAfxnwP///////jgAAAAAAD///+AAAAAPCb3///////+AAAAAAAAD///8AAAAAfCJf//////+ECAAAAAAAB///8AAAAAGDRf///////mMAAAAAAAA///8AAAAAH+Ai///////E8AAAAAAAAf//wAAAAAP/AA///////BgAAAAAAAAP//gAAAAAf/73///////gAAAAAAAAAD/AQAAAAAf//9/f/////gAAAAAAAAAF+AQAAAAB///+/n/////AAAAAAAAAAC+AAAAAAB///+fwH///+AAAAAAAAAAAeAwAAAAD////f/D///8gAAAAAAAAAAeGEAAAAD////v+B/j/AAAAAAAAAAAAPMAwAAAD////n+AfB+gAAAAAAAAAAAD8AAAAAD////34AeBfAgAAAAAAAAAAAPAAAAAH////3gAcAfAgAAAAAAAAAAADAAAAAD////6AAcAfgwAAAAAAAAAAABBwAAAD////8wAMATAIAAAAAAAAAAAAr/AAAB/////gAIASAAAAAAAAAAAAAAH/gAAA/////gACAAAIAAAAAAAAAAAAH/8AAAYH///AAAAsGAAAAAAAAAAAAAH/+AAAAB//+AAAAUOAAAAAAAAAAAAAP/+AAAAB//8AAAAc+gAAAAAAAAAAAAP//gAAAD//4AAAAMeBgAAAAAAAAAAAP//8AAAB//wAAAAGdCuAAAAAAAAAAAf///AAAA//wAAAACAAHgAAAAAAAAAAP///gAAA//wAAAAB4AHggAAAAAAAAAH///AAAAf/wAAAAACIDQIAAAAAAAAAH//+AAAAf/wAAAAAAAAAAAAAAAAAAAD//+AAAA//wgAAAAABxAAAAAAAAAAAD//8AAAA//wgAAAAAHxgBAAAAAAAAAA//8AAAA//zgAAAAAf/gAAAAAAAAAAAf/8AAAA//DgAAAAAf/gAAAAAAAAAAAf/8AAAAf/DAAAAAD//4CAAAAAAAAAAf/wAAAAf/DAAAAAH//4AAAAAAAAAAAf/AAAAAf+DAAAAAH//8AAAAAAAAAAAf/AAAAAP8AAAAAAH//+AAAAAAAAAAA/+AAAAAP8AAAAAAH//+AAAAAAAAAAA/8AAAAAH4AAAAAAD//+AAAAAAAAAAA/8AAAAAHwAAAAAADwf8AAAAAAAAAAA/gAAAAAAAAAAAAACAP4AAAAAAAAAAB/wAAAAAAAAAAAAAAAD4AEAAAAAAAAB+AAAAAAAAAAAAAAAAAAAGAAAAAAAAB6AAAAAAAAAAAAAAAAAwAMAAAAAAAAA8AAAAAAAAAAAAAAAAAQAYAAAAAAAAB4AAAAAAAAAAAAAAAAAAAwAAAAAAAAB4AAAAAAAAAAAAAAAAAAAAAAAAAAAABwAAAAAAAAAACAAAAAAAAAAAAAAAAADgAAAAAAAAAAAAAAAAAAAAAAAAAAAABwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
 
-let caminhoTerraCache = null;
-function caminhoTerra() {
-  if (caminhoTerraCache) return caminhoTerraCache;
+/**
+ * A máscara só diz terra ou água. A cor do terreno é deduzida da latitude e de
+ * caixas de longitude — os grandes desertos, as florestas equatoriais e o gelo
+ * polar. Não é ciência, é cartografia à vista: a 2° de resolução chega bem para
+ * o Sara sair amarelo e a Amazónia sair verde-escura.
+ */
+const DESERTOS = [
+  [15, 32, -17, 35],    // Sara
+  [13, 32, 35, 60],     // Península Arábica
+  [24, 38, 55, 78],     // Irão, Thar
+  [36, 48, 75, 112],    // Gobi, Taklamakan
+  [36, 46, 50, 72],     // Karakum, Kyzylkum
+  [3, 15, 38, 52],      // Corno de África
+  [-32, -19, 116, 146], // interior australiano
+  [-30, -17, 11, 27],   // Namibe, Kalahari
+  [-30, -16, -72, -64], // Atacama e altiplano
+  [24, 38, -118, -99],  // sudoeste norte-americano
+];
+const TROPICOS = [
+  [-13, 7, -79, -47],  // Amazónia
+  [-7, 8, 8, 32],      // bacia do Congo
+  [-11, 15, 94, 142],  // sudeste asiático e Indonésia
+  [-4, 11, -85, -74],  // Chocó
+  [-22, -8, 30, 41],   // Zambeze
+];
+
+const dentro = (lat, lon, [la0, la1, lo0, lo1]) =>
+  lat >= la0 && lat <= la1 && lon >= lo0 && lon <= lo1;
+
+function classeTerra(lat, lon) {
+  // Gronelândia e as calotes: gelo mesmo abaixo do círculo polar.
+  if (lat > 66 || lat < -60 || (lat > 59 && lon > -73 && lon < -20)) return "gelo";
+  if (DESERTOS.some((caixa) => dentro(lat, lon, caixa))) return "deserto";
+  if (TROPICOS.some((caixa) => dentro(lat, lon, caixa))) return "tropico";
+  if (lat > 56) return "tundra";
+  return "verde";
+}
+
+let caminhosTerraCache = null;
+function caminhosTerra() {
+  if (caminhosTerraCache) return caminhosTerraCache;
   const cru = atob(MAPA_TERRA);
-  let d = "";
+  const caminhos = { verde: "", tropico: "", deserto: "", tundra: "", gelo: "" };
   for (let i = 0, n = MAPA_COLS * MAPA_ROWS; i < n; i++) {
     // packbits é MSB primeiro: o bit mais à esquerda do byte é a primeira célula.
-    if (cru.charCodeAt(i >> 3) & (128 >> (i & 7))) {
-      const c = i % MAPA_COLS;
-      const r = (i / MAPA_COLS) | 0;
-      d += `M${c * 2 + 1} ${r * 2 + 1}h.01`;
-    }
+    if (!(cru.charCodeAt(i >> 3) & (128 >> (i & 7)))) continue;
+    const c = i % MAPA_COLS;
+    const r = (i / MAPA_COLS) | 0;
+    const lon = -180 + 2 * c + 1;
+    const lat = 84 - 2 * r - 1;
+    caminhos[classeTerra(lat, lon)] += `M${c * 2 + 1} ${r * 2 + 1}h.01`;
   }
-  return (caminhoTerraCache = d);
+  return (caminhosTerraCache = caminhos);
 }
 
 /** Projeção equirretangular: longitude para x, latitude para y. */
@@ -694,6 +733,9 @@ function bandeiraDe(...textos) {
   return iso ? emojiBandeira(iso) : "";
 }
 
+/** Minutos de leitura a 200 palavras por minuto — a conta de sempre das redações. */
+const minutos = (item) => Math.max(1, Math.round(String(item.texto || "").split(/\s+/).length / 200));
+
 /** Duas letras sempre: com a inicial só, "Mercados" e "Macro" ficavam iguais. */
 const SIGLA = (texto) => {
   const palavras = (texto || "?").replace(/[^\p{L}\p{N} ]/gu, "").split(/\s+/).filter(Boolean);
@@ -731,7 +773,9 @@ function linhaNoticia(item, i, cor) {
     ${mosaico}
     <span class="corpo">
       <h3>${esc(item.titulo)}</h3>
-      <span class="meta">${esc(item.rubrica || "Tema")} <em data-nivel="${esc(item.impacto)}">${esc(item.impacto)}</em></span>
+      <span class="meta">${esc(item.rubrica || "Tema")} <em data-nivel="${esc(item.impacto)}">${esc(
+        item.impacto
+      )}</em> <span class="min">${minutos(item)} min</span></span>
     </span>
     <span class="lado">
       <span class="marcador-nota" data-marcar="${i}" aria-pressed="${marcada}">
@@ -743,6 +787,9 @@ function linhaNoticia(item, i, cor) {
 }
 
 const chaveItem = (item) => `${estado.edicaoNoticias?.data || ""}:${item.titulo}`;
+
+/* Guardado à parte para o clique no mapa saber quantos temas tem cada país. */
+let focosDoDia = [];
 
 function desenharNoticias() {
   const alvo = $("#noticias-corpo");
@@ -793,7 +840,7 @@ function desenharNoticias() {
 
   /* Focos do dia: um por país detectado, com o peso a contar os temas e o grau
      a guardar o pior impacto. É isto que acende os pontos no mapa. */
-  const focos = (() => {
+  const focos = (focosDoDia = (() => {
     const por = new Map();
     for (const { item, i } of geopoliticos) {
       const iso = isoDe(item.titulo, item.rubrica);
@@ -810,7 +857,7 @@ function desenharNoticias() {
       por.set(iso, { iso, indices: [], alto: a.nivel === "alto" });
     }
     return [...por.values()].sort((a, b) => b.indices.length - a.indices.length);
-  })();
+  })());
 
   const escolhido = estado.focoGeo && focos.some((f) => f.iso === estado.focoGeo) ? estado.focoGeo : "";
 
@@ -828,6 +875,7 @@ function desenharNoticias() {
             <circle class="halo" r="${(r * 2.6).toFixed(1)}"/>
             <circle class="anel" r="${(r * 1.5).toFixed(1)}"/>
             <circle class="nucleo" r="${r.toFixed(1)}"/>
+            <circle class="alvo" r="9"/>
             <title>${esc(NOME_PAIS[f.iso] || f.iso)}</title>
           </g>`;
       })
@@ -842,7 +890,9 @@ function desenharNoticias() {
         <svg class="mapa-mundo" viewBox="0 0 360 142" role="img"
              aria-label="Mapa dos focos do dia" preserveAspectRatio="xMidYMid meet">
           <g class="mundo" id="mapa-mundo">
-            <path class="terra" d="${caminhoTerra()}"/>
+            ${Object.entries(caminhosTerra())
+              .map(([tipo, d]) => (d ? `<path class="terra" data-terreno="${tipo}" d="${d}"/>` : ""))
+              .join("")}
             ${pontos}
           </g>
         </svg>
@@ -863,9 +913,114 @@ function desenharNoticias() {
       }
       <p class="mapa-legenda rotulo">
         <i class="bolha alto"></i>impacto alto
-        <i class="bolha"></i>restantes · toca para filtrar
+        <i class="bolha"></i>restantes · toca para abrir
       </p>
     </div>`;
+  };
+
+  /* Os blocos ricos do painel viviam só na edição completa. Passam a aparecer
+     também nas abas, que é onde se lê o dia sem abrir mais nada. */
+  const emPainel = (html) => (html ? `<div class="painel painel-aba">${html}</div>` : "");
+
+  const blocoDestaque = () =>
+    painel.destaque
+      ? `<div class="destaque destaque-aba">
+          <div class="topo">
+            <div>
+              <div class="tick">${esc(painel.destaque.nome)}</div>
+              ${painel.destaque.descricao ? `<div class="desc">${esc(painel.destaque.descricao)}</div>` : ""}
+            </div>
+            <div style="text-align:right">
+              ${variacao(painel.destaque.variacao)}
+              ${painel.destaque.valor ? `<div class="desc">${esc(painel.destaque.valor)}</div>` : ""}
+            </div>
+          </div>
+          ${painel.destaque.texto ? `<p class="texto">${esc(painel.destaque.texto)}</p>` : ""}
+        </div>`
+      : "";
+
+  /* Nas abas as tabelas são listas: o `table` deixava cair a explicação no
+     telemóvel, e a explicação é justamente o que se quer ler. */
+  const linhaAba = (nome, valor, direita, explicacao) =>
+    `<div class="linha-aba">
+      <span class="nome">${nome}</span>
+      ${valor ? `<span class="valor">${esc(valor)}</span>` : ""}
+      <span class="direita">${direita}</span>
+      ${explicacao ? `<p class="explica">${esc(explicacao)}</p>` : ""}
+    </div>`;
+
+  const blocoCarteira = () =>
+    painel.carteira
+      ? bloco(
+          "A tua carteira hoje",
+          `<div class="lista-aba">${painel.carteira
+            .map((l) => linhaAba(esc(l.nome), l.valor, variacao(l.variacao), l.leitura))
+            .join("")}</div>`
+        )
+      : "";
+
+  const blocoAccoes = () =>
+    painel.accoes
+      ? bloco(
+          "Ações em foco",
+          `<div class="lista-aba">${painel.accoes
+            .map((l) => linhaAba(esc(l.nome), l.valor, variacao(l.variacao), l.leitura))
+            .join("")}</div>`
+        )
+      : "";
+
+  const blocoTeatros = () =>
+    geo.conflitos
+      ? bloco(
+          "Teatros",
+          `<div class="lista-aba">${geo.conflitos
+            .map((c) => {
+              const b = bandeiraDe(c.nome);
+              return linhaAba(
+                `${b ? `<i class="bandeira-linha">${b}</i>` : ""}${esc(c.nome)}`,
+                "",
+                `<span class="prob">${esc(c.probabilidade || "")}</span>`,
+                c.situacao
+              );
+            })
+            .join("")}</div>`
+        )
+      : "";
+
+  const blocoImpactoCarteira = () => {
+    if (!geo.impacto_carteira) return "";
+    const sinais = { positivo: "▲", neutro: "→", negativo: "▼" };
+    return bloco(
+      "Impacto na carteira",
+      `<div class="lista-aba">${geo.impacto_carteira
+        .map((i) =>
+          linhaAba(
+            esc(i.nome),
+            "",
+            `<span class="var" data-sinal="${
+              i.sentido === "positivo" ? "sobe" : i.sentido === "negativo" ? "desce" : "igual"
+            }">${sinais[i.sentido] || "→"}</span>`,
+            i.justificacao
+          )
+        )
+        .join("")}</div>`
+    );
+  };
+
+  /* Os números soltos do risco: conflitos ativos, focos, quem está mais exposto. */
+  const grelhaRisco = () => {
+    const r = geo.risco || {};
+    const campos = [
+      ["Conflitos ativos", r.conflitos],
+      ["Alertas críticos", r.alertas],
+      ["Focos", r.hotspots],
+      ["Mais expostos", r.expostos],
+    ].filter(([, v]) => tem(v));
+    return campos.length
+      ? `<div class="grelha grelha-risco">${campos
+          .map(([k, v]) => `<div><span>${k}</span><span>${esc(String(v))}</span></div>`)
+          .join("")}</div>`
+      : "";
   };
 
   const semGeoAqui = "Esta edição não trouxe temas geopolíticos.";
@@ -881,7 +1036,7 @@ function desenharNoticias() {
         <span class="selo" style="color:${cor};align-self:flex-start">${esc(item.rubrica || "Tema")}</span>
         <h3>${esc(item.titulo)}</h3>
         <span class="pe">
-          <span class="rotulo">${esc(haQuanto(item, edicao))}</span>
+          <span class="rotulo">${esc(haQuanto(item, edicao))} · ${minutos(item)} min</span>
           <span class="marcador-nota" data-marcar="${i}"
             aria-pressed="${vivos("notas").some((n) => n.origem?.chave === chaveItem(item))}">
             <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7"><path d="M6 4h12v17l-6-4-6 4z"/></svg>
@@ -923,6 +1078,7 @@ function desenharNoticias() {
           </div>
           <div class="medidor-barra" data-alto="${geo.risco.indice >= 61 ? 1 : 0}"><i style="width:${geo.risco.indice}%"></i></div>
           <div class="escala-risco"><span>0 · calmo</span><span>50</span><span>100 · crítico</span></div>
+          ${grelhaRisco()}
         </div>`
       : "";
 
@@ -951,8 +1107,34 @@ function desenharNoticias() {
       // de scroll. Quem quiser o resto tem o "ver tudo" logo ao lado.
       lista(mercado.slice(0, 4), semMercado) +
       cabecalho("Geopolítica", EMOJI("🌍"), "geo") +
-      carrossel(geopoliticos),
-    mercado: () => blocoIndices() + cabecalho("Investimentos", EMOJI("📈")) + lista(mercado, semMercado),
+      carrossel(geopoliticos) +
+      blocoDestaque() +
+      emPainel(
+        (painel.veredicto
+          ? bloco(
+              "Leitura de mercado",
+              `<div class="veredicto" data-tom="${esc(painel.veredicto.tom)}">
+                ${painel.veredicto.titulo ? `<div class="tom">${esc(painel.veredicto.titulo)}</div>` : ""}
+                <p>${esc(painel.veredicto.texto)}</p>
+              </div>`
+            )
+          : "") +
+          (geo.veredicto
+            ? bloco(
+                "Leitura geopolítica",
+                `<div class="veredicto" data-tom="${esc(geo.veredicto.tom)}">
+                  ${geo.veredicto.titulo ? `<div class="tom">${esc(geo.veredicto.titulo)}</div>` : ""}
+                  <p>${esc(geo.veredicto.texto)}</p>
+                </div>`
+              )
+            : "")
+      ),
+    mercado: () =>
+      blocoIndices() +
+      blocoDestaque() +
+      cabecalho("Investimentos", EMOJI("📈")) +
+      lista(mercado, semMercado) +
+      emPainel(blocoCarteira() + blocoAccoes() + avaliacaoHTML(painel, "Leitura de mercado")),
     geo: () => {
       const filtrados = escolhido
         ? geopoliticos.filter(({ i }) => focos.find((f) => f.iso === escolhido)?.indices.includes(i))
@@ -963,7 +1145,8 @@ function desenharNoticias() {
         blocoRisco() +
         blocoAlertas() +
         cabecalho(escolhido ? `Temas · ${nome}` : "Geopolítica", EMOJI("🌍")) +
-        lista(filtrados, escolhido ? `Nada sobre ${nome} nesta edição.` : semGeo)
+        lista(filtrados, escolhido ? `Nada sobre ${nome} nesta edição.` : semGeo) +
+        emPainel(blocoTeatros() + blocoImpactoCarteira() + avaliacaoHTML(geo, "Leitura geopolítica"))
       );
     },
   };
@@ -1006,9 +1189,21 @@ $("#noticias-corpo").addEventListener("click", (e) => {
   const foco = e.target.closest("[data-foco]");
   if (!foco) return;
   const iso = foco.dataset.foco;
+
+  // Um país com um tema só não precisa de filtro nenhum: abre-se o tema.
+  const unico = focosDoDia.find((f) => f.iso === iso);
+  if (iso && unico?.indices.length === 1 && estado.focoGeo !== iso) {
+    return irPara("artigo", unico.indices[0]);
+  }
+
   estado.focoGeo = iso === estado.focoGeo ? "" : iso;
   desenharNoticias();
   aproximarMapa();
+  if (estado.focoGeo) {
+    $("#noticias-corpo")
+      .querySelector(".cabecalho-lista:last-of-type")
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
 });
 
 /**

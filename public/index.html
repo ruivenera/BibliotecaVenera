@@ -1353,13 +1353,49 @@
     margin-bottom: 0.5rem;
   }
   .mapa-cabeca .rotulo { font-size: 0.58rem; letter-spacing: 0.16em; }
+  /* Oceano: um azul com fundo mais escuro em baixo, como nas cartas antigas. */
   .mapa-palco {
-    background:
-      radial-gradient(120% 140% at 50% 0%, color-mix(in srgb, var(--latao) 7%, transparent), transparent 70%),
-      var(--tinta);
+    --oceano: #bcd6ec;
+    --oceano-fundo: #9dc0de;
+    --terra-verde: #43813f;
+    --terra-tropico: #27602f;
+    --terra-deserto: #d3a531;
+    --terra-tundra: #7f9b74;
+    --terra-gelo: #d8e4ec;
+    background: linear-gradient(to bottom, var(--oceano), var(--oceano-fundo));
     border: 1px solid var(--tinta-3);
     border-radius: 10px;
     overflow: hidden;
+  }
+  :root[data-tema="escuro"] .mapa-palco,
+  :root:not([data-tema]) .mapa-palco {
+    --oceano: #12283d;
+    --oceano-fundo: #0b1a2a;
+    --terra-verde: #5f9a5f;
+    --terra-tropico: #3f8049;
+    --terra-deserto: #c9a94a;
+    --terra-tundra: #7d9578;
+    --terra-gelo: #b9cdda;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-tema]) .mapa-palco {
+      --oceano: #cfe0ef;
+      --oceano-fundo: #b4cde3;
+      --terra-verde: #43813f;
+      --terra-tropico: #27602f;
+      --terra-deserto: #d3a531;
+      --terra-tundra: #7f9b74;
+      --terra-gelo: #d8e4ec;
+    }
+  }
+  :root[data-tema="claro"] .mapa-palco {
+    --oceano: #bcd6ec;
+    --oceano-fundo: #9dc0de;
+    --terra-verde: #43813f;
+    --terra-tropico: #27602f;
+    --terra-deserto: #d3a531;
+    --terra-tundra: #7f9b74;
+    --terra-gelo: #d8e4ec;
   }
   .mapa-mundo { display: block; width: 100%; height: auto; }
   /* O grupo inteiro é que se aproxima — o traço da terra não engorda porque
@@ -1370,22 +1406,32 @@
   }
   .mapa-mundo .terra {
     fill: none;
-    stroke: color-mix(in srgb, var(--papel) 42%, transparent);
-    stroke-width: 1.25;
+    stroke-width: 1.45;
     stroke-linecap: round;
   }
+  .mapa-mundo .terra[data-terreno="verde"] { stroke: var(--terra-verde); }
+  .mapa-mundo .terra[data-terreno="tropico"] { stroke: var(--terra-tropico); }
+  .mapa-mundo .terra[data-terreno="deserto"] { stroke: var(--terra-deserto); }
+  .mapa-mundo .terra[data-terreno="tundra"] { stroke: var(--terra-tundra); }
+  .mapa-mundo .terra[data-terreno="gelo"] { stroke: var(--terra-gelo); }
   .mapa-mundo .foco {
     cursor: pointer;
     transition: transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
   }
-  .mapa-mundo .foco .nucleo { fill: var(--latao); }
-  .mapa-mundo .foco .anel { fill: none; stroke: var(--latao); stroke-width: 0.6; opacity: 0.55; }
-  .mapa-mundo .foco .halo { fill: var(--latao); opacity: 0.1; }
+  /* O toque acerta num alvo invisível de 9 unidades: o dedo é maior do que o
+     ponto, e os halos dos vizinhos deixam de roubar o clique. */
+  .mapa-mundo .foco .halo,
+  .mapa-mundo .foco .anel,
+  .mapa-mundo .foco .nucleo { pointer-events: none; }
+  .mapa-mundo .foco .alvo { fill: transparent; }
+  .mapa-mundo .foco .nucleo { fill: #f2b430; stroke: rgba(0, 0, 0, 0.45); stroke-width: 0.5; }
+  .mapa-mundo .foco .anel { fill: none; stroke: #f2b430; stroke-width: 0.7; opacity: 0.7; }
+  .mapa-mundo .foco .halo { fill: #f2b430; opacity: 0.22; }
   /* Impacto alto pulsa: é o que se procura primeiro num mapa cheio de pontos. */
-  .mapa-mundo .foco[data-alto="sim"] .nucleo,
-  .mapa-mundo .foco[data-alto="sim"] .anel { fill: var(--rust); stroke: var(--rust); }
+  .mapa-mundo .foco[data-alto="sim"] .nucleo { fill: #e8402f; stroke: rgba(0, 0, 0, 0.45); }
+  .mapa-mundo .foco[data-alto="sim"] .anel { stroke: #e8402f; }
   .mapa-mundo .foco[data-alto="sim"] .halo {
-    fill: var(--rust);
+    fill: #e8402f;
     animation: pulsar 2.4s ease-out infinite;
     transform-origin: center;
   }
@@ -1394,8 +1440,8 @@
     70% { opacity: 0; transform: scale(1.35); }
     100% { opacity: 0; transform: scale(1.35); }
   }
-  .mapa-mundo .foco[aria-current="true"] .nucleo { fill: var(--papel); }
-  .mapa-mundo .foco[aria-current="true"] .anel { stroke: var(--papel); opacity: 1; stroke-width: 0.9; }
+  .mapa-mundo .foco[aria-current="true"] .nucleo { fill: #fff; stroke: #111; stroke-width: 0.8; }
+  .mapa-mundo .foco[aria-current="true"] .anel { stroke: #fff; opacity: 1; stroke-width: 1; }
 
   .fichas-foco {
     display: flex;
@@ -1446,10 +1492,10 @@
   .mapa-legenda .bolha {
     width: 7px; height: 7px;
     border-radius: 50%;
-    background: var(--latao);
+    background: #f2b430;
     display: inline-block;
   }
-  .mapa-legenda .bolha.alto { background: var(--rust); }
+  .mapa-legenda .bolha.alto { background: #e8402f; }
   .mapa-legenda .bolha + i { margin-left: 0.5rem; }
 
   .medidor-caixa { margin-top: 0.6rem; }
@@ -1481,6 +1527,53 @@
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--papel-fosco);
+  }
+
+  /* Os blocos do painel dentro das abas: mais apertados do que na edição, que
+     ali tinham a página toda para respirar. */
+  .painel-aba { margin: 0.6rem var(--gap) 0.4rem; }
+  .painel-aba .bloco { padding: 1.1rem 0 0.9rem; }
+  .painel-aba .bloco > .rotulo { margin-bottom: 0.7rem; font-size: 0.58rem; letter-spacing: 0.16em; }
+  .painel-aba .tabela { font-size: 0.8rem; }
+  .painel-aba .tabela td { padding: 0.5rem 0; }
+  .painel-aba .duas { gap: 0.8rem; }
+  .destaque-aba { margin: 0.7rem var(--gap) 0.2rem; }
+  /* Listas das abas: nome e número na primeira linha, explicação por baixo. Nas
+     tabelas do ecrã da edição a explicação some-se no telemóvel por falta de
+     largura, e é justamente o que aqui se quer ler. */
+  .lista-aba { display: grid; }
+  .linha-aba {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: baseline;
+    gap: 0.1rem 0.7rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--tinta-2);
+  }
+  .linha-aba:last-child { border-bottom: 0; }
+  .linha-aba .nome { font-weight: 600; font-size: 0.88rem; }
+  .linha-aba .valor { font-family: var(--meta); font-size: 0.8rem; }
+  .linha-aba .direita { font-family: var(--meta); font-size: 0.8rem; text-align: right; white-space: nowrap; }
+  .linha-aba .prob { color: var(--papel-fosco); }
+  /* Chama-se explica e não leitura: .leitura já é o painel de leitura, com
+     padding e margem automática próprios, e estava a empurrar o texto. */
+  .linha-aba .explica {
+    grid-column: 1 / -1;
+    margin: 0.15rem 0 0;
+    padding: 0;
+    max-width: none;
+    color: var(--papel-fosco);
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+
+  .grelha-risco { margin-top: 0.9rem; }
+  .grelha-risco span:first-child { font-size: 0.75rem; }
+  .grelha-risco span:last-child { font-size: 0.72rem; }
+  .noticia .meta .min {
+    margin-left: 0.4rem;
+    color: var(--papel-fosco);
+    opacity: 0.85;
   }
 
   /* Emojis: fonte do sistema, para não herdarem a mono nem a display. */
