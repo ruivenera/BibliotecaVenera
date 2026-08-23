@@ -154,6 +154,11 @@ function limparImagem(img) {
  * publica sem foto.
  */
 const AGENTE = "VeneraBiblioteca/1.0 (biblioteca pessoal de estudo)";
+/* Palavras que aparecem em todo o lado e não servem para confirmar nada. */
+const PALAVRAS_VAZIAS = new Set([
+  "the", "and", "with", "from", "that", "this", "into", "over", "near", "para",
+  "pela", "pelo", "como", "sobre", "entre", "photo", "image", "picture",
+]);
 const CACHE_ACHOU = 60 * 60 * 24 * 30; // um mês: bandeiras e edifícios não mudam
 const CACHE_FALHOU = 60 * 60 * 24; // um dia: dá para tentar outra vez amanhã
 
@@ -186,6 +191,17 @@ async function procurarNoCommons(termo) {
   if (!resposta.ok) return null;
 
   const dados = await resposta.json();
+
+  /* O primeiro resultado do Commons não é forçosamente o certo: uma pesquisa por
+     mísseis já devolveu a bandeira da Turquia. Só passa quem tiver no título uma
+     palavra do que foi pedido — e bandeiras só quando a bandeira é que se pediu. */
+  const palavras = termo
+    .toLowerCase()
+    .split(/[^a-zà-ÿ0-9]+/i)
+    .filter((p) => p.length >= 4 && !PALAVRAS_VAZIAS.has(p));
+  const pediuBandeira = /\bflag\b|\bbandeira\b/i.test(termo);
+
+  let melhor = null;
   for (const pagina of dados?.query?.pages || []) {
     const info = pagina?.imageinfo?.[0];
     const url = info?.thumburl || info?.url;
@@ -196,12 +212,24 @@ async function procurarNoCommons(termo) {
     } catch {
       continue;
     }
-    const autor = semEtiquetas(info?.extmetadata?.Artist?.value).slice(0, 90);
-    const licenca = semEtiquetas(info?.extmetadata?.LicenseShortName?.value).slice(0, 40);
-    const credito = [autor || "Wikimedia Commons", licenca].filter(Boolean).join(" · ");
-    return { url, credito: frase(credito, 160) };
+
+    const titulo = String(pagina.title || "").toLowerCase();
+    if (!pediuBandeira && /\bflag\b|\bcoat of arms\b|\bemblem\b/.test(titulo)) continue;
+
+    const acertos = palavras.filter((p) => titulo.includes(p)).length;
+    if (palavras.length && !acertos) continue;
+
+    if (!melhor || acertos > melhor.acertos) {
+      const autor = semEtiquetas(info?.extmetadata?.Artist?.value).slice(0, 90);
+      const licenca = semEtiquetas(info?.extmetadata?.LicenseShortName?.value).slice(0, 40);
+      const credito = [autor || "Wikimedia Commons", licenca].filter(Boolean).join(" · ");
+      melhor = { acertos, url, credito: frase(credito, 160) };
+    }
   }
-  return null;
+
+  // Sem nada que sirva, prefere-se não publicar imagem nenhuma: a app põe lá a
+  // bandeira do país e ninguém fica a olhar para uma fotografia errada.
+  return melhor ? { url: melhor.url, credito: melhor.credito } : null;
 }
 
 /** Uma pesquisa por termo e por mês: o KV poupa a API e acelera a ingestão. */
