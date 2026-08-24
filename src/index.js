@@ -232,9 +232,18 @@ async function procurarNoCommons(termo) {
   return melhor ? { url: melhor.url, credito: melhor.credito } : null;
 }
 
-/** Uma pesquisa por termo e por mês: o KV poupa a API e acelera a ingestão. */
+/**
+ * Uma pesquisa por termo e por mês: o KV poupa a API e acelera a ingestão.
+ *
+ * O número no prefixo é a versão do filtro. Quando as regras de escolha mudam,
+ * sobe-se o número e as respostas antigas deixam de ser lidas — sem isto, uma
+ * bandeira turca guardada ontem continuava a ser servida durante trinta dias,
+ * sem nunca passar pelo filtro novo.
+ */
+const VERSAO_IMAGENS = 2;
+
 async function resolverImagem(env, termo) {
-  const chave = `imagem:${termo.toLowerCase().slice(0, 120)}`;
+  const chave = `imagem${VERSAO_IMAGENS}:${termo.toLowerCase().slice(0, 120)}`;
   const guardada = await env.VENERA.get(chave, "json").catch(() => null);
   if (guardada) return guardada.url ? guardada : null;
 
