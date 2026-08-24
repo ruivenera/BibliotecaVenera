@@ -2300,7 +2300,153 @@ const anel = (pct) => `<svg class="anel" viewBox="0 0 40 40">
   <text x="20" y="20">${pct}</text>
 </svg>`;
 
+/* ------------------------------------------------------------ áreas base --- */
+
+/**
+ * Seis áreas de arranque, cada uma com um percurso já escrito do princípio ao
+ * fim. Semeiam-se uma vez só: se depois forem apagadas, ficam apagadas.
+ */
+const AREAS_SEMENTE = [
+  {
+    nome: "Cozinha",
+    sigla: "CZ",
+    cor: "latao",
+    temas: [
+      "Afiar e usar a faca: corte em juliana, brunoise e chiffonade",
+      "Os cinco sabores e como corrigir um prato salgado, ácido ou insonso",
+      "Refogado: cebola, alho e a base de metade dos pratos portugueses",
+      "Selar carne: reação de Maillard, tempo de repouso e ponto",
+      "Peixe: escamar, amanhar e assar inteiro sem secar",
+      "Arroz, massa e batata: proporções de água e tempos de cozedura",
+      "Ovos: mexidos, escalfados e omelete francesa",
+      "Molhos-mãe: bechamel, holandês e vinagretes que não se separam",
+      "Sopa: caldo de legumes, de galinha e de peixe",
+      "Fermento e pão: massa mãe, tempos de levedação e forno",
+      "Conservação: congelar bem, marinar e curar",
+      "Planear a semana: lista de compras e cozinhar em lote",
+    ],
+  },
+  {
+    nome: "Mecânica",
+    sigla: "MC",
+    cor: "rust",
+    temas: [
+      "As quatro fases do motor a quatro tempos",
+      "Óleo e filtros: quando mudar e o que dizem as especificações",
+      "Travões: pastilhas, discos, líquido e sinais de desgaste",
+      "Pneus: pressão, desgaste irregular, TPMS e mudança de roda",
+      "Bateria e alternador: medir com multímetro e arrancar com pinças",
+      "Correia de distribuição contra corrente: prazos e risco",
+      "Sistema de arrefecimento: radiador, termóstato e sobreaquecimento",
+      "Suspensão e direção: amortecedores, rótulas e alinhamento",
+      "Ler códigos OBD2 e perceber a luz do motor",
+      "Embraiagem e caixa: manual, automática e sinais de fim de vida",
+      "Diesel moderno: filtro de partículas, EGR e AdBlue",
+      "Inspeção periódica: o que reprova e como preparar o carro",
+    ],
+  },
+  {
+    nome: "Eletricidade",
+    sigla: "EL",
+    cor: "indigo",
+    temas: [
+      "Tensão, corrente, resistência e a lei de Ohm",
+      "Potência e consumo: watts, kWh e o que pesa na fatura",
+      "Corrente alterna e contínua: onde aparece cada uma",
+      "Quadro elétrico: disjuntores, diferencial e o que faz saltar a luz",
+      "Ligação à terra e por que razão salva vidas",
+      "Secções de cabo e a corrente que cada uma aguenta",
+      "Trocar uma tomada, um interruptor e um ponto de luz em segurança",
+      "Circuito de escada: dois interruptores, uma lâmpada",
+      "Usar o multímetro: continuidade, tensão e resistência",
+      "Iluminação LED: lúmen, temperatura de cor e drivers",
+      "Fotovoltaico doméstico: painéis, inversor e autoconsumo",
+      "Primeiros socorros em choque elétrico",
+    ],
+  },
+  {
+    nome: "Coisas úteis",
+    sigla: "UT",
+    cor: "sobe",
+    temas: [
+      "Canalização básica: desentupir, trocar torneira e sifão",
+      "Furar parede: brocas, buchas e onde não furar",
+      "Pintar uma divisão: preparação, primário e acabamento",
+      "Nós essenciais: direito, oito, volta do fiel e nó de pescador",
+      "Kit de primeiros socorros e o que fazer nos primeiros cinco minutos",
+      "Extintores: classes de fogo e qual usar",
+      "Ler uma fatura de água, luz e gás",
+      "Orçamento pessoal: registar, categorizar e poupar por objetivo",
+      "Impostos: IRS, escalões e deduções que se perdem por esquecimento",
+      "Contratos e seguros: o que ler antes de assinar",
+      "Segurança digital: gestor de palavras-passe e dois fatores",
+      "Manutenção de casa por estação do ano",
+    ],
+  },
+  {
+    nome: "História",
+    sigla: "HI",
+    cor: "indigo",
+    temas: [
+      "Mesopotâmia e Egito: escrita, cidade e Estado",
+      "Grécia: pólis, democracia ateniense e o legado do pensamento",
+      "Roma: república, império e as razões da queda",
+      "Idade Média: feudalismo, Igreja e as invasões",
+      "Formação de Portugal: condado, Afonso Henriques e a reconquista",
+      "Expansão marítima: Ceuta, Índia, Brasil e o preço humano",
+      "Renascimento, Reforma e revolução científica",
+      "Revoluções liberais: França, América e o constitucionalismo",
+      "Revolução Industrial e o nascimento do operariado",
+      "Primeira República e o Estado Novo em Portugal",
+      "Duas guerras mundiais e o Holocausto",
+      "Guerra Fria, descolonização e o 25 de Abril",
+      "Integração europeia e o mundo depois de 1989",
+    ],
+  },
+  {
+    nome: "Francês",
+    sigla: "FR",
+    cor: "latao",
+    temas: [
+      "Alfabeto, sons nasais e as ligações entre palavras",
+      "Cumprimentos, apresentações e tratamento por tu ou vous",
+      "Artigos definidos, indefinidos e partitivos",
+      "Presente dos verbos em -er, -ir e -re",
+      "Être, avoir, aller e faire: os quatro que abrem tudo",
+      "Números, horas, dias e datas",
+      "Perguntar: est-ce que, inversão e as palavras interrogativas",
+      "Passado composto contra imperfeito",
+      "Futuro próximo e futuro simples",
+      "Pronomes complemento: le, la, lui, y, en",
+      "Vocabulário do dia a dia: casa, comida, transportes, trabalho",
+      "Subjuntivo presente: quando e porquê",
+      "Ler um jornal francês e ouvir rádio sem legendas",
+    ],
+  },
+];
+
+function semearAreas() {
+  if (localStorage.getItem("venera:areas-semente")) return;
+  localStorage.setItem("venera:areas-semente", "1");
+  if (vivos("areas").length) return; // quem já tinha as suas fica com elas
+  for (const base of AREAS_SEMENTE) {
+    alterar("areas", {
+      id: id(),
+      nome: base.nome,
+      sigla: base.sigla,
+      cor: base.cor,
+      temas: base.temas.map((nome) => ({ nome, feito: false })),
+      criado_em: Date.now(),
+      apagado: false,
+    });
+  }
+}
+
+/** O primeiro tema por fazer de uma área — o que vem a seguir. */
+const proximoTema = (area) => area.temas.find((t) => !t.feito)?.nome || "";
+
 function desenharAprendizagem() {
+  semearAreas();
   const areas = vivos("areas");
   const curso = estado.edicaoCurso;
 
@@ -2319,13 +2465,80 @@ function desenharAprendizagem() {
     mosaico(`<svg viewBox="0 0 24 24"><path d="m12 3 2.6 5.6 6 .8-4.4 4.2 1.1 6L12 16.8 6.7 19.6l1.1-6L3.4 9.4l6-.8z"/></svg>`, temasFeitos + cartoesSabidos, "Conceitos sabidos"),
   ].join("");
 
+  /* A aula que está na app é a última publicada, não necessariamente a de hoje.
+     Dizer "o curso de hoje" quando a rotina não corre há onze dias é mentira, e
+     ainda por cima esconde que a rotina parou. */
+  const diasDesde = (data) => {
+    if (!data) return null;
+    const d = new Date(`${data}T12:00:00`);
+    return Math.max(0, Math.round((Date.now() - d.getTime()) / DIA));
+  };
+  const atraso = curso ? diasDesde(curso.data) : null;
+  const frescura =
+    atraso === null
+      ? ""
+      : atraso === 0
+        ? `<span class="selo fresco">hoje</span>`
+        : atraso === 1
+          ? `<span class="selo velho">ontem</span>`
+          : `<span class="selo velho">há ${atraso} dias</span>`;
+
   $("#aprender-curso").innerHTML = curso
     ? `<button class="cartao-curso" data-abrir-curso>
         <span class="rotulo" style="color:var(--indigo)">${esc(NOMES["inteligencia-artificial"])}</span>
         <h3>${esc(curso.titulo)}</h3>
-        <span class="selos">${desenharProgresso(curso.progresso) || `<span class="selo">${curso.itens.length} capítulos</span>`}</span>
-      </button>`
+        <span class="selos">${desenharProgresso(curso.progresso) || `<span class="selo">${curso.itens.length} capítulos</span>`}${frescura}</span>
+      </button>${
+        atraso > 1
+          ? `<p class="aviso-rotina rotulo">A rotina de IA não publica desde ${esc(
+              porExtenso(curso.data)
+            )}.</p>`
+          : ""
+      }`
     : `<div class="grupo"><p class="linha"><span class="texto"><span>A aula de hoje ainda não foi publicada.</span></span></p></div>`;
+
+  /* Plano do dia: a aula, os cartões devidos e um tema por fazer, escolhido de
+     forma estável pelo dia do ano — hoje é sempre o mesmo, amanhã é outro. */
+  const porFazer = areas.flatMap((a) => a.temas.filter((t) => !t.feito).map((t) => ({ a, t })));
+  const diaDoAno = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / DIA);
+  const sugerido = porFazer.length ? porFazer[diaDoAno % porFazer.length] : null;
+  const cartoesDevidos = devidos().length;
+
+  const linhaPlano = (icone, texto, extra, accao) =>
+    `<button class="linha-plano" ${accao}>
+      <span class="emoji">${icone}</span>
+      <span class="corpo"><b>${texto}</b>${extra ? `<span>${extra}</span>` : ""}</span>
+      <span class="seta">›</span>
+    </button>`;
+
+  $("#aprender-plano").innerHTML = `<div class="grupo">${[
+    curso
+      ? linhaPlano(
+          "📘",
+          esc(curso.titulo),
+          `${NOMES["inteligencia-artificial"]}${atraso ? ` · há ${atraso} dias` : " · hoje"}`,
+          "data-abrir-curso"
+        )
+      : "",
+    cartoesDevidos
+      ? linhaPlano(
+          "🔁",
+          `${cartoesDevidos} ${cartoesDevidos === 1 ? "cartão" : "cartões"} para rever`,
+          "Revisão espaçada",
+          'data-ir="revisao"'
+        )
+      : linhaPlano("🔁", "Nada para rever hoje", "Revisão espaçada", 'data-ir="revisao"'),
+    sugerido
+      ? linhaPlano(
+          "🎯",
+          esc(sugerido.t.nome),
+          `Próximo tema · ${esc(sugerido.a.nome)}`,
+          `data-area="${esc(sugerido.a.id)}"`
+        )
+      : "",
+  ]
+    .filter(Boolean)
+    .join("")}</div>`;
 
   $("#aprender-areas").innerHTML = areas.length
     ? `<div class="grupo">${areas
@@ -2335,7 +2548,8 @@ function desenharAprendizagem() {
             <span class="bloco-area">${esc(a.sigla || SIGLA(a.nome))}</span>
             <span class="corpo">
               <h4>${esc(a.nome)}</h4>
-              <span class="rotulo">${a.temas.length} temas · ${pct}%</span>
+              <span class="rotulo">${a.temas.filter((t) => t.feito).length} de ${a.temas.length} · ${pct}%</span>
+              ${proximoTema(a) ? `<span class="seguinte">a seguir: ${esc(proximoTema(a))}</span>` : ""}
               <span class="barra-progresso" style="margin-top:0.4rem"><i style="width:${pct}%"></i></span>
             </span>
           </button>`;
