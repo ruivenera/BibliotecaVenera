@@ -1697,6 +1697,68 @@
   }
   .veredicto-aba p { margin: 0.35rem 0 0; font-size: 0.88rem; line-height: 1.55; }
 
+  /* ------------------------------------------------------ plano do dia --- */
+  .linha-plano {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    width: 100%;
+    padding: 0.75rem 0.9rem;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--tinta-3);
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .linha-plano:last-child { border-bottom: 0; }
+  .linha-plano .emoji {
+    flex: none;
+    width: 34px; height: 34px;
+    display: grid;
+    place-items: center;
+    margin: 0;
+    background: var(--tinta-2);
+    border: 1px solid var(--tinta-3);
+    border-radius: 10px;
+    font-size: 1rem;
+  }
+  .linha-plano .corpo { flex: 1; min-width: 0; display: grid; gap: 0.15rem; }
+  .linha-plano .corpo b {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 0.9rem;
+    line-height: 1.25;
+    color: var(--titulo, var(--papel));
+  }
+  .linha-plano .corpo span {
+    font-family: var(--meta);
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--papel-fosco);
+  }
+  .linha-plano .seta { flex: none; color: var(--papel-fosco); font-size: 1.1rem; }
+
+  /* Frescura da aula e aviso de rotina parada. */
+  .selo.fresco { color: var(--sobe); border-color: color-mix(in srgb, var(--sobe) 45%, transparent); }
+  .selo.velho { color: var(--papel-fosco); }
+  .aviso-rotina {
+    display: block;
+    margin: 0.5rem var(--gap) 0;
+    font-size: 0.55rem;
+    color: var(--papel-fosco);
+    text-transform: none;
+    letter-spacing: 0.06em;
+  }
+  .area .seguinte {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.76rem;
+    line-height: 1.35;
+    color: var(--papel-fosco);
+  }
+
   /* Emojis: fonte do sistema, para não herdarem a mono nem a display. */
   .emoji {
     font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
@@ -2326,19 +2388,24 @@
       </span>
     </div>
 
-    <span class="rotulo-seccao">O teu progresso</span>
+    <span class="rotulo-seccao"><i class="emoji">📈</i>O teu progresso</span>
     <div class="grupo">
       <div class="mosaicos" id="aprender-numeros"></div>
     </div>
 
     <div class="cabecalho-lista">
-      <span class="rotulo">O curso de hoje</span>
+      <span class="rotulo"><i class="emoji">🎯</i>O plano de hoje</span>
+    </div>
+    <div id="aprender-plano"></div>
+
+    <div class="cabecalho-lista">
+      <span class="rotulo"><i class="emoji">📘</i>A última aula</span>
       <button class="ver-mais" data-ir="aprendizagem-arquivo">Anteriores ›</button>
     </div>
     <div id="aprender-curso"></div>
 
     <div class="cabecalho-lista">
-      <span class="rotulo">As tuas áreas</span>
+      <span class="rotulo"><i class="emoji">🗂️</i>As tuas áreas</span>
       <button class="ver-mais" id="btn-area-nova">+ Nova área</button>
     </div>
     <div id="aprender-areas"></div>
