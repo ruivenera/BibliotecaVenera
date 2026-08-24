@@ -1258,7 +1258,9 @@ function desenharNoticias() {
     geral: () =>
       blocoIndices() +
       cabecalho("Destaques de investimentos", EMOJI("📈"), "mercado") +
-      lista(mercado.slice(0, 4), semMercado) +
+      // Três, agora que cada linha respira mais: com quatro, a geopolítica caía
+      // outra vez para debaixo da barra.
+      lista(mercado.slice(0, 3), semMercado) +
       cabecalho("Geopolítica", EMOJI("🌍"), "geo") +
       carrossel(geopoliticos) +
       emPainel(
