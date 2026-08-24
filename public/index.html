@@ -236,7 +236,7 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 1rem;
-    padding: 0.35rem var(--gap) 0;
+    padding: 0.7rem var(--gap) 0;
   }
   .cabecalho-pagina h1 {
     font-family: var(--display);
@@ -249,7 +249,7 @@
     line-height: 1.05;
     margin: 0;
   }
-  .cabecalho-pagina .sub { margin: 0.18rem 0 0; color: var(--papel-fosco); font-size: 0.78rem; }
+  .cabecalho-pagina .sub { margin: 0.38rem 0 0; color: var(--papel-fosco); font-size: 0.78rem; }
   .cabecalho-pagina .sub.rotulo { color: var(--latao); }
 
   .botao-icone {
@@ -285,7 +285,7 @@
   }
 
   .grupo {
-    margin: 0 var(--gap) 0.35rem;
+    margin: 0 var(--gap) 0.25rem;
     background: color-mix(in srgb, var(--tinta-2) 60%, transparent);
     border: 1px solid var(--tinta-3);
     border-radius: 12px;
@@ -1160,16 +1160,16 @@
 
   .separadores {
     display: flex;
-    gap: 1.6rem;
-    padding: 0.45rem var(--gap) 0;
+    gap: 1.7rem;
+    padding: 0.85rem var(--gap) 0;
     border-bottom: 1px solid var(--tinta-3);
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.55rem;
   }
   .separador {
     background: none;
     border: 0;
     border-bottom: 2px solid transparent;
-    padding: 0 0 0.5rem;
+    padding: 0 0 0.6rem;
     color: var(--papel-fosco);
     font-family: var(--meta);
     font-size: 0.72rem;
@@ -1187,7 +1187,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(6.2rem, 1fr));
     gap: 0.6rem;
-    padding: 0 var(--gap) 0.45rem;
+    padding: 0 var(--gap) 0.35rem;
   }
   .indices::-webkit-scrollbar { display: none; }
   .cartao-indice {
@@ -1230,8 +1230,8 @@
   .caixa-data {
     display: flex;
     align-items: center;
-    gap: 0.7rem;
-    padding: 0.15rem var(--gap) 0;
+    gap: 0.75rem;
+    padding: 0.6rem var(--gap) 0;
   }
   .icone-data {
     flex: none;
@@ -1290,7 +1290,7 @@
   /* Faixa tipográfica no lugar da fotografia. */
   .faixa-geo {
     flex: none;
-    height: 88px;
+    height: 84px;
     overflow: hidden;
     display: grid;
     place-items: center;
@@ -1304,7 +1304,7 @@
   .faixa-geo.com-foto { position: relative; padding: 0; }
   /* Altura em pixéis, não em percentagem: com percentagem a imagem crescia para
      lá da faixa e ia cair por cima da etiqueta e do título. */
-  .faixa-geo.com-foto img { width: 100%; height: 88px; object-fit: cover; display: block; }
+  .faixa-geo.com-foto img { width: 100%; height: 84px; object-fit: cover; display: block; }
   /* O crédito não aparece no cartão — fica no artigo, por baixo da fotografia
      em tamanho grande, que é onde a licença pede que esteja. A regra apanha
      também a classe antiga, caso o telemóvel ainda tenha o JS em cache. */
@@ -1802,7 +1802,7 @@
     gap: 1rem;
     /* Cabeçalhos de secção com ar em cima: colados à lista anterior liam-se
        como parte dela. */
-    padding: 0.95rem var(--gap) 0.45rem;
+    padding: 0.8rem var(--gap) 0.4rem;
   }
   .cabecalho-lista .rotulo { display: flex; align-items: center; gap: 0.45rem; }
   .cabecalho-lista svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.6; }
