@@ -12,11 +12,34 @@ const TIPOS = ["notas", "cartoes", "livros", "areas"];
 const COR = {
   "financas-geopolitica": "var(--latao)",
   "inteligencia-artificial": "var(--indigo)",
+  "curso-cozinha": "var(--latao)",
+  "curso-mecanica": "var(--rust)",
+  "curso-eletricidade": "var(--indigo)",
+  "curso-uteis": "var(--sobe)",
+  "curso-historia": "var(--papel-fosco)",
+  "curso-frances": "var(--latao)",
 };
 let NOMES = {
   "financas-geopolitica": "Finanças & Geopolítica",
   "inteligencia-artificial": "Inteligência Artificial",
+  "curso-cozinha": "Cozinha",
+  "curso-mecanica": "Mecânica",
+  "curso-eletricidade": "Eletricidade",
+  "curso-uteis": "Coisas úteis",
+  "curso-historia": "História",
+  "curso-frances": "Francês",
 };
+
+/* Todos os cursos vivem na aba Aprender. A de IA à cabeça, por ser a mais antiga. */
+const CURSOS = [
+  "inteligencia-artificial",
+  "curso-historia",
+  "curso-frances",
+  "curso-cozinha",
+  "curso-mecanica",
+  "curso-eletricidade",
+  "curso-uteis",
+];
 
 /* --------------------------------------------------------------- estado --- */
 
@@ -164,6 +187,12 @@ const VISTAS = [
 const MODULO = {
   "financas-geopolitica": "noticias",
   "inteligencia-artificial": "aprendizagem",
+  "curso-cozinha": "aprendizagem",
+  "curso-mecanica": "aprendizagem",
+  "curso-eletricidade": "aprendizagem",
+  "curso-uteis": "aprendizagem",
+  "curso-historia": "aprendizagem",
+  "curso-frances": "aprendizagem",
 };
 const ROTINA_DO_MODULO = { noticias: "financas-geopolitica", aprendizagem: "inteligencia-artificial" };
 
@@ -256,9 +285,13 @@ async function carregarModulo(rotina) {
     const { estanteDados, feed } = await buscarEstante();
     NOMES = estanteDados.rotinas || NOMES;
     marcarEstado("guardado", "ligado");
-    desenharEstante(estanteDados.lombadas.filter((l) => l.rotina === rotina), modulo);
-    desenharDossies(feed.edicoes.filter((e) => e.rotina === rotina), rotina, modulo);
+    // Na aprendizagem não há uma rotina, há sete: a estante e o arquivo juntam-nas.
+    const daVista = (r) => (modulo === "aprendizagem" ? MODULO[r] === "aprendizagem" : r === rotina);
+    desenharEstante(estanteDados.lombadas.filter((l) => daVista(l.rotina)), modulo);
+    desenharDossies(feed.edicoes.filter((e) => daVista(e.rotina)), rotina, modulo);
     if (modulo === "aprendizagem") {
+      // A aula mais recente de cada curso, pela ordem em que os cursos vivem.
+      estado.cursos = CURSOS.map((r) => feed.edicoes.find((e) => e.rotina === r)).filter(Boolean);
       estado.edicaoCurso = feed.edicoes.find((e) => e.rotina === rotina) || null;
       // O cabeçalho é a data de hoje, não a da última aula: a página é de hoje,
       // a aula é que pode ser velha — e isso já se diz no cartão dela.
@@ -2310,6 +2343,7 @@ const anel = (pct) => `<svg class="anel" viewBox="0 0 40 40">
 const AREAS_SEMENTE = [
   {
     nome: "Cozinha",
+    rotina: "curso-cozinha",
     sigla: "CZ",
     cor: "latao",
     temas: [
@@ -2329,6 +2363,7 @@ const AREAS_SEMENTE = [
   },
   {
     nome: "Mecânica",
+    rotina: "curso-mecanica",
     sigla: "MC",
     cor: "rust",
     temas: [
@@ -2348,6 +2383,7 @@ const AREAS_SEMENTE = [
   },
   {
     nome: "Eletricidade",
+    rotina: "curso-eletricidade",
     sigla: "EL",
     cor: "indigo",
     temas: [
@@ -2367,6 +2403,7 @@ const AREAS_SEMENTE = [
   },
   {
     nome: "Coisas úteis",
+    rotina: "curso-uteis",
     sigla: "UT",
     cor: "sobe",
     temas: [
@@ -2386,6 +2423,7 @@ const AREAS_SEMENTE = [
   },
   {
     nome: "História",
+    rotina: "curso-historia",
     sigla: "HI",
     cor: "indigo",
     temas: [
@@ -2406,6 +2444,7 @@ const AREAS_SEMENTE = [
   },
   {
     nome: "Francês",
+    rotina: "curso-frances",
     sigla: "FR",
     cor: "latao",
     temas: [
@@ -2436,6 +2475,7 @@ function semearAreas() {
       nome: base.nome,
       sigla: base.sigla,
       cor: base.cor,
+      rotina: base.rotina || "",
       temas: base.temas.map((nome) => ({ nome, feito: false })),
       criado_em: Date.now(),
       apagado: false,
@@ -2467,6 +2507,7 @@ function desenharAprendizagem() {
   ].join("");
 
   /* A aula que está na app é a última publicada, não necessariamente a de hoje.
+     (diasDesde serve tanto o cartão da aula como a lista de cursos.)
      Dizer "o curso de hoje" quando a rotina não corre há onze dias é mentira, e
      ainda por cima esconde que a rotina parou. */
   const diasDesde = (data) => {
@@ -2484,20 +2525,6 @@ function desenharAprendizagem() {
           ? `<span class="selo velho">ontem</span>`
           : `<span class="selo velho">há ${atraso} dias</span>`;
 
-  $("#aprender-curso").innerHTML = curso
-    ? `<button class="cartao-curso" data-abrir-curso>
-        <span class="rotulo" style="color:var(--indigo)">${esc(NOMES["inteligencia-artificial"])}</span>
-        <h3>${esc(curso.titulo)}</h3>
-        <span class="selos">${desenharProgresso(curso.progresso) || `<span class="selo">${curso.itens.length} capítulos</span>`}${frescura}</span>
-      </button>${
-        atraso > 1
-          ? `<p class="aviso-rotina rotulo">A rotina de IA não publica desde ${esc(
-              porExtenso(curso.data)
-            )}.</p>`
-          : ""
-      }`
-    : `<div class="grupo"><p class="linha"><span class="texto"><span>A aula de hoje ainda não foi publicada.</span></span></p></div>`;
-
   /* Plano do dia: a aula, os cartões devidos e um tema por fazer, escolhido de
      forma estável pelo dia do ano — hoje é sempre o mesmo, amanhã é outro. */
   const porFazer = areas.flatMap((a) => a.temas.filter((t) => !t.feito).map((t) => ({ a, t })));
@@ -2512,15 +2539,20 @@ function desenharAprendizagem() {
       <span class="seta">›</span>
     </button>`;
 
+  // As aulas saídas hoje, de qualquer curso. Se nenhuma saiu, mostra-se a última.
+  const deHoje = (estado.cursos || []).filter((c) => diasDesde(c.data) === 0);
+  const aulas = deHoje.length ? deHoje : curso ? [curso] : [];
+
   $("#aprender-plano").innerHTML = `<div class="grupo">${[
-    curso
-      ? linhaPlano(
-          "📘",
-          esc(curso.titulo),
-          `${NOMES["inteligencia-artificial"]}${atraso ? ` · há ${atraso} dias` : " · hoje"}`,
-          "data-abrir-curso"
-        )
-      : "",
+    ...aulas.map((c) => {
+      const d = diasDesde(c.data);
+      return linhaPlano(
+        "📘",
+        esc(c.titulo),
+        `${esc(NOMES[c.rotina] || c.rotina)} · ${d === 0 ? "hoje" : d === 1 ? "ontem" : `há ${d} dias`}`,
+        `data-curso="${esc(c.rotina)}" data-data="${esc(c.data)}"`
+      );
+    }),
     cartoesDevidos
       ? linhaPlano(
           "🔁",
@@ -2540,6 +2572,29 @@ function desenharAprendizagem() {
   ]
     .filter(Boolean)
     .join("")}</div>`;
+
+  /* Um cartão por curso: o nome, a última aula e a idade dela. É por aqui que
+     se escolhe a aula que se quer, em vez de haver só a de IA. */
+  const cursos = estado.cursos || (curso ? [curso] : []);
+  $("#aprender-cursos").innerHTML = cursos.length
+    ? `<div class="grupo">${cursos
+        .map((c) => {
+          const dias = diasDesde(c.data);
+          const idade = dias === 0 ? "hoje" : dias === 1 ? "ontem" : `há ${dias} dias`;
+          return `<button class="linha-curso" data-curso="${esc(c.rotina)}" data-data="${esc(c.data)}"
+              style="--marcador:${COR[c.rotina] || "var(--latao)"}">
+              <span class="corpo">
+                <span class="rotulo">${esc(NOMES[c.rotina] || c.rotina)}</span>
+                <b>${esc(c.titulo)}</b>
+              </span>
+              <span class="idade rotulo" data-velho="${dias > 1 ? "sim" : "nao"}">${idade}</span>
+            </button>`;
+        })
+        .join("")}</div>`
+    : vazio(
+        "Ainda sem cursos publicados",
+        "Cada área tem a sua rotina em claude.ai. Assim que publicarem, as aulas aparecem aqui."
+      );
 
   $("#aprender-areas").innerHTML = areas.length
     ? `<div class="grupo">${areas
@@ -2678,25 +2733,21 @@ $("#aprender-areas").addEventListener("click", (e) => {
   if (alvo) abrirArea(estado.biblioteca.areas[alvo.dataset.area]);
 });
 
-$("#aprender-curso").addEventListener("click", () => {
-  const c = estado.edicaoCurso;
-  if (c) irPara("edicao", c.rotina, c.data);
-});
-
 /* O plano é desenhado a cada pintura: os seus botões vão por delegação, senão
    ficavam sem dono e o toque não fazia nada. */
-$("#aprender-plano").addEventListener("click", (e) => {
+function cliqueAprender(e) {
   const area = e.target.closest("[data-area]");
   if (area) return abrirArea(estado.biblioteca.areas[area.dataset.area]);
 
-  const curso = e.target.closest("[data-abrir-curso]");
-  if (curso && estado.edicaoCurso) {
-    return irPara("edicao", estado.edicaoCurso.rotina, estado.edicaoCurso.data);
-  }
+  const aula = e.target.closest("[data-curso]");
+  if (aula) return irPara("edicao", aula.dataset.curso, aula.dataset.data);
 
   const ir = e.target.closest("[data-ir]");
   if (ir) irPara(ir.dataset.ir);
-});
+}
+
+$("#aprender-plano").addEventListener("click", cliqueAprender);
+$("#aprender-cursos").addEventListener("click", cliqueAprender);
 
 document.querySelector('[data-ir="aprendizagem-arquivo"]').addEventListener("click", () => {
   const arquivo = $("#aprender-arquivo");

@@ -1751,6 +1751,34 @@
     margin-top: 0.25rem;
   }
 
+  /* Um cartão por curso, com a idade da última aula à direita. */
+  .linha-curso {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--tinta-3);
+    border-left: 2px solid var(--marcador, var(--latao));
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .linha-curso:last-child { border-bottom: 0; }
+  .linha-curso .corpo { flex: 1; min-width: 0; display: grid; gap: 0.2rem; }
+  .linha-curso .corpo .rotulo { color: var(--marcador, var(--latao)); font-size: 0.53rem; }
+  .linha-curso .corpo b {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 0.88rem;
+    line-height: 1.3;
+    color: var(--titulo, var(--papel));
+  }
+  .linha-curso .idade { flex: none; font-size: 0.52rem; color: var(--sobe); }
+  .linha-curso .idade[data-velho="sim"] { color: var(--papel-fosco); }
+
   /* ------------------------------------------------------ plano do dia --- */
   .linha-plano {
     display: flex;
@@ -2453,10 +2481,10 @@
     <div id="aprender-plano"></div>
 
     <div class="cabecalho-lista">
-      <span class="rotulo"><i class="emoji">📘</i>A última aula</span>
+      <span class="rotulo"><i class="emoji">📚</i>Os teus cursos</span>
       <button class="ver-mais" data-ir="aprendizagem-arquivo">Anteriores ›</button>
     </div>
-    <div id="aprender-curso"></div>
+    <div id="aprender-cursos"></div>
 
     <div class="cabecalho-lista">
       <span class="rotulo"><i class="emoji">🗂️</i>As tuas áreas</span>
