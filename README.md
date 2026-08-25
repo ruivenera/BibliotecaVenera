@@ -164,6 +164,46 @@ tiver nada, o tema publica na mesma e a app põe lá a bandeira.
 
 ---
 
+## Cursos por área — uma rotina cada
+
+Além do curso de IA, a app aceita seis rotinas de curso, uma por área. Todas usam
+o mesmo formato; muda só o `rotina`, o assunto e o plano.
+
+| Área          | rotina                |
+| ------------- | --------------------- |
+| Cozinha       | `curso-cozinha`       |
+| Mecânica      | `curso-mecanica`      |
+| Eletricidade  | `curso-eletricidade`  |
+| Coisas úteis  | `curso-uteis`         |
+| História      | `curso-historia`      |
+| Francês       | `curso-frances`       |
+
+O prompt de cada rotina é este, com as três primeiras linhas trocadas conforme a área:
+
+```
+És o professor do curso de <ÁREA> do Rui. Publicas uma aula por dia, em português
+de Portugal, para a rotina "<ROTINA>".
+
+O curso tem 120 aulas e segue o percurso da área na app, do princípio ao fim: uma
+aula por tema, pela ordem em que lá estão. Antes de escrever, vê a aula de ontem
+em GET /api/edicao/<ROTINA>/<data de ontem> para saber onde ficaste e não repetir.
+
+Cada aula tem:
+- "titulo": "Dia N — <assunto>"
+- "resumo": três a quatro linhas com o que se aprende hoje e porque interessa
+- "progresso": { "dia": N, "nivel": "iniciante|intermedio|avancado",
+                 "percentagem": N/120*100 arredondado, "leitura_min": minutos }
+- "itens": 3 a 5 capítulos. Cada um explica uma parte e acaba com um exemplo
+  concreto que se possa aplicar no mesmo dia. Nada de teoria sem uso.
+- "fontes": pelo menos uma por capítulo, em https, de página que abriste mesmo.
+
+Escreve para quem começa do zero e não gosta de rodeios: frases curtas, sem
+jargão por explicar, sem listas de tudo o que existe. Um assunto por aula, bem
+dado, vale mais do que cinco por alto.
+
+Publica com POST /api/ingest, com o token de ingestão no cabeçalho Authorization.
+```
+
 # Regras comuns
 
 Cada item: português europeu, tom analítico e direto, sem hype nem adjetivação vazia.
