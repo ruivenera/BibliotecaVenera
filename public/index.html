@@ -1753,6 +1753,162 @@
 
   .barra-accoes { display: flex; justify-content: flex-end; padding: 0 var(--gap) 0.5rem; }
 
+  /* ------------------------------------------------------------- leitura --- */
+  .heroi-leitura {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.9rem var(--gap) 0.6rem;
+  }
+  .heroi-leitura .dizeres { flex: 1; min-width: 0; }
+  .heroi-leitura h1 {
+    margin: 0.35rem 0 0.4rem;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 1.32rem;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--titulo, var(--papel));
+    text-wrap: balance;
+  }
+  .heroi-leitura .sub {
+    margin: 0;
+    font-size: 0.86rem;
+    line-height: 1.5;
+    color: var(--papel-fosco);
+    text-wrap: pretty;
+  }
+  .canto-leitura { flex: none; width: 132px; height: 99px; }
+  .canto-leitura .traco {
+    fill: none;
+    stroke: var(--latao);
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.85;
+  }
+  @media (max-width: 22rem) { .canto-leitura { display: none; } }
+
+  .barra-livros {
+    display: flex;
+    gap: 0.6rem;
+    padding: 0.2rem var(--gap) 0.8rem;
+  }
+  .barra-livros .campo { flex: 1; margin: 0; }
+  .barra-livros .btn { flex: none; white-space: nowrap; }
+
+  /* Painel da biblioteca: quatro contas em fila, com o traço a separar. */
+  .painel-livros {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    margin: 0 var(--gap) 0.9rem;
+    background: var(--tinta-2);
+    border: 1px solid var(--tinta-3);
+    border-radius: 13px;
+    overflow: hidden;
+  }
+  .painel-livros .celula {
+    padding: 0.75rem 0.5rem 0.8rem;
+    text-align: center;
+    border-right: 1px solid var(--tinta-3);
+  }
+  .painel-livros .celula:last-child { border-right: 0; }
+  .painel-livros svg { width: 17px; height: 17px; fill: none; stroke: var(--latao); stroke-width: 1.5; }
+  .painel-livros b {
+    display: block;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 1.15rem;
+    margin: 0.2rem 0 0.15rem;
+  }
+  .painel-livros span {
+    display: block;
+    font-family: var(--meta);
+    font-size: 0.48rem;
+    line-height: 1.4;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--papel-fosco);
+  }
+
+  /* Primeiro livro: o convite ocupa o lugar da lista enquanto ela está vazia. */
+  .convite-livros {
+    margin: 0 var(--gap) 0.6rem;
+    padding: 1.6rem 1.2rem 1.2rem;
+    background: var(--tinta-2);
+    border: 1px solid var(--tinta-3);
+    border-radius: 14px;
+    text-align: center;
+  }
+  .convite-livros .medalha {
+    width: 56px; height: 56px;
+    margin: 0 auto 0.9rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--latao) 12%, transparent);
+  }
+  .convite-livros .medalha svg { width: 26px; height: 26px; fill: none; stroke: var(--latao); stroke-width: 1.4; }
+  .convite-livros h3 {
+    margin: 0 0 0.5rem;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: var(--titulo, var(--papel));
+  }
+  .convite-livros p { margin: 0 0 1.1rem; color: var(--papel-fosco); font-size: 0.88rem; line-height: 1.5; }
+  .convite-livros .tres {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.7rem;
+    margin-top: 1.2rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--tinta-3);
+    text-align: left;
+  }
+  .convite-livros .tres svg { width: 15px; height: 15px; fill: none; stroke: var(--latao); stroke-width: 1.5; }
+  .convite-livros .tres b {
+    display: block;
+    margin: 0.3rem 0 0.15rem;
+    color: var(--latao);
+    font-family: var(--meta);
+    font-size: 0.55rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .convite-livros .tres span { font-size: 0.72rem; line-height: 1.4; color: var(--papel-fosco); }
+
+  .fichas-genero {
+    display: flex;
+    gap: 0.45rem;
+    overflow-x: auto;
+    padding: 0 var(--gap) 0.4rem;
+    scrollbar-width: none;
+  }
+  .fichas-genero::-webkit-scrollbar { display: none; }
+  .ficha-genero {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.55rem 0.7rem;
+    background: var(--tinta-2);
+    border: 1px solid var(--tinta-3);
+    border-radius: 11px;
+    color: var(--papel-fosco);
+    font-family: var(--meta);
+    font-size: 0.58rem;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .ficha-genero .emoji { margin: 0; font-size: 0.95rem; }
+  .ficha-genero[aria-current="true"] {
+    color: var(--papel);
+    border-color: var(--latao);
+    box-shadow: inset 0 0 0 1px var(--latao);
+  }
+
   /* ------------------------------------------------------- áreas e cursos --- */
   .cartoes-area { display: grid; gap: 0.7rem; margin: 0 var(--gap); }
   .cartao-area {
@@ -2598,14 +2754,50 @@
 
   <!-- ------------------------------------------------------ leitura (livros) -->
   <section class="vista" id="v-leitura" aria-label="Leitura">
-    <div class="seccao">
-      <div class="cabecalho-seccao">
+    <header class="heroi-leitura">
+      <div class="dizeres">
         <p class="rotulo">Leitura</p>
-        <button class="btn" id="btn-livro-novo">Novo livro</button>
+        <h1>A tua jornada começa aqui.</h1>
+        <p class="sub">Organiza, acompanha e aproveita cada livro ao máximo.</p>
       </div>
-      <input class="campo" id="procura-livros" type="search" placeholder="Procurar nos livros">
-      <div id="lista-livros"></div>
+      <!-- Um canto de leitura: estante, candeeiro e cadeirão, em traço de latão. -->
+      <svg class="canto-leitura" viewBox="0 0 200 150" aria-hidden="true">
+        <defs>
+          <radialGradient id="luz" cx="50%" cy="35%" r="55%">
+            <stop offset="0%" stop-color="var(--latao)" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="var(--latao)" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <circle cx="128" cy="52" r="58" fill="url(#luz)"/>
+        <g class="traco">
+          <rect x="140" y="18" width="52" height="96" rx="3"/>
+          <path d="M140 46h52M140 74h52M140 100h52"/>
+          <path d="M147 24v20M153 24v20M159 27v17M167 26v18M173 24v20"/>
+          <path d="M147 52v20M155 54v18M161 52v20M170 55v17"/>
+          <path d="M147 80v18M154 80v18M162 82v16"/>
+          <path d="M120 46h22M131 46v16" />
+          <ellipse cx="131" cy="46" rx="13" ry="4"/>
+          <path d="M124 38h14l4 8h-22z"/>
+          <path d="M96 114v-26a10 10 0 0 1 10-10h14a10 10 0 0 1 10 10v26"/>
+          <path d="M92 114h46M96 96h34"/>
+          <path d="M108 78v-8h10v8"/>
+          <path d="M118 62h18M127 62v6"/>
+        </g>
+      </svg>
+    </header>
+
+    <div class="barra-livros">
+      <input class="campo" id="procura-livros" type="search" placeholder="Procurar nos livros…">
+      <button class="btn" data-tom="forte" id="btn-livro-novo">+ Novo livro</button>
     </div>
+
+    <div id="numeros-livros"></div>
+    <div id="lista-livros"></div>
+
+    <div class="cabecalho-lista">
+      <span class="rotulo"><i class="emoji">✨</i>Inspiração para ler</span>
+    </div>
+    <div class="fichas-genero" id="generos-livros"></div>
   </section>
 
   <!-- -------------------------------------------------------------- artigo -->
@@ -2871,6 +3063,12 @@
   <p class="rotulo" id="livro-rotulo">Livro</p>
   <input class="campo" id="livro-titulo" placeholder="Título">
   <input class="campo" id="livro-autor" placeholder="Autor">
+  <input class="campo" id="livro-genero" placeholder="Género (ex.: Biografias)" list="generos-sugeridos">
+  <datalist id="generos-sugeridos">
+    <option value="Ficção"></option><option value="Desenvolvimento Pessoal"></option>
+    <option value="Negócios"></option><option value="História"></option>
+    <option value="Biografias"></option><option value="Ciência"></option>
+  </datalist>
   <div class="segmentado" role="group" aria-label="Estado do livro">
     <button class="btn" data-livro-estado="a_ler">A ler</button>
     <button class="btn" data-livro-estado="lido">Lido</button>

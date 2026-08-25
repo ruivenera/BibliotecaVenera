@@ -2782,14 +2782,54 @@ const ESTADOS_LIVRO = { a_ler: "A ler", lido: "Lido", recomendado: "Recomendado"
 
 let livroAberto = null;
 
+const GENEROS = [
+  ["📖", "Ficção"],
+  ["🌱", "Desenvolvimento Pessoal"],
+  ["💼", "Negócios"],
+  ["🏛️", "História"],
+  ["👤", "Biografias"],
+  ["🔬", "Ciência"],
+];
+
+/** Género escolhido nas fichas de inspiração. Vazio é a biblioteca toda. */
+let generoEscolhido = "";
+
+const ICONE_LIVRO = {
+  livros: `<svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h5v18H6a2 2 0 0 1-2-2zM20 5a2 2 0 0 0-2-2h-5v18h5a2 2 0 0 0 2-2z"/></svg>`,
+  aLer: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
+  lido: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>`,
+  depois: `<svg viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg>`,
+  organiza: `<svg viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg>`,
+  acompanha: `<svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>`,
+  descobre: `<svg viewBox="0 0 24 24"><path d="M12 4l2.4 5.2 5.6.7-4.2 3.9 1.2 5.6L12 16.6 6.9 19.4l1.2-5.6L4 9.9l5.6-.7z"/></svg>`,
+};
+
 function desenharLivros() {
   const procura = $("#procura-livros").value.trim().toLowerCase();
-  const lista = vivos("livros")
-    .filter((l) => !procura || `${l.titulo} ${l.autor} ${l.resumo}`.toLowerCase().includes(procura))
+  const todos = vivos("livros");
+
+  // Painel da biblioteca: as quatro contas que dizem em que pé vai a leitura.
+  const conta = (icone, n, l1, l2) =>
+    `<div class="celula">${icone}<b>${n}</b><span>${l1}<br>${l2}</span></div>`;
+  $("#numeros-livros").innerHTML = `<div class="painel-livros">
+    ${conta(ICONE_LIVRO.livros, todos.length, "Livros", "na biblioteca")}
+    ${conta(ICONE_LIVRO.aLer, todos.filter((l) => l.estado === "a_ler").length, "A ler", "agora")}
+    ${conta(ICONE_LIVRO.lido, todos.filter((l) => l.estado === "lido").length, "Lidos", "concluídos")}
+    ${conta(ICONE_LIVRO.depois, todos.filter((l) => l.estado === "recomendado").length, "Quero ler", "mais tarde")}
+  </div>`;
+
+  $("#generos-livros").innerHTML = GENEROS.map(
+    ([emoji, nome]) => `<button class="ficha-genero" data-genero="${esc(nome)}"
+      aria-current="${generoEscolhido === nome}"><i class="emoji">${emoji}</i>${esc(nome)}</button>`
+  ).join("");
+
+  const lista = todos
+    .filter((l) => !generoEscolhido || l.genero === generoEscolhido)
+    .filter((l) => !procura || `${l.titulo} ${l.autor} ${l.genero} ${l.resumo}`.toLowerCase().includes(procura))
     .sort((a, b) => b.atualizado_em - a.atualizado_em);
 
-  $("#lista-livros").innerHTML =
-    lista
+  if (lista.length) {
+    $("#lista-livros").innerHTML = lista
       .map(
         (l) => `<button class="livro" data-livro="${esc(l.id)}">
           <span class="rotulo estado-livro" data-estado="${esc(l.estado)}">${esc(
@@ -2797,17 +2837,47 @@ function desenharLivros() {
         )}</span>
           <h4>${esc(l.titulo || "Sem título")}</h4>
           ${l.autor ? `<p>${esc(l.autor)}</p>` : ""}
+          ${l.genero ? `<p class="rotulo">${esc(l.genero)}</p>` : ""}
           ${l.resumo ? `<p>${esc(l.resumo.slice(0, 120))}${l.resumo.length > 120 ? "…" : ""}</p>` : ""}
         </button>`
       )
-      .join("") ||
-    vazio(
-      procura ? "Nada encontrado" : "Ainda sem livros",
-      procura
-        ? "Não há livros com esse termo."
-        : "Acrescenta o primeiro: título, autor e o que quiseres guardar da leitura."
-    );
+      .join("");
+    return;
+  }
+
+  // Sem resultados a lista dá lugar ao convite — ou ao aviso de procura vazia.
+  const filtrado = procura || generoEscolhido;
+  $("#lista-livros").innerHTML = todos.length && filtrado
+    ? vazio(
+        "Nada encontrado",
+        generoEscolhido
+          ? `Ainda não tens livros em ${generoEscolhido}.`
+          : "Não há livros com esse termo."
+      )
+    : `<div class="convite-livros">
+        <span class="medalha">${ICONE_LIVRO.livros}</span>
+        <h3>Ainda não tens livros na biblioteca</h3>
+        <p>Adiciona o teu primeiro livro e começa a tua jornada de leitura.</p>
+        <button class="btn" data-tom="forte" id="btn-primeiro-livro">Adicionar primeiro livro</button>
+        <div class="tres">
+          <div>${ICONE_LIVRO.organiza}<b>Organiza</b><span>A tua biblioteca do teu jeito</span></div>
+          <div>${ICONE_LIVRO.acompanha}<b>Acompanha</b><span>O teu progresso de leitura</span></div>
+          <div>${ICONE_LIVRO.descobre}<b>Descobre</b><span>Novos livros e autores</span></div>
+        </div>
+      </div>`;
 }
+
+$("#generos-livros").addEventListener("click", (e) => {
+  const ficha = e.target.closest("[data-genero]");
+  if (!ficha) return;
+  // Tocar outra vez na mesma ficha limpa o filtro.
+  generoEscolhido = generoEscolhido === ficha.dataset.genero ? "" : ficha.dataset.genero;
+  desenharLivros();
+});
+
+$("#lista-livros").addEventListener("click", (e) => {
+  if (e.target.closest("#btn-primeiro-livro")) abrirLivro(null);
+});
 
 function abrirLivro(livro) {
   livroAberto = livro || {
@@ -2815,6 +2885,8 @@ function abrirLivro(livro) {
     titulo: "",
     autor: "",
     estado: "a_ler",
+    // A ficha de género escolhida entra já preenchida no livro novo.
+    genero: generoEscolhido || "",
     resumo: "",
     criado_em: Date.now(),
     apagado: false,
@@ -2822,6 +2894,7 @@ function abrirLivro(livro) {
   $("#livro-rotulo").textContent = livro ? "Editar livro" : "Novo livro";
   $("#livro-titulo").value = livroAberto.titulo;
   $("#livro-autor").value = livroAberto.autor;
+  $("#livro-genero").value = livroAberto.genero || "";
   $("#livro-resumo").value = livroAberto.resumo;
   $("#livro-apagar").style.display = livro ? "" : "none";
   marcarEstadoLivro(livroAberto.estado);
@@ -2847,11 +2920,13 @@ $("#lista-livros").addEventListener("click", (e) => {
   if (alvo) abrirLivro(estado.biblioteca.livros[alvo.dataset.livro]);
 });
 
+
 $("#livro-cancelar").addEventListener("click", () => $("#folha-livro").close());
 
 $("#livro-guardar").addEventListener("click", () => {
   livroAberto.titulo = $("#livro-titulo").value.trim();
   livroAberto.autor = $("#livro-autor").value.trim();
+  livroAberto.genero = $("#livro-genero").value.trim();
   livroAberto.resumo = $("#livro-resumo").value;
   if (!livroAberto.titulo) return;
   alterar("livros", livroAberto);
