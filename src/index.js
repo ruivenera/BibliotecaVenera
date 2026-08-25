@@ -627,6 +627,7 @@ function limparLivro(l) {
     titulo: String(l.titulo || "").slice(0, 200),
     autor: String(l.autor || "").slice(0, 120),
     estado: ["a_ler", "lido", "recomendado"].includes(l.estado) ? l.estado : "a_ler",
+    genero: String(l.genero || "").slice(0, 60),
     resumo: String(l.resumo || "").slice(0, 40000),
     criado_em: Number(l.criado_em) || agora(),
     atualizado_em: Number(l.atualizado_em) || agora(),
