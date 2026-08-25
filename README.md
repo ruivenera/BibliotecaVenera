@@ -166,17 +166,18 @@ tiver nada, o tema publica na mesma e a app põe lá a bandeira.
 
 ## Cursos por área — uma rotina cada
 
-Além do curso de IA, a app aceita seis rotinas de curso, uma por área. Todas usam
+Além do curso de IA, a app aceita quatro rotinas de curso, uma por área. Todas usam
 o mesmo formato; muda só o `rotina`, o assunto e o plano.
 
-| Área          | rotina                |
-| ------------- | --------------------- |
-| Cozinha       | `curso-cozinha`       |
-| Mecânica      | `curso-mecanica`      |
-| Eletricidade  | `curso-eletricidade`  |
-| Coisas úteis  | `curso-uteis`         |
-| História      | `curso-historia`      |
-| Francês       | `curso-frances`       |
+| Área              | rotina             |
+| ----------------- | ------------------ |
+| Cozinha           | `curso-cozinha`    |
+| Melhoria Pessoal  | `curso-uteis`      |
+| História          | `curso-historia`   |
+| Francês           | `curso-frances`    |
+
+Melhoria Pessoal junta o que antes eram três áreas: casa e bricolage,
+eletricidade e mecânica, mais dinheiro, contratos e segurança digital.
 
 O prompt de cada rotina é este, com as três primeiras linhas trocadas conforme a área:
 
