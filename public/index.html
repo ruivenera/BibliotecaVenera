@@ -1798,10 +1798,11 @@
     min-height: 132px;
     padding: 1rem var(--gap) 1.2rem;
     background-image:
-      linear-gradient(95deg, var(--tinta) 26%, color-mix(in srgb, var(--tinta) 55%, transparent) 58%, transparent 92%),
+      linear-gradient(180deg, transparent 58%, color-mix(in srgb, var(--tinta) 72%, transparent) 84%, var(--tinta) 100%),
+      linear-gradient(95deg, var(--tinta) 30%, color-mix(in srgb, var(--tinta) 62%, transparent) 60%, color-mix(in srgb, var(--tinta) 20%, transparent) 95%),
       url("/estudo.jpg");
-    background-size: cover, cover;
-    background-position: center, right 30%;
+    background-size: cover, cover, cover;
+    background-position: center, center, right 42%;
   }
   .heroi-aprender h1 {
     margin: 0;
@@ -1813,6 +1814,24 @@
     color: var(--latao);
   }
   .heroi-aprender .sub { margin: 0.35rem 0 0; color: var(--papel-fosco); font-size: 0.82rem; }
+  .heroi-aprender .sub.data { margin-top: 0.25rem; font-size: 0.78rem; }
+
+  /* Fotografia mais clara do que a das notícias: no tema claro o véu tem de
+     apertar ainda mais para o título dourado não se perder. */
+  :root[data-tema="claro"] .heroi-aprender {
+    background-image:
+      linear-gradient(180deg, transparent 48%, color-mix(in srgb, var(--tinta) 88%, transparent) 78%, var(--tinta) 100%),
+      linear-gradient(95deg, var(--tinta) 40%, color-mix(in srgb, var(--tinta) 86%, transparent) 66%, color-mix(in srgb, var(--tinta) 55%, transparent) 100%),
+      url("/estudo.jpg");
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-tema]) .heroi-aprender {
+      background-image:
+        linear-gradient(180deg, transparent 48%, color-mix(in srgb, var(--tinta) 88%, transparent) 78%, var(--tinta) 100%),
+        linear-gradient(95deg, var(--tinta) 40%, color-mix(in srgb, var(--tinta) 86%, transparent) 66%, color-mix(in srgb, var(--tinta) 55%, transparent) 100%),
+        url("/estudo.jpg");
+    }
+  }
   .heroi-aprender .botao-icone { flex: none; }
 
   /* Cada conta no seu cartão, como na maqueta. */
@@ -2974,7 +2993,8 @@
     <header class="heroi-aprender">
       <div class="dizeres">
         <h1><i class="emoji">🎓</i>Aprender</h1>
-        <p class="sub" id="data-aprendizagem"></p>
+        <p class="sub"><span class="ponto-rotina" style="--ponto:var(--latao)"></span> Melhoria pessoal e evolução mental</p>
+        <p class="sub data" id="data-aprendizagem"></p>
       </div>
       <span class="botao-icone" aria-hidden="true">
         <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
