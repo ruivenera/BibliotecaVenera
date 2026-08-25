@@ -588,6 +588,7 @@ function limparNota(n) {
     id: n.id,
     titulo: String(n.titulo || "").slice(0, 200),
     texto: String(n.texto || "").slice(0, 20000),
+    etiqueta: ["Ideias", "Leituras", "Pessoais", "Arquivo"].includes(n.etiqueta) ? n.etiqueta : "",
     origem: n.origem && typeof n.origem === "object" ? n.origem : null,
     criado_em: Number(n.criado_em) || agora(),
     atualizado_em: Number(n.atualizado_em) || agora(),
