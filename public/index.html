@@ -1753,6 +1753,129 @@
 
   .barra-accoes { display: flex; justify-content: flex-end; padding: 0 var(--gap) 0.5rem; }
 
+  /* --------------------------------------------------------------- notas --- */
+  /* A fotografia entra por CSS e vive em public/quote.jpg — o degradê por cima
+     é que garante que o texto se lê, venha a imagem clara ou escura. */
+  .quote-dia {
+    position: relative;
+    margin: 0.9rem var(--gap) 0.4rem;
+    padding: 1.2rem 1.1rem 1.1rem;
+    min-height: 190px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border: 1px solid var(--tinta-3);
+    border-radius: 14px;
+    overflow: hidden;
+    background-image:
+      linear-gradient(100deg, var(--tinta) 30%, color-mix(in srgb, var(--tinta) 55%, transparent) 60%, transparent 88%),
+      url("/quote.jpg");
+    background-size: cover, cover;
+    background-position: center, right center;
+  }
+  .quote-dia .rotulo { color: var(--latao); font-size: 0.55rem; }
+  .quote-dia blockquote {
+    margin: 0.6rem 0 0.5rem;
+    max-width: 62%;
+    font-family: var(--display);
+    font-style: italic;
+    font-weight: 600;
+    font-size: 1.18rem;
+    line-height: 1.3;
+    color: var(--papel);
+    text-wrap: balance;
+  }
+  .quote-dia figcaption {
+    max-width: 62%;
+    font-size: 0.82rem;
+    color: var(--papel-fosco);
+  }
+  .quote-dia .ver-mais { align-self: flex-start; margin-top: 0.9rem; }
+  @media (max-width: 22rem) {
+    .quote-dia blockquote, .quote-dia figcaption { max-width: 100%; }
+  }
+
+  /* Notas em mosaico de dois, com a etiqueta em baixo. */
+  .lista-notas {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
+    margin: 0 var(--gap) 0.4rem;
+  }
+  .lista-notas .nota {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.8rem 0.85rem 0.85rem;
+    background: var(--tinta-2);
+    border: 1px solid var(--tinta-3);
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: left;
+  }
+  .lista-notas .nota .quando {
+    font-family: var(--meta);
+    font-size: 0.5rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--papel-fosco);
+  }
+  .lista-notas .nota h4 {
+    margin: 0;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 0.92rem;
+    line-height: 1.25;
+    color: var(--titulo, var(--papel));
+  }
+  .lista-notas .nota p {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: var(--papel-fosco);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .lista-notas .nota .selo-etiqueta {
+    align-self: flex-start;
+    margin-top: 0.25rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    font-family: var(--meta);
+    font-size: 0.5rem;
+    letter-spacing: 0.08em;
+    background: var(--tinta-3);
+    color: var(--papel-fosco);
+  }
+  .lista-notas .nota .selo-etiqueta[data-et="Ideias"] { color: var(--latao); background: color-mix(in srgb, var(--latao) 14%, transparent); }
+  .lista-notas .nota .selo-etiqueta[data-et="Leituras"] { color: var(--indigo); background: color-mix(in srgb, var(--indigo) 14%, transparent); }
+  .lista-notas .nota .selo-etiqueta[data-et="Pessoais"] { color: var(--sobe); background: color-mix(in srgb, var(--sobe) 14%, transparent); }
+  /* A lista é uma grelha de duas colunas: o vazio e o convite ocupam-nas ambas,
+     senão ficavam espremidos a meia largura. */
+  .lista-notas .vazio,
+  .lista-notas .convite-livros { grid-column: 1 / -1; margin-left: 0; margin-right: 0; }
+
+  /* Convite das notas: o mesmo cartão do primeiro livro, com duas colunas. */
+  .convite-livros .duas-colunas {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.9rem;
+    margin-top: 1.2rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--tinta-3);
+    text-align: left;
+  }
+  .convite-livros .duas-colunas b {
+    display: block;
+    margin-bottom: 0.2rem;
+    font-family: var(--display);
+    font-size: 0.88rem;
+    color: var(--papel);
+  }
+  .convite-livros .duas-colunas span { font-size: 0.75rem; line-height: 1.45; color: var(--papel-fosco); }
+
   /* ------------------------------------------------------------- leitura --- */
   .heroi-leitura {
     display: flex;
@@ -2829,19 +2952,19 @@
 
   <!-- -------------------------------------------------------------- notas -->
   <section class="vista" id="v-notas" aria-label="Notas e Quotes">
-    <div class="seccao">
-      <div class="cabecalho-seccao">
-        <p class="rotulo">Quote do dia</p>
-      </div>
-      <figure class="quote" id="quote"></figure>
+    <figure class="quote-dia" id="quote"></figure>
 
-      <div class="cabecalho-seccao" style="margin-top:2.4rem">
-        <p class="rotulo">Notas</p>
-        <button class="btn" id="btn-nota-nova">Nova nota</button>
-      </div>
-      <input class="campo" id="procura" type="search" placeholder="Procurar nas notas" enterkeyhint="search">
-      <div class="lista-notas" id="lista-notas"></div>
+    <div class="cabecalho-lista">
+      <span class="rotulo">Notas</span>
+      <button class="ver-mais" id="btn-nota-nova">+ Nova nota ›</button>
     </div>
+
+    <div class="barra-livros">
+      <input class="campo" id="procura" type="search" placeholder="Procurar nas notas…" enterkeyhint="search">
+    </div>
+
+    <div class="fichas-genero" id="etiquetas-notas"></div>
+    <div class="lista-notas" id="lista-notas"></div>
   </section>
 
   <!-- ------------------------------------------------------------ revisão -->
@@ -3086,6 +3209,12 @@
   <p class="rotulo" id="folha-rotulo"></p>
   <h3 id="folha-titulo"></h3>
   <input class="campo" id="folha-frente" placeholder="Frente">
+  <div class="segmentado" id="folha-etiquetas" role="group" aria-label="Etiqueta da nota">
+    <button class="btn" data-etiqueta="Ideias">Ideias</button>
+    <button class="btn" data-etiqueta="Leituras">Leituras</button>
+    <button class="btn" data-etiqueta="Pessoais">Pessoais</button>
+    <button class="btn" data-etiqueta="Arquivo">Arquivo</button>
+  </div>
   <textarea class="campo" id="folha-verso" placeholder="Verso"></textarea>
   <p class="aviso" id="folha-aviso"></p>
   <div class="rodape-folha">

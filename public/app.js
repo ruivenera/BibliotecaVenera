@@ -1847,28 +1847,85 @@ async function abrirEdicao(rotina, data) {
 
 /* ----------------------------------------------------------------- notas --- */
 
+const ETIQUETAS = [
+  ["☰", "Todas"],
+  ["💡", "Ideias"],
+  ["📖", "Leituras"],
+  ["👤", "Pessoais"],
+  ["🗄️", "Arquivo"],
+];
+
+/** Etiqueta escolhida nas fichas. "Todas" mostra tudo menos o arquivo. */
+let etiquetaEscolhida = "Todas";
+
 function desenharNotas() {
   const procura = $("#procura").value.trim().toLowerCase();
-  const lista = vivos("notas")
+  const todas = vivos("notas");
+
+  $("#etiquetas-notas").innerHTML = ETIQUETAS.map(
+    ([emoji, nome]) => `<button class="ficha-genero" data-etiqueta="${esc(nome)}"
+      aria-current="${etiquetaEscolhida === nome}"><i class="emoji">${emoji}</i>${esc(nome)}</button>`
+  ).join("");
+
+  const lista = todas
+    .filter((n) =>
+      etiquetaEscolhida === "Todas" ? n.etiqueta !== "Arquivo" : n.etiqueta === etiquetaEscolhida
+    )
     .filter((n) => !procura || `${n.titulo} ${n.texto}`.toLowerCase().includes(procura))
     .sort((a, b) => b.atualizado_em - a.atualizado_em);
 
-  $("#lista-notas").innerHTML = lista.length
-    ? lista
-        .map(
-          (n) => `<article class="nota" data-nota="${esc(n.id)}">
-            <h4>${esc(n.titulo || "Sem título")}</h4>
-            <p>${esc(n.texto)}</p>
-            <span class="linha-meta rotulo">${
-              n.origem ? esc(NOMES[n.origem.rotina] || n.origem.rotina) + " · " + esc(dataCurta(n.origem.data)) : "nota solta"
-            }</span>
-          </article>`
-        )
-        .join("")
-    : procura
-    ? vazio("Nada encontrado", "Nenhuma nota tem essas palavras.")
-    : vazio("Ainda não há notas", "Abre uma edição e guarda o que interessa — ou escreve uma nota solta.");
+  if (lista.length) {
+    $("#lista-notas").innerHTML = lista
+      .map((n) => {
+        const quando = n.origem
+          ? `${NOMES[n.origem.rotina] || n.origem.rotina} · ${dataCurta(n.origem.data)}`
+          : dataCurta(new Date(n.atualizado_em).toISOString().slice(0, 10));
+        return `<article class="nota" data-nota="${esc(n.id)}">
+          <span class="quando">${esc(quando)}</span>
+          <h4>${esc(n.titulo || "Sem título")}</h4>
+          ${n.texto ? `<p>${esc(n.texto)}</p>` : ""}
+          ${n.etiqueta ? `<span class="selo-etiqueta" data-et="${esc(n.etiqueta)}">${esc(n.etiqueta)}</span>` : ""}
+        </article>`;
+      })
+      .join("");
+    return;
+  }
+
+  const filtrado = procura || etiquetaEscolhida !== "Todas";
+  $("#lista-notas").innerHTML = todas.length && filtrado
+    ? vazio(
+        "Nada encontrado",
+        procura ? "Nenhuma nota tem essas palavras." : `Ainda não há notas em ${etiquetaEscolhida}.`
+      )
+    : `<div class="convite-livros">
+        <span class="medalha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 3h9l3 3v15H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span>
+        <h3>Ainda não há notas</h3>
+        <p>Abre uma edição e guarda o que interessa — ou escreve uma nota solta.</p>
+        <button class="btn" data-tom="forte" id="btn-primeira-nota">Escrever a primeira nota</button>
+        <div class="duas-colunas">
+          <div><b>Escreve livremente</b><span>Captura pensamentos, ideias e reflexões.</span></div>
+          <div><b>Organiza e encontra</b><span>Mantém tudo arrumado e fácil de rever.</span></div>
+        </div>
+      </div>`;
 }
+
+$("#lista-notas").addEventListener("click", (e) => {
+  if (e.target.closest("#btn-primeira-nota")) abrirFolha("nota-nova", {});
+});
+
+$("#quote").addEventListener("click", (e) => {
+  // "Ver mais quotes" salta para a seguinte da lista, sem esperar por amanhã.
+  if (!e.target.closest("#btn-outra-quote")) return;
+  saltoQuote += 1;
+  desenharQuote();
+});
+
+$("#etiquetas-notas").addEventListener("click", (e) => {
+  const ficha = e.target.closest("[data-etiqueta]");
+  if (!ficha) return;
+  etiquetaEscolhida = ficha.dataset.etiqueta;
+  desenharNotas();
+});
 
 /* --------------------------------------------------------------- revisão --- */
 
@@ -2120,12 +2177,30 @@ function abrirFolha(modo, dados = {}) {
   $("#folha-verso").placeholder = nota ? "O que queres guardar" : "Verso — a resposta";
   $("#folha-frente").value = dados.frente || "";
   $("#folha-verso").value = dados.verso || "";
+  // A etiqueta só faz sentido nas notas; nos cartões a fila esconde-se.
+  $("#folha-etiquetas").hidden = !nota;
+  marcarEtiqueta(dados.etiqueta || (etiquetaEscolhida !== "Todas" ? etiquetaEscolhida : ""));
   $("#folha-aviso").textContent = "";
   $("#folha-apagar").hidden = !modo.endsWith("editar");
   $("#folha-para-cartao").hidden = modo !== "nota-editar";
   folha.showModal();
   $("#folha-frente").focus();
 }
+
+function marcarEtiqueta(valor) {
+  contexto.etiqueta = valor || "";
+  document
+    .querySelectorAll("[data-etiqueta]")
+    .forEach((b) =>
+      b.setAttribute("aria-current", b.dataset.etiqueta === contexto.etiqueta ? "true" : "false")
+    );
+}
+
+// Tocar na etiqueta já escolhida tira-a: uma nota pode não ter nenhuma.
+$("#folha-etiquetas").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-etiqueta]");
+  if (b) marcarEtiqueta(contexto.etiqueta === b.dataset.etiqueta ? "" : b.dataset.etiqueta);
+});
 
 function guardarFolha() {
   const frente = $("#folha-frente").value.trim();
@@ -2142,7 +2217,7 @@ function guardarFolha() {
       origem: contexto.origem || null,
       apagado: false,
     };
-    alterar("notas", { ...item, titulo: frente, texto: verso });
+    alterar("notas", { ...item, titulo: frente, texto: verso, etiqueta: contexto.etiqueta || "" });
     desenharNotas();
   } else {
     const item = estado.biblioteca.cartoes[contexto.id] || {
@@ -2195,7 +2270,13 @@ document.addEventListener("click", (evento) => {
 
   if (alvo.dataset.nota) {
     const n = estado.biblioteca.notas[alvo.dataset.nota];
-    return abrirFolha("nota-editar", { id: n.id, frente: n.titulo, verso: n.texto, origem: n.origem });
+    return abrirFolha("nota-editar", {
+      id: n.id,
+      frente: n.titulo,
+      verso: n.texto,
+      origem: n.origem,
+      etiqueta: n.etiqueta,
+    });
   }
 
   if (alvo.dataset.editarCartao) {
@@ -2283,12 +2364,16 @@ const QUOTES = [
   ["Não te preocupes por não seres conhecido; preocupa-te por não seres digno de o ser.", "Confúcio, Analectos"],
 ];
 
+let saltoQuote = 0;
+
 function desenharQuote() {
   const inicio = Date.UTC(new Date().getUTCFullYear(), 0, 1);
   const dia = Math.floor((Date.now() - inicio) / DIA);
-  const [texto, fonte] = QUOTES[dia % QUOTES.length];
-  $("#quote").innerHTML = `<blockquote>“${esc(texto)}”</blockquote>
-    <figcaption>${esc(fonte)}</figcaption>`;
+  const [texto, fonte] = QUOTES[(dia + saltoQuote) % QUOTES.length];
+  $("#quote").innerHTML = `<span class="rotulo">Quote do dia ❞</span>
+    <blockquote>“${esc(texto)}”</blockquote>
+    <figcaption>${esc(fonte)}</figcaption>
+    <button class="ver-mais" id="btn-outra-quote">Ver mais quotes ›</button>`;
 }
 
 /* ---------------------------------------------------------- aprendizagem --- */
