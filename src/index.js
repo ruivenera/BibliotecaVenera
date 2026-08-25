@@ -16,9 +16,7 @@ const ROTINAS = {
   // Um curso por área: cada rotina publica a sua aula do dia, com o mesmo
   // formato da de IA. A app junta-as todas na aba Aprender.
   "curso-cozinha": "Cozinha",
-  "curso-mecanica": "Mecânica",
-  "curso-eletricidade": "Eletricidade",
-  "curso-uteis": "Coisas úteis",
+  "curso-uteis": "Melhoria Pessoal",
   "curso-historia": "História",
   "curso-frances": "Francês",
 };
