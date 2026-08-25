@@ -1753,6 +1753,39 @@
 
   .barra-accoes { display: flex; justify-content: flex-end; padding: 0 var(--gap) 0.5rem; }
 
+  /* ------------------------------------------------------------ notícias --- */
+  /* O jornal fica por trás do título, da data e das abas. São dois degradês: um
+     na horizontal, para a coluna do texto ficar sobre fundo cheio, e outro na
+     vertical, para as abas assentarem na página em vez de flutuarem na foto. */
+  .heroi-noticias {
+    position: relative;
+    background-image:
+      linear-gradient(180deg, transparent 55%, color-mix(in srgb, var(--tinta) 70%, transparent) 82%, var(--tinta) 100%),
+      linear-gradient(94deg, var(--tinta) 24%, color-mix(in srgb, var(--tinta) 62%, transparent) 56%, color-mix(in srgb, var(--tinta) 25%, transparent) 100%),
+      url("/jornal.jpg");
+    background-size: cover, cover, cover;
+    background-position: center, center, center 35%;
+  }
+  /* Sem isto, o filete das abas desaparecia contra a fotografia. */
+  .heroi-noticias .separadores { border-bottom-color: color-mix(in srgb, var(--papel) 22%, transparent); }
+
+  /* No tema claro a fotografia é escura e o texto é azul-marinho: o véu tem de
+     ser bem mais denso do que no escuro, senão as abas perdem-se no jornal. */
+  :root[data-tema="claro"] .heroi-noticias {
+    background-image:
+      linear-gradient(180deg, transparent 42%, color-mix(in srgb, var(--tinta) 88%, transparent) 76%, var(--tinta) 100%),
+      linear-gradient(94deg, var(--tinta) 36%, color-mix(in srgb, var(--tinta) 84%, transparent) 64%, color-mix(in srgb, var(--tinta) 58%, transparent) 100%),
+      url("/jornal.jpg");
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-tema]) .heroi-noticias {
+      background-image:
+        linear-gradient(180deg, transparent 42%, color-mix(in srgb, var(--tinta) 88%, transparent) 76%, var(--tinta) 100%),
+        linear-gradient(94deg, var(--tinta) 36%, color-mix(in srgb, var(--tinta) 84%, transparent) 64%, color-mix(in srgb, var(--tinta) 58%, transparent) 100%),
+        url("/jornal.jpg");
+    }
+  }
+
   /* ------------------------------------------------------------ aprender --- */
   /* A fotografia de secretária entra por baixo do título, esbatida à esquerda
      para o texto ficar legível sem caixa por trás. */
@@ -2896,6 +2929,7 @@
 
   <!-- ----------------------------------------------------------- notícias -->
   <section class="vista" id="v-noticias" aria-label="Notícias">
+    <header class="heroi-noticias">
     <div class="cabecalho-pagina">
       <div>
         <h1><i class="emoji">🗞️</i>Notícias</h1>
@@ -2921,6 +2955,7 @@
       <button class="separador" data-meia="mercado" aria-selected="false">Investimentos</button>
       <button class="separador" data-meia="geo" aria-selected="false">Geopolítica</button>
     </div>
+    </header>
 
     <div id="noticias-corpo"></div>
 
