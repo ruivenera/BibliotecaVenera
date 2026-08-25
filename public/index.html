@@ -2028,13 +2028,37 @@
   .convite-livros .duas-colunas span { font-size: 0.75rem; line-height: 1.45; color: var(--papel-fosco); }
 
   /* ------------------------------------------------------------- leitura --- */
+  /* A fotografia da secretária de leitura fica atrás do título, com o mesmo par
+     de degradês das outras abas: um a encher a coluna do texto, outro a fechar
+     em baixo para a busca não assentar sobre a imagem. */
   .heroi-leitura {
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    padding: 0.9rem var(--gap) 0.6rem;
+    min-height: 168px;
+    padding: 1.1rem var(--gap) 1.3rem;
+    background-image:
+      linear-gradient(180deg, transparent 56%, color-mix(in srgb, var(--tinta) 74%, transparent) 84%, var(--tinta) 100%),
+      linear-gradient(95deg, var(--tinta) 28%, color-mix(in srgb, var(--tinta) 60%, transparent) 60%, color-mix(in srgb, var(--tinta) 18%, transparent) 96%),
+      url("/leitura.jpg");
+    background-size: cover, cover, cover;
+    background-position: center, center, right 45%;
   }
-  .heroi-leitura .dizeres { flex: 1; min-width: 0; }
+  :root[data-tema="claro"] .heroi-leitura {
+    background-image:
+      linear-gradient(180deg, transparent 48%, color-mix(in srgb, var(--tinta) 88%, transparent) 78%, var(--tinta) 100%),
+      linear-gradient(95deg, var(--tinta) 38%, color-mix(in srgb, var(--tinta) 86%, transparent) 66%, color-mix(in srgb, var(--tinta) 52%, transparent) 100%),
+      url("/leitura.jpg");
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-tema]) .heroi-leitura {
+      background-image:
+        linear-gradient(180deg, transparent 48%, color-mix(in srgb, var(--tinta) 88%, transparent) 78%, var(--tinta) 100%),
+        linear-gradient(95deg, var(--tinta) 38%, color-mix(in srgb, var(--tinta) 86%, transparent) 66%, color-mix(in srgb, var(--tinta) 52%, transparent) 100%),
+        url("/leitura.jpg");
+    }
+  }
+  .heroi-leitura .dizeres { flex: 1; min-width: 0; max-width: 74%; }
   .heroi-leitura h1 {
     margin: 0.35rem 0 0.4rem;
     font-family: var(--display);
@@ -2052,16 +2076,6 @@
     color: var(--papel-fosco);
     text-wrap: pretty;
   }
-  .canto-leitura { flex: none; width: 132px; height: 99px; }
-  .canto-leitura .traco {
-    fill: none;
-    stroke: var(--latao);
-    stroke-width: 1.4;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    opacity: 0.85;
-  }
-  @media (max-width: 22rem) { .canto-leitura { display: none; } }
 
   .barra-livros {
     display: flex;
@@ -3032,34 +3046,10 @@
   <section class="vista" id="v-leitura" aria-label="Leitura">
     <header class="heroi-leitura">
       <div class="dizeres">
-        <p class="rotulo">Leitura</p>
+        <p class="rotulo"><i class="emoji">📖</i>Leitura</p>
         <h1>A tua jornada começa aqui.</h1>
         <p class="sub">Organiza, acompanha e aproveita cada livro ao máximo.</p>
       </div>
-      <!-- Um canto de leitura: estante, candeeiro e cadeirão, em traço de latão. -->
-      <svg class="canto-leitura" viewBox="0 0 200 150" aria-hidden="true">
-        <defs>
-          <radialGradient id="luz" cx="50%" cy="35%" r="55%">
-            <stop offset="0%" stop-color="var(--latao)" stop-opacity="0.35"/>
-            <stop offset="100%" stop-color="var(--latao)" stop-opacity="0"/>
-          </radialGradient>
-        </defs>
-        <circle cx="128" cy="52" r="58" fill="url(#luz)"/>
-        <g class="traco">
-          <rect x="140" y="18" width="52" height="96" rx="3"/>
-          <path d="M140 46h52M140 74h52M140 100h52"/>
-          <path d="M147 24v20M153 24v20M159 27v17M167 26v18M173 24v20"/>
-          <path d="M147 52v20M155 54v18M161 52v20M170 55v17"/>
-          <path d="M147 80v18M154 80v18M162 82v16"/>
-          <path d="M120 46h22M131 46v16" />
-          <ellipse cx="131" cy="46" rx="13" ry="4"/>
-          <path d="M124 38h14l4 8h-22z"/>
-          <path d="M96 114v-26a10 10 0 0 1 10-10h14a10 10 0 0 1 10 10v26"/>
-          <path d="M92 114h46M96 96h34"/>
-          <path d="M108 78v-8h10v8"/>
-          <path d="M118 62h18M127 62v6"/>
-        </g>
-      </svg>
     </header>
 
     <div class="barra-livros">
