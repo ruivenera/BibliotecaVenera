@@ -13,19 +13,15 @@ const COR = {
   "financas-geopolitica": "var(--latao)",
   "inteligencia-artificial": "var(--indigo)",
   "curso-cozinha": "var(--latao)",
-  "curso-mecanica": "var(--rust)",
-  "curso-eletricidade": "var(--indigo)",
   "curso-uteis": "var(--sobe)",
-  "curso-historia": "var(--papel-fosco)",
-  "curso-frances": "var(--latao)",
+  "curso-historia": "var(--rust)",
+  "curso-frances": "var(--indigo)",
 };
 let NOMES = {
   "financas-geopolitica": "Finanças & Geopolítica",
   "inteligencia-artificial": "Inteligência Artificial",
   "curso-cozinha": "Cozinha",
-  "curso-mecanica": "Mecânica",
-  "curso-eletricidade": "Eletricidade",
-  "curso-uteis": "Coisas úteis",
+  "curso-uteis": "Melhoria Pessoal",
   "curso-historia": "História",
   "curso-frances": "Francês",
 };
@@ -36,8 +32,6 @@ const CURSOS = [
   "curso-historia",
   "curso-frances",
   "curso-cozinha",
-  "curso-mecanica",
-  "curso-eletricidade",
   "curso-uteis",
 ];
 
@@ -188,8 +182,6 @@ const MODULO = {
   "financas-geopolitica": "noticias",
   "inteligencia-artificial": "aprendizagem",
   "curso-cozinha": "aprendizagem",
-  "curso-mecanica": "aprendizagem",
-  "curso-eletricidade": "aprendizagem",
   "curso-uteis": "aprendizagem",
   "curso-historia": "aprendizagem",
   "curso-frances": "aprendizagem",
@@ -2342,90 +2334,45 @@ const anel = (pct) => `<svg class="anel" viewBox="0 0 40 40">
  */
 const AREAS_SEMENTE = [
   {
-    nome: "Cozinha",
-    rotina: "curso-cozinha",
-    sigla: "CZ",
-    cor: "latao",
-    temas: [
-      "Afiar e usar a faca: corte em juliana, brunoise e chiffonade",
-      "Os cinco sabores e como corrigir um prato salgado, ácido ou insonso",
-      "Refogado: cebola, alho e a base de metade dos pratos portugueses",
-      "Selar carne: reação de Maillard, tempo de repouso e ponto",
-      "Peixe: escamar, amanhar e assar inteiro sem secar",
-      "Arroz, massa e batata: proporções de água e tempos de cozedura",
-      "Ovos: mexidos, escalfados e omelete francesa",
-      "Molhos-mãe: bechamel, holandês e vinagretes que não se separam",
-      "Sopa: caldo de legumes, de galinha e de peixe",
-      "Fermento e pão: massa mãe, tempos de levedação e forno",
-      "Conservação: congelar bem, marinar e curar",
-      "Planear a semana: lista de compras e cozinhar em lote",
-    ],
-  },
-  {
-    nome: "Mecânica",
-    rotina: "curso-mecanica",
-    sigla: "MC",
-    cor: "rust",
-    temas: [
-      "As quatro fases do motor a quatro tempos",
-      "Óleo e filtros: quando mudar e o que dizem as especificações",
-      "Travões: pastilhas, discos, líquido e sinais de desgaste",
-      "Pneus: pressão, desgaste irregular, TPMS e mudança de roda",
-      "Bateria e alternador: medir com multímetro e arrancar com pinças",
-      "Correia de distribuição contra corrente: prazos e risco",
-      "Sistema de arrefecimento: radiador, termóstato e sobreaquecimento",
-      "Suspensão e direção: amortecedores, rótulas e alinhamento",
-      "Ler códigos OBD2 e perceber a luz do motor",
-      "Embraiagem e caixa: manual, automática e sinais de fim de vida",
-      "Diesel moderno: filtro de partículas, EGR e AdBlue",
-      "Inspeção periódica: o que reprova e como preparar o carro",
-    ],
-  },
-  {
-    nome: "Eletricidade",
-    rotina: "curso-eletricidade",
-    sigla: "EL",
+    nome: "Inteligência Artificial",
+    sigla: "IA",
     cor: "indigo",
-    temas: [
-      "Tensão, corrente, resistência e a lei de Ohm",
-      "Potência e consumo: watts, kWh e o que pesa na fatura",
-      "Corrente alterna e contínua: onde aparece cada uma",
-      "Quadro elétrico: disjuntores, diferencial e o que faz saltar a luz",
-      "Ligação à terra e por que razão salva vidas",
-      "Secções de cabo e a corrente que cada uma aguenta",
-      "Trocar uma tomada, um interruptor e um ponto de luz em segurança",
-      "Circuito de escada: dois interruptores, uma lâmpada",
-      "Usar o multímetro: continuidade, tensão e resistência",
-      "Iluminação LED: lúmen, temperatura de cor e drivers",
-      "Fotovoltaico doméstico: painéis, inversor e autoconsumo",
-      "Primeiros socorros em choque elétrico",
-    ],
+    rotina: "inteligencia-artificial",
+    temas: [], // esta área é o curso: o percurso vem das aulas publicadas
   },
   {
-    nome: "Coisas úteis",
-    rotina: "curso-uteis",
-    sigla: "UT",
+    nome: "Melhoria Pessoal",
+    sigla: "MP",
     cor: "sobe",
+    rotina: "curso-uteis",
     temas: [
       "Canalização básica: desentupir, trocar torneira e sifão",
       "Furar parede: brocas, buchas e onde não furar",
       "Pintar uma divisão: preparação, primário e acabamento",
       "Nós essenciais: direito, oito, volta do fiel e nó de pescador",
-      "Kit de primeiros socorros e o que fazer nos primeiros cinco minutos",
+      "Kit de primeiros socorros e os primeiros cinco minutos",
       "Extintores: classes de fogo e qual usar",
-      "Ler uma fatura de água, luz e gás",
+      "Eletricidade: tensão, corrente, resistência e a lei de Ohm",
+      "Quadro elétrico: disjuntores, diferencial e o que faz saltar a luz",
+      "Trocar tomada, interruptor e ponto de luz em segurança",
+      "Usar o multímetro: continuidade, tensão e resistência",
+      "Motor a quatro tempos: as quatro fases explicadas",
+      "Óleo, filtros e travões: quando mudar e o que verificar",
+      "Pneus: pressão, desgaste irregular e mudança de roda",
+      "Bateria e alternador: medir e arrancar com pinças",
+      "Ler códigos OBD2 e perceber a luz do motor",
       "Orçamento pessoal: registar, categorizar e poupar por objetivo",
-      "Impostos: IRS, escalões e deduções que se perdem por esquecimento",
+      "IRS: escalões, deduções e o que se perde por esquecimento",
       "Contratos e seguros: o que ler antes de assinar",
       "Segurança digital: gestor de palavras-passe e dois fatores",
-      "Manutenção de casa por estação do ano",
+      "Manutenção de casa e de carro por estação do ano",
     ],
   },
   {
     nome: "História",
-    rotina: "curso-historia",
     sigla: "HI",
-    cor: "indigo",
+    cor: "rust",
+    rotina: "curso-historia",
     temas: [
       "Mesopotâmia e Egito: escrita, cidade e Estado",
       "Grécia: pólis, democracia ateniense e o legado do pensamento",
@@ -2444,9 +2391,9 @@ const AREAS_SEMENTE = [
   },
   {
     nome: "Francês",
-    rotina: "curso-frances",
     sigla: "FR",
-    cor: "latao",
+    cor: "indigo",
+    rotina: "curso-frances",
     temas: [
       "Alfabeto, sons nasais e as ligações entre palavras",
       "Cumprimentos, apresentações e tratamento por tu ou vous",
@@ -2463,8 +2410,29 @@ const AREAS_SEMENTE = [
       "Ler um jornal francês e ouvir rádio sem legendas",
     ],
   },
+  {
+    nome: "Cozinha",
+    sigla: "CZ",
+    cor: "latao",
+    rotina: "curso-cozinha",
+    temas: [
+      "Afiar e usar a faca: corte em juliana, brunoise e chiffonade",
+      "Os cinco sabores e como corrigir um prato salgado ou insonso",
+      "Refogado: cebola, alho e a base de metade dos pratos",
+      "Selar carne: reação de Maillard, repouso e ponto",
+      "Peixe: escamar, amanhar e assar inteiro sem secar",
+      "Arroz, massa e batata: proporções de água e tempos",
+      "Ovos: mexidos, escalfados e omelete francesa",
+      "Molhos-mãe: bechamel, holandês e vinagretes que não se separam",
+      "Sopa: caldo de legumes, de galinha e de peixe",
+      "Fermento e pão: massa mãe, levedação e forno",
+      "Conservação: congelar bem, marinar e curar",
+      "Planear a semana: lista de compras e cozinhar em lote",
+    ],
+  },
 ];
 
+/** Semeia as áreas de arranque. Uma vez só: se forem apagadas, ficam apagadas. */
 function semearAreas() {
   if (localStorage.getItem("venera:areas-semente")) return;
   localStorage.setItem("venera:areas-semente", "1");
@@ -2483,11 +2451,62 @@ function semearAreas() {
   }
 }
 
+/**
+ * Migração para a versão 2 das áreas: Mecânica e Eletricidade desaparecem e os
+ * seus temas passam para Melhoria Pessoal, que era Coisas úteis. Cada área fica
+ * ligada à rotina do seu curso.
+ */
+function migrarAreas() {
+  if (localStorage.getItem("venera:areas-versao") === "2") return;
+  localStorage.setItem("venera:areas-versao", "2");
+
+  const porNome = (n) => vivos("areas").find((a) => a.nome.toLowerCase() === n);
+  const uteis = porNome("coisas úteis") || porNome("melhoria pessoal");
+  if (uteis) {
+    const juntar = [porNome("mecânica"), porNome("eletricidade")].filter(Boolean);
+    const nomesJa = new Set(uteis.temas.map((t) => t.nome));
+    for (const velha of juntar) {
+      for (const tema of velha.temas) if (!nomesJa.has(tema.nome)) uteis.temas.push(tema);
+      velha.apagado = true;
+      alterar("areas", velha);
+    }
+    uteis.nome = "Melhoria Pessoal";
+    uteis.sigla = "MP";
+    uteis.rotina = "curso-uteis";
+    alterar("areas", uteis);
+  }
+
+  // As restantes ganham a rotina do curso correspondente.
+  for (const base of AREAS_SEMENTE) {
+    const existente = porNome(base.nome.toLowerCase());
+    if (existente && !existente.rotina) {
+      existente.rotina = base.rotina;
+      alterar("areas", existente);
+    }
+  }
+
+  // A área do curso de IA pode ainda não existir: cria-se sem temas.
+  if (!porNome("inteligência artificial")) {
+    const ia = AREAS_SEMENTE[0];
+    alterar("areas", {
+      id: id(),
+      nome: ia.nome,
+      sigla: ia.sigla,
+      cor: ia.cor,
+      rotina: ia.rotina,
+      temas: [],
+      criado_em: Date.now(),
+      apagado: false,
+    });
+  }
+}
+
 /** O primeiro tema por fazer de uma área — o que vem a seguir. */
 const proximoTema = (area) => area.temas.find((t) => !t.feito)?.nome || "";
 
 function desenharAprendizagem() {
   semearAreas();
+  migrarAreas();
   const areas = vivos("areas");
   const curso = estado.edicaoCurso;
 
@@ -2525,96 +2544,104 @@ function desenharAprendizagem() {
           ? `<span class="selo velho">ontem</span>`
           : `<span class="selo velho">há ${atraso} dias</span>`;
 
-  /* Plano do dia: a aula, os cartões devidos e um tema por fazer, escolhido de
-     forma estável pelo dia do ano — hoje é sempre o mesmo, amanhã é outro. */
+  /* ------------------------------------------------------------- plano --- */
+  /* O plano do dia: as aulas saídas hoje, os cartões devidos e um tema por
+     fazer, escolhido de forma estável pelo dia do ano. */
   const porFazer = areas.flatMap((a) => a.temas.filter((t) => !t.feito).map((t) => ({ a, t })));
   const diaDoAno = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / DIA);
   const sugerido = porFazer.length ? porFazer[diaDoAno % porFazer.length] : null;
   const cartoesDevidos = devidos().length;
+  const cursos = estado.cursos || [];
+  const aulasHoje = cursos.filter((c) => diasDesde(c.data) === 0);
 
-  const linhaPlano = (icone, texto, extra, accao) =>
-    `<button class="linha-plano" ${accao}>
+  const linhaPlano = (icone, texto, extra, accao, cor) =>
+    `<button class="linha-plano" style="--marcador:${cor || "var(--latao)"}" ${accao}>
       <span class="emoji">${icone}</span>
-      <span class="corpo"><b>${texto}</b>${extra ? `<span>${extra}</span>` : ""}</span>
+      <span class="corpo"><b>${texto}</b><span>${extra}</span></span>
       <span class="seta">›</span>
     </button>`;
 
-  // As aulas saídas hoje, de qualquer curso. Se nenhuma saiu, mostra-se a última.
-  const deHoje = (estado.cursos || []).filter((c) => diasDesde(c.data) === 0);
-  const aulas = deHoje.length ? deHoje : curso ? [curso] : [];
-
-  $("#aprender-plano").innerHTML = `<div class="grupo">${[
-    ...aulas.map((c) => {
-      const d = diasDesde(c.data);
-      return linhaPlano(
+  const linhas = [
+    ...aulasHoje.map((c) =>
+      linhaPlano(
         "📘",
         esc(c.titulo),
-        `${esc(NOMES[c.rotina] || c.rotina)} · ${d === 0 ? "hoje" : d === 1 ? "ontem" : `há ${d} dias`}`,
-        `data-curso="${esc(c.rotina)}" data-data="${esc(c.data)}"`
-      );
-    }),
-    cartoesDevidos
-      ? linhaPlano(
-          "🔁",
-          `${cartoesDevidos} ${cartoesDevidos === 1 ? "cartão" : "cartões"} para rever`,
-          "Revisão espaçada",
-          'data-ir="revisao"'
-        )
-      : linhaPlano("🔁", "Nada para rever hoje", "Revisão espaçada", 'data-ir="revisao"'),
+        `Aula de hoje · ${esc(NOMES[c.rotina] || c.rotina)}`,
+        `data-curso="${esc(c.rotina)}" data-data="${esc(c.data)}"`,
+        COR[c.rotina]
+      )
+    ),
     sugerido
       ? linhaPlano(
           "🎯",
           esc(sugerido.t.nome),
-          `Próximo tema · ${esc(sugerido.a.nome)}`,
-          `data-area="${esc(sugerido.a.id)}"`
+          `Tema a seguir · ${esc(sugerido.a.nome)}`,
+          `data-area="${esc(sugerido.a.id)}"`,
+          CORES_AREA[sugerido.a.cor]
         )
       : "",
-  ]
-    .filter(Boolean)
-    .join("")}</div>`;
+    linhaPlano(
+      "🔁",
+      cartoesDevidos
+        ? `${cartoesDevidos} ${cartoesDevidos === 1 ? "cartão" : "cartões"} para rever`
+        : "Nada para rever hoje",
+      "Revisão espaçada",
+      'data-ir="revisao"',
+      "var(--papel-fosco)"
+    ),
+  ].filter(Boolean);
 
-  /* Um cartão por curso: o nome, a última aula e a idade dela. É por aqui que
-     se escolhe a aula que se quer, em vez de haver só a de IA. */
-  const cursos = estado.cursos || (curso ? [curso] : []);
-  $("#aprender-cursos").innerHTML = cursos.length
-    ? `<div class="grupo">${cursos
-        .map((c) => {
-          const dias = diasDesde(c.data);
-          const idade = dias === 0 ? "hoje" : dias === 1 ? "ontem" : `há ${dias} dias`;
-          return `<button class="linha-curso" data-curso="${esc(c.rotina)}" data-data="${esc(c.data)}"
-              style="--marcador:${COR[c.rotina] || "var(--latao)"}">
-              <span class="corpo">
-                <span class="rotulo">${esc(NOMES[c.rotina] || c.rotina)}</span>
-                <b>${esc(c.titulo)}</b>
-              </span>
-              <span class="idade rotulo" data-velho="${dias > 1 ? "sim" : "nao"}">${idade}</span>
-            </button>`;
-        })
-        .join("")}</div>`
-    : vazio(
-        "Ainda sem cursos publicados",
-        "Cada área tem a sua rotina em claude.ai. Assim que publicarem, as aulas aparecem aqui."
-      );
+  $("#aprender-plano").innerHTML = `<div class="cartao-plano">
+    <div class="cabeca-plano">
+      <span class="rotulo">${aulasHoje.length ? `${aulasHoje.length} ${aulasHoje.length === 1 ? "aula" : "aulas"} hoje` : "sem aulas hoje"}</span>
+      <span class="rotulo">${porFazer.length} temas por fazer</span>
+    </div>
+    ${linhas.join("")}
+  </div>`;
 
+  /* ------------------------------------------------------------- áreas --- */
+  /* Cada área é também o seu curso: o percurso em cima, a última aula em baixo. */
   $("#aprender-areas").innerHTML = areas.length
-    ? `<div class="grupo">${areas
+    ? `<div class="cartoes-area">${areas
         .map((a) => {
           const pct = progressoArea(a);
-          return `<button class="area" data-area="${esc(a.id)}" style="--ponto:${CORES_AREA[a.cor]}">
-            <span class="bloco-area">${esc(a.sigla || SIGLA(a.nome))}</span>
-            <span class="corpo">
-              <h4>${esc(a.nome)}</h4>
-              <span class="rotulo">${a.temas.filter((t) => t.feito).length} de ${a.temas.length} · ${pct}%</span>
-              ${proximoTema(a) ? `<span class="seguinte">a seguir: ${esc(proximoTema(a))}</span>` : ""}
-              <span class="barra-progresso" style="margin-top:0.4rem"><i style="width:${pct}%"></i></span>
-            </span>
-          </button>`;
+          const feitos = a.temas.filter((t) => t.feito).length;
+          const aula = cursos.find((c) => c.rotina === a.rotina);
+          const dias = aula ? diasDesde(aula.data) : null;
+          const idade = dias === 0 ? "hoje" : dias === 1 ? "ontem" : `há ${dias} dias`;
+          return `<article class="cartao-area" style="--marcador:${CORES_AREA[a.cor]}">
+            <button class="topo-area" data-area="${esc(a.id)}">
+              <span class="sigla">${esc(a.sigla || SIGLA(a.nome))}</span>
+              <span class="corpo">
+                <h4>${esc(a.nome)}</h4>
+                <span class="rotulo">${
+                  a.temas.length ? `${feitos} de ${a.temas.length} temas · ${pct}%` : "percurso pelas aulas"
+                }</span>
+              </span>
+              <span class="seta">›</span>
+            </button>
+            ${
+              a.temas.length
+                ? `<span class="barra-progresso"><i style="width:${pct}%"></i></span>
+                   <p class="seguinte">${
+                     proximoTema(a) ? `A seguir: ${esc(proximoTema(a))}` : "Percurso concluído."
+                   }</p>`
+                : ""
+            }
+            ${
+              aula
+                ? `<button class="aula-area" data-curso="${esc(aula.rotina)}" data-data="${esc(aula.data)}">
+                    <span class="corpo"><span class="rotulo">Última aula · ${idade}</span><b>${esc(aula.titulo)}</b></span>
+                    <span class="seta">›</span>
+                  </button>`
+                : `<p class="sem-aula rotulo">${
+                    a.rotina ? "A rotina deste curso ainda não publicou." : "Sem curso ligado a esta área."
+                  }</p>`
+            }
+          </article>`;
         })
         .join("")}</div>`
-    : vazio(
-        "Ainda sem áreas",
-        "Cria a primeira: Francês, História, o que quiseres seguir a par do curso de IA."
-      );
+    : vazio("Ainda sem áreas", "Cria a primeira e liga-lhe um curso.");
 }
 
 let areaAberta = null;
@@ -2728,11 +2755,6 @@ $("#area-apagar").addEventListener("click", () => {
   desenharAprendizagem();
 });
 
-$("#aprender-areas").addEventListener("click", (e) => {
-  const alvo = e.target.closest("[data-area]");
-  if (alvo) abrirArea(estado.biblioteca.areas[alvo.dataset.area]);
-});
-
 /* O plano é desenhado a cada pintura: os seus botões vão por delegação, senão
    ficavam sem dono e o toque não fazia nada. */
 function cliqueAprender(e) {
@@ -2747,7 +2769,7 @@ function cliqueAprender(e) {
 }
 
 $("#aprender-plano").addEventListener("click", cliqueAprender);
-$("#aprender-cursos").addEventListener("click", cliqueAprender);
+$("#aprender-areas").addEventListener("click", cliqueAprender);
 
 document.querySelector('[data-ir="aprendizagem-arquivo"]').addEventListener("click", () => {
   const arquivo = $("#aprender-arquivo");
