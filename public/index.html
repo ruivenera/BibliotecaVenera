@@ -1697,6 +1697,60 @@
   }
   .veredicto-aba p { margin: 0.35rem 0 0; font-size: 0.88rem; line-height: 1.55; }
 
+  /* ------------------------------------------------------ percurso de área --- */
+  .cabeca-percurso {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0.2rem 0 0.6rem;
+  }
+  .temas {
+    list-style: none;
+    counter-reset: tema;
+    margin: 0 0 0.4rem;
+    padding: 0;
+    max-height: 52vh;
+    overflow-y: auto;
+  }
+  .temas li { counter-increment: tema; }
+  .temas button {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    width: 100%;
+    padding: 0.6rem 0.2rem;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--tinta-3);
+    color: inherit;
+    text-align: left;
+    font-size: 0.88rem;
+    line-height: 1.4;
+    cursor: pointer;
+  }
+  .temas li:last-child button { border-bottom: 0; }
+  .temas .caixa {
+    flex: none;
+    width: 18px; height: 18px;
+    margin-top: 0.15rem;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--tinta-3);
+    border-radius: 5px;
+    font-size: 0.7rem;
+    color: var(--tinta);
+  }
+  .temas [data-feito="sim"] .caixa { background: var(--sobe); border-color: var(--sobe); }
+  .temas [data-feito="sim"] .nome { color: var(--papel-fosco); text-decoration: line-through; }
+  .temas .num {
+    flex: none;
+    font-family: var(--meta);
+    font-size: 0.6rem;
+    color: var(--papel-fosco);
+    margin-top: 0.25rem;
+  }
+
   /* ------------------------------------------------------ plano do dia --- */
   .linha-plano {
     display: flex;
@@ -2666,14 +2720,28 @@
 
 <dialog id="folha-area">
   <p class="rotulo" id="area-rotulo">Área</p>
-  <input class="campo" id="area-nome" placeholder="Nome da área (ex.: Francês)">
-  <input class="campo" id="area-sigla" placeholder="Sigla, até 4 letras (ex.: FR)" maxlength="4">
-  <div class="cores" id="area-cores" style="margin:0.6rem 0"></div>
-  <p class="rotulo">Temas — um por linha. Começa a linha com <b>x</b> para marcar como feito.</p>
-  <textarea class="campo" id="area-temas" placeholder="x Verbos regulares&#10;Verbos irregulares&#10;Concordância"></textarea>
+
+  <!-- Percurso: a lista de temas com o dedo, sem passar pelo texto todo. -->
+  <div id="area-percurso">
+    <div class="cabeca-percurso">
+      <span class="rotulo" id="area-progresso"></span>
+      <button class="ver-mais" id="area-editar">Editar lista ›</button>
+    </div>
+    <ol class="temas" id="area-temas-lista"></ol>
+  </div>
+
+  <!-- Edição: só aparece a pedido, ou quando a área é nova. -->
+  <div id="area-edicao" hidden>
+    <input class="campo" id="area-nome" placeholder="Nome da área (ex.: Francês)">
+    <input class="campo" id="area-sigla" placeholder="Sigla, até 4 letras (ex.: FR)" maxlength="4">
+    <div class="cores" id="area-cores" style="margin:0.6rem 0"></div>
+    <p class="rotulo">Temas — um por linha. Começa a linha com <b>x</b> para marcar como feito.</p>
+    <textarea class="campo" id="area-temas" placeholder="x Verbos regulares&#10;Verbos irregulares&#10;Concordância"></textarea>
+  </div>
+
   <div class="accoes">
     <button class="btn" id="area-apagar">Apagar</button>
-    <button class="btn" id="area-cancelar">Cancelar</button>
+    <button class="btn" id="area-cancelar">Fechar</button>
     <button class="btn" data-tom="forte" id="area-guardar">Guardar</button>
   </div>
 </dialog>

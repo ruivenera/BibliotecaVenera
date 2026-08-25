@@ -260,8 +260,9 @@ async function carregarModulo(rotina) {
     desenharDossies(feed.edicoes.filter((e) => e.rotina === rotina), rotina, modulo);
     if (modulo === "aprendizagem") {
       estado.edicaoCurso = feed.edicoes.find((e) => e.rotina === rotina) || null;
-      const quando = estado.edicaoCurso?.data || estanteDados.lombadas.find((l) => l.rotina === rotina)?.data;
-      $("#data-aprendizagem").textContent = quando ? porExtensoComDia(quando) : "sem aula publicada";
+      // O cabeçalho é a data de hoje, não a da última aula: a página é de hoje,
+      // a aula é que pode ser velha — e isso já se diz no cartão dela.
+      $("#data-aprendizagem").textContent = porExtensoComDia(new Date().toISOString().slice(0, 10));
       desenharAprendizagem();
     }
 
@@ -2563,6 +2564,46 @@ function desenharAprendizagem() {
 
 let areaAberta = null;
 
+function mostrarEdicaoArea(sim) {
+  $("#area-edicao").hidden = !sim;
+  $("#area-percurso").hidden = sim;
+  $("#area-guardar").style.display = sim ? "" : "none";
+  $("#area-apagar").style.display = sim && areaAberta?.nome ? "" : "none";
+}
+
+/** O percurso da área: tocar num tema marca-o feito, tocar outra vez desmarca. */
+function desenharPercursoArea() {
+  const feitos = areaAberta.temas.filter((t) => t.feito).length;
+  const total = areaAberta.temas.length;
+  $("#area-progresso").textContent = total
+    ? `${feitos} de ${total} temas · ${Math.round((feitos / total) * 100)}%`
+    : "sem temas ainda";
+
+  $("#area-temas-lista").innerHTML = areaAberta.temas
+    .map(
+      (t, i) => `<li>
+        <button data-tema="${i}" data-feito="${t.feito ? "sim" : "nao"}">
+          <span class="caixa">${t.feito ? "✓" : ""}</span>
+          <span class="num">${String(i + 1).padStart(2, "0")}</span>
+          <span class="nome">${esc(t.nome)}</span>
+        </button>
+      </li>`
+    )
+    .join("");
+}
+
+$("#area-temas-lista").addEventListener("click", (e) => {
+  const alvo = e.target.closest("[data-tema]");
+  if (!alvo) return;
+  const tema = areaAberta.temas[Number(alvo.dataset.tema)];
+  tema.feito = !tema.feito;
+  alterar("areas", areaAberta);
+  desenharPercursoArea();
+  desenharAprendizagem();
+});
+
+$("#area-editar").addEventListener("click", () => mostrarEdicaoArea(true));
+
 function abrirArea(area) {
   areaAberta = area || {
     id: id(),
@@ -2573,12 +2614,16 @@ function abrirArea(area) {
     criado_em: Date.now(),
     apagado: false,
   };
-  $("#area-rotulo").textContent = area ? "Editar área" : "Nova área";
+  $("#area-rotulo").textContent = area ? areaAberta.nome : "Nova área";
   $("#area-nome").value = areaAberta.nome;
   $("#area-sigla").value = areaAberta.sigla;
   $("#area-temas").value = areaAberta.temas.map((t) => (t.feito ? "x " : "") + t.nome).join("\n");
   $("#area-apagar").style.display = area ? "" : "none";
   marcarCorArea(areaAberta.cor);
+
+  // Área existente abre no percurso; área nova abre logo na edição.
+  mostrarEdicaoArea(!area);
+  desenharPercursoArea();
   $("#folha-area").showModal();
 }
 
@@ -2601,6 +2646,7 @@ $("#btn-area-nova").addEventListener("click", () => abrirArea(null));
 $("#area-cancelar").addEventListener("click", () => $("#folha-area").close());
 
 $("#area-guardar").addEventListener("click", () => {
+  // Guardar volta ao percurso, que é onde se vive depois de a área existir.
   areaAberta.nome = $("#area-nome").value.trim();
   if (!areaAberta.nome) return;
   areaAberta.sigla = $("#area-sigla").value.trim().toUpperCase();
@@ -2614,7 +2660,9 @@ $("#area-guardar").addEventListener("click", () => {
       return { nome: linha.replace(/^x\s+/i, ""), feito };
     });
   alterar("areas", areaAberta);
-  $("#folha-area").close();
+  mostrarEdicaoArea(false);
+  desenharPercursoArea();
+  $("#area-rotulo").textContent = areaAberta.nome;
   desenharAprendizagem();
 });
 
@@ -2633,6 +2681,21 @@ $("#aprender-areas").addEventListener("click", (e) => {
 $("#aprender-curso").addEventListener("click", () => {
   const c = estado.edicaoCurso;
   if (c) irPara("edicao", c.rotina, c.data);
+});
+
+/* O plano é desenhado a cada pintura: os seus botões vão por delegação, senão
+   ficavam sem dono e o toque não fazia nada. */
+$("#aprender-plano").addEventListener("click", (e) => {
+  const area = e.target.closest("[data-area]");
+  if (area) return abrirArea(estado.biblioteca.areas[area.dataset.area]);
+
+  const curso = e.target.closest("[data-abrir-curso]");
+  if (curso && estado.edicaoCurso) {
+    return irPara("edicao", estado.edicaoCurso.rotina, estado.edicaoCurso.data);
+  }
+
+  const ir = e.target.closest("[data-ir]");
+  if (ir) irPara(ir.dataset.ir);
 });
 
 document.querySelector('[data-ir="aprendizagem-arquivo"]').addEventListener("click", () => {
