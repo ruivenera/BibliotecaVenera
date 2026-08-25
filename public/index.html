@@ -1753,6 +1753,105 @@
 
   .barra-accoes { display: flex; justify-content: flex-end; padding: 0 var(--gap) 0.5rem; }
 
+  /* ------------------------------------------------------------ aprender --- */
+  /* A fotografia de secretária entra por baixo do título, esbatida à esquerda
+     para o texto ficar legível sem caixa por trás. */
+  .heroi-aprender {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 132px;
+    padding: 1rem var(--gap) 1.2rem;
+    background-image:
+      linear-gradient(95deg, var(--tinta) 26%, color-mix(in srgb, var(--tinta) 55%, transparent) 58%, transparent 92%),
+      url("/estudo.jpg");
+    background-size: cover, cover;
+    background-position: center, right 30%;
+  }
+  .heroi-aprender h1 {
+    margin: 0;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(1.2rem, 5.2vw, 1.45rem);
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: var(--latao);
+  }
+  .heroi-aprender .sub { margin: 0.35rem 0 0; color: var(--papel-fosco); font-size: 0.82rem; }
+  .heroi-aprender .botao-icone { flex: none; }
+
+  /* Cada conta no seu cartão, como na maqueta. */
+  .mosaicos {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    padding: 0 var(--gap) 0.4rem;
+  }
+  .mosaico {
+    padding: 0.75rem 0.4rem 0.8rem;
+    background: var(--tinta-2);
+    border: 1px solid var(--tinta-3);
+    border-radius: 12px;
+    text-align: center;
+  }
+
+  /* Áreas em linha: sigla, nome, contagem e um traço de progresso à direita. */
+  .linha-area {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.7rem 0.85rem;
+    background: var(--tinta-2);
+    border: 1px solid var(--tinta-3);
+    border-radius: 12px;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .linha-area + .linha-area { margin-top: 0.5rem; }
+  .linha-area .sigla {
+    flex: none;
+    width: 38px; height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--marcador) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--marcador) 35%, transparent);
+    color: var(--marcador);
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+  .linha-area .corpo { flex: 1; min-width: 0; display: grid; gap: 0.1rem; }
+  .linha-area .corpo h4 {
+    margin: 0;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 0.98rem;
+    color: var(--titulo, var(--papel));
+  }
+  .linha-area .corpo .rotulo { font-size: 0.54rem; }
+  .linha-area .lado { flex: none; display: grid; justify-items: end; gap: 0.25rem; max-width: 42%; }
+  .linha-area .barra-progresso { display: block; width: 96px; }
+  .linha-area .aula {
+    display: grid;
+    justify-items: end;
+    gap: 0.1rem;
+    background: none;
+    border: 0;
+    padding: 0;
+    color: inherit;
+    cursor: pointer;
+    text-align: right;
+  }
+  .linha-area .aula .rotulo { font-size: 0.5rem; color: var(--papel-fosco); }
+  .linha-area .aula b { font-family: var(--meta); font-size: 0.6rem; color: var(--marcador); }
+  .linha-area .seta { flex: none; color: var(--papel-fosco); font-size: 1.05rem; }
+  .lista-areas { margin: 0 var(--gap) 0.4rem; }
+
   /* --------------------------------------------------------------- notas --- */
   /* A fotografia entra por CSS e vive em public/quote.jpg — o degradê por cima
      é que garante que o texto se lê, venha a imagem clara ou escura. */
@@ -2837,23 +2936,22 @@
 
   <!-- ------------------------------------------------------- aprendizagem -->
   <section class="vista" id="v-aprendizagem" aria-label="Aprender">
-    <div class="cabecalho-pagina">
-      <div>
+    <header class="heroi-aprender">
+      <div class="dizeres">
         <h1><i class="emoji">🎓</i>Aprender</h1>
         <p class="sub" id="data-aprendizagem"></p>
       </div>
       <span class="botao-icone" aria-hidden="true">
         <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
       </span>
-    </div>
+    </header>
 
     <span class="rotulo-seccao"><i class="emoji">📈</i>O teu progresso</span>
-    <div class="grupo">
-      <div class="mosaicos" id="aprender-numeros"></div>
-    </div>
+    <div class="mosaicos" id="aprender-numeros"></div>
 
     <div class="cabecalho-lista">
       <span class="rotulo"><i class="emoji">🎯</i>O plano de hoje</span>
+      <span class="rotulo" id="conta-temas"></span>
     </div>
     <div id="aprender-plano"></div>
 

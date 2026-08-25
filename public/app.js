@@ -2676,58 +2676,48 @@ function desenharAprendizagem() {
     ),
   ].filter(Boolean);
 
-  $("#aprender-plano").innerHTML = `<div class="cartao-plano">
-    <div class="cabeca-plano">
-      <span class="rotulo">${aulasHoje.length ? `${aulasHoje.length} ${aulasHoje.length === 1 ? "aula" : "aulas"} hoje` : "sem aulas hoje"}</span>
-      <span class="rotulo">${porFazer.length} temas por fazer</span>
-    </div>
-    ${linhas.join("")}
-  </div>`;
+  $("#conta-temas").textContent = `${porFazer.length} temas por fazer`;
+  $("#aprender-plano").innerHTML = `<div class="cartao-plano">${linhas.join("")}</div>`;
 
   /* ------------------------------------------------------------- áreas --- */
-  /* Cada área é também o seu curso: o percurso em cima, a última aula em baixo. */
+  /* Cada área numa linha: sigla, nome, contagem, e à direita o progresso ou a
+     idade da última aula. O percurso completo abre ao tocar. */
   $("#aprender-areas").innerHTML = areas.length
-    ? `<div class="cartoes-area">${areas
+    ? `<div class="lista-areas">${areas
         .map((a) => {
           const pct = progressoArea(a);
           const feitos = a.temas.filter((t) => t.feito).length;
           const aula = cursos.find((c) => c.rotina === a.rotina);
           const dias = aula ? diasDesde(aula.data) : null;
           const idade = dias === 0 ? "hoje" : dias === 1 ? "ontem" : `há ${dias} dias`;
-          return `<article class="cartao-area" style="--marcador:${CORES_AREA[a.cor]}">
-            <button class="topo-area" data-area="${esc(a.id)}">
-              <span class="sigla">${esc(a.sigla || SIGLA(a.nome))}</span>
-              <span class="corpo">
-                <h4>${esc(a.nome)}</h4>
-                <span class="rotulo">${
-                  a.temas.length ? `${feitos} de ${a.temas.length} temas · ${pct}%` : "percurso pelas aulas"
-                }</span>
-              </span>
-              <span class="seta">›</span>
-            </button>
-            ${
-              a.temas.length
-                ? `<span class="barra-progresso"><i style="width:${pct}%"></i></span>
-                   <p class="seguinte">${
-                     proximoTema(a) ? `A seguir: ${esc(proximoTema(a))}` : "Percurso concluído."
-                   }</p>`
-                : ""
-            }
-            ${
-              aula
-                ? `<button class="aula-area" data-curso="${esc(aula.rotina)}" data-data="${esc(aula.data)}">
-                    <span class="corpo"><span class="rotulo">Última aula · ${idade}</span><b>${esc(aula.titulo)}</b></span>
-                    <span class="seta">›</span>
-                  </button>`
-                : `<p class="sem-aula rotulo">${
-                    a.rotina ? "A rotina deste curso ainda não publicou." : "Sem curso ligado a esta área."
-                  }</p>`
-            }
-          </article>`;
+          return `<button class="linha-area" data-area="${esc(a.id)}" style="--marcador:${CORES_AREA[a.cor]}">
+            <span class="sigla">${esc(a.sigla || SIGLA(a.nome))}</span>
+            <span class="corpo">
+              <h4>${esc(a.nome)}</h4>
+              <span class="rotulo">${
+                a.temas.length ? `${feitos} de ${a.temas.length} temas · ${pct}%` : "percurso pelas aulas"
+              }</span>
+            </span>
+            <span class="lado">
+              ${a.temas.length ? `<span class="barra-progresso"><i style="width:${pct}%"></i></span>` : ""}
+              ${
+                aula
+                  ? `<span class="aula" data-curso="${esc(aula.rotina)}" data-data="${esc(aula.data)}">
+                      <span class="rotulo">Última aula</span><b>${idade}</b>
+                    </span>`
+                  : ""
+              }
+            </span>
+            <span class="seta">›</span>
+          </button>`;
         })
         .join("")}</div>`
     : vazio("Ainda sem áreas", "Cria a primeira e liga-lhe um curso.");
 }
+
+
+
+
 
 let areaAberta = null;
 
