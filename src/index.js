@@ -15,10 +15,9 @@ const ROTINAS = {
   "inteligencia-artificial": "Inteligência Artificial",
   // Um curso por área: cada rotina publica a sua aula do dia, com o mesmo
   // formato da de IA. A app junta-as todas na aba Aprender.
-  "curso-cozinha": "Cozinha",
   "curso-uteis": "Melhoria Pessoal",
   "curso-historia": "História",
-  "curso-frances": "Francês",
+  "curso-linguas": "Línguas",
 };
 const CHAVES = Object.keys(ROTINAS);
 
