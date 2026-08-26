@@ -1762,14 +1762,13 @@
   #v-noticias::before {
     content: "";
     position: absolute;
-    inset: 0 0 auto 0;
-    height: 118vh;
+    inset: 0;
     z-index: -1;
     pointer-events: none;
-    background: url("/fundo-noticias.jpg") top center / cover no-repeat;
+    /* O ficheiro é a fotografia seguida do seu reflexo: assim o fundo repete-se
+       ao longo da aba toda sem se ver onde acaba uma cópia e começa a outra. */
+    background: url("/fundo-noticias.jpg") top center / 100% auto repeat-y;
     opacity: 0.34;
-    -webkit-mask-image: linear-gradient(180deg, #000 0 16%, rgba(0,0,0,0.5) 54%, transparent 88%);
-    mask-image: linear-gradient(180deg, #000 0 16%, rgba(0,0,0,0.5) 54%, transparent 88%);
   }
   /* No claro a fotografia é escura: baixa-se a presença para o texto navy não
      perder contraste nas zonas sem cartão. */
@@ -1876,13 +1875,26 @@
     gap: 0.5rem;
     padding: 0 var(--gap) 0.4rem;
   }
+  /* Os quatro cartões partilham a mesma grelha: ícone em cima, número ao meio,
+     etiqueta em baixo. Com alturas fixas por linha, os números alinham-se todos
+     na mesma altura, tenham as etiquetas uma linha ou duas. */
   .mosaico {
-    padding: 0.75rem 0.4rem 0.8rem;
+    display: grid;
+    grid-template-rows: 24px auto 2.2rem;
+    align-items: center;
+    justify-items: center;
+    gap: 0.3rem;
+    padding: 0.8rem 0.4rem 0.75rem;
     background: var(--tinta-2);
     border: 1px solid var(--tinta-3);
     border-radius: 12px;
     text-align: center;
   }
+  .mosaico .n { margin: 0; font-size: 1.45rem; }
+  .mosaico .et { align-self: start; }
+  /* Dentro do mosaico o anel é ícone, do tamanho dos outros e sem número. */
+  .mosaico .anel { width: 24px; height: 24px; }
+  .mosaico .anel text { display: none; }
 
   /* Áreas em linha: sigla, nome, contagem e um traço de progresso à direita. */
   .linha-area {
@@ -2391,6 +2403,62 @@
   }
   .linha-curso .idade { flex: none; font-size: 0.52rem; color: var(--sobe); }
   .linha-curso .idade[data-velho="sim"] { color: var(--papel-fosco); }
+
+  /* ------------------------------------------------------- lição do dia --- */
+  /* Cartão grande, com a fotografia do tema por trás. Os ficheiros vivem em
+     public/ com o nome da rotina: licao-ia.jpg, licao-historia.jpg,
+     licao-frances.jpg, licao-melhoria.jpg. Se algum faltar, fica só a cor. */
+  .cartao-licao {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 0.8rem;
+    width: calc(100% - 2 * var(--gap));
+    min-height: 176px;
+    margin: 0 var(--gap) 0.6rem;
+    padding: 1rem 1rem 1.1rem;
+    background: var(--tinta-2);
+    background-size: cover;
+    background-position: center;
+    border: 1px solid var(--tinta-3);
+    border-left: 3px solid var(--marcador, var(--latao));
+    border-radius: 15px;
+    overflow: hidden;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .cartao-licao[data-rotina="inteligencia-artificial"] { background-image: url("/licao-ia.jpg"); }
+  .cartao-licao[data-rotina="curso-historia"] { background-image: url("/licao-historia.jpg"); }
+  .cartao-licao[data-rotina="curso-linguas"] { background-image: url("/licao-linguas.jpg"); }
+  .cartao-licao[data-rotina="curso-uteis"] { background-image: url("/licao-melhoria.jpg"); }
+
+  /* O véu é um elemento à parte para o degradê ficar por cima da fotografia e
+     por baixo do texto, sem depender da ordem das camadas de fundo. */
+  .cartao-licao .veu {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--tinta) 94%, transparent) 0%,
+      color-mix(in srgb, var(--tinta) 72%, transparent) 42%,
+      color-mix(in srgb, var(--tinta) 18%, transparent) 100%
+    );
+  }
+  .cartao-licao .dentro { position: relative; flex: 1; min-width: 0; display: grid; gap: 0.3rem; }
+  /* Chama-se nome-area e não area: .area já é a linha da lista de áreas, que
+     traz filete em baixo — aparecia um traço solto por cima do título. */
+  .cartao-licao .nome-area { color: var(--marcador, var(--latao)); font-size: 0.55rem; }
+  .cartao-licao b {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 1.18rem;
+    line-height: 1.25;
+    color: var(--titulo, var(--papel));
+    text-wrap: balance;
+  }
+  .cartao-licao .meta { font-size: 0.53rem; color: var(--papel-fosco); }
+  .cartao-licao .seta { position: relative; align-self: center; color: var(--papel-fosco); font-size: 1.2rem; }
 
   /* ------------------------------------------------------ plano do dia --- */
   .cartao-plano {
@@ -3108,13 +3176,13 @@
     <div class="mosaicos" id="aprender-numeros"></div>
 
     <div class="cabecalho-lista">
-      <span class="rotulo"><i class="emoji">🎯</i>O plano de hoje</span>
+      <span class="rotulo"><i class="emoji">🎯</i>A lição de hoje</span>
       <span class="rotulo" id="conta-temas"></span>
     </div>
     <div id="aprender-plano"></div>
 
     <div class="cabecalho-lista">
-      <span class="rotulo"><i class="emoji">📚</i>Áreas e cursos</span>
+      <span class="rotulo"><i class="emoji">📚</i>Os meus cursos</span>
       <button class="ver-mais" data-ir="aprendizagem-arquivo">Aulas anteriores ›</button>
     </div>
     <div class="barra-accoes"><button class="ver-mais" id="btn-area-nova">+ Nova área</button></div>

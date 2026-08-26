@@ -12,28 +12,20 @@ const TIPOS = ["notas", "cartoes", "livros", "areas"];
 const COR = {
   "financas-geopolitica": "var(--latao)",
   "inteligencia-artificial": "var(--indigo)",
-  "curso-cozinha": "var(--latao)",
   "curso-uteis": "var(--sobe)",
   "curso-historia": "var(--rust)",
-  "curso-frances": "var(--indigo)",
+  "curso-linguas": "var(--indigo)",
 };
 let NOMES = {
   "financas-geopolitica": "Finanças & Geopolítica",
   "inteligencia-artificial": "Inteligência Artificial",
-  "curso-cozinha": "Cozinha",
   "curso-uteis": "Melhoria Pessoal",
   "curso-historia": "História",
-  "curso-frances": "Francês",
+  "curso-linguas": "Línguas",
 };
 
 /* Todos os cursos vivem na aba Aprender. A de IA à cabeça, por ser a mais antiga. */
-const CURSOS = [
-  "inteligencia-artificial",
-  "curso-historia",
-  "curso-frances",
-  "curso-cozinha",
-  "curso-uteis",
-];
+const CURSOS = ["inteligencia-artificial", "curso-historia", "curso-linguas", "curso-uteis"];
 
 /* --------------------------------------------------------------- estado --- */
 
@@ -181,10 +173,9 @@ const VISTAS = [
 const MODULO = {
   "financas-geopolitica": "noticias",
   "inteligencia-artificial": "aprendizagem",
-  "curso-cozinha": "aprendizagem",
   "curso-uteis": "aprendizagem",
   "curso-historia": "aprendizagem",
-  "curso-frances": "aprendizagem",
+  "curso-linguas": "aprendizagem",
 };
 const ROTINA_DO_MODULO = { noticias: "financas-geopolitica", aprendizagem: "inteligencia-artificial" };
 
@@ -2451,6 +2442,10 @@ const AREAS_SEMENTE = [
       "Contratos e seguros: o que ler antes de assinar",
       "Segurança digital: gestor de palavras-passe e dois fatores",
       "Manutenção de casa e de carro por estação do ano",
+      "Cozinha: faca, cortes e o refogado que é base de tudo",
+      "Cozinha: ponto da carne, do peixe e dos ovos",
+      "Cozinha: arroz, massa e batata sem falhar as proporções",
+      "Cozinha: sopa, caldos e cozinhar em lote para a semana",
     ],
   },
   {
@@ -2475,10 +2470,10 @@ const AREAS_SEMENTE = [
     ],
   },
   {
-    nome: "Francês",
-    sigla: "FR",
+    nome: "Línguas",
+    sigla: "LN",
     cor: "indigo",
-    rotina: "curso-frances",
+    rotina: "curso-linguas",
     temas: [
       "Alfabeto, sons nasais e as ligações entre palavras",
       "Cumprimentos, apresentações e tratamento por tu ou vous",
@@ -2493,26 +2488,6 @@ const AREAS_SEMENTE = [
       "Vocabulário do dia a dia: casa, comida, transportes, trabalho",
       "Subjuntivo presente: quando e porquê",
       "Ler um jornal francês e ouvir rádio sem legendas",
-    ],
-  },
-  {
-    nome: "Cozinha",
-    sigla: "CZ",
-    cor: "latao",
-    rotina: "curso-cozinha",
-    temas: [
-      "Afiar e usar a faca: corte em juliana, brunoise e chiffonade",
-      "Os cinco sabores e como corrigir um prato salgado ou insonso",
-      "Refogado: cebola, alho e a base de metade dos pratos",
-      "Selar carne: reação de Maillard, repouso e ponto",
-      "Peixe: escamar, amanhar e assar inteiro sem secar",
-      "Arroz, massa e batata: proporções de água e tempos",
-      "Ovos: mexidos, escalfados e omelete francesa",
-      "Molhos-mãe: bechamel, holandês e vinagretes que não se separam",
-      "Sopa: caldo de legumes, de galinha e de peixe",
-      "Fermento e pão: massa mãe, levedação e forno",
-      "Conservação: congelar bem, marinar e curar",
-      "Planear a semana: lista de compras e cozinhar em lote",
     ],
   },
 ];
@@ -2586,12 +2561,44 @@ function migrarAreas() {
   }
 }
 
+/**
+ * Versão 3: os cursos passam a ser quatro. O Francês alarga-se a Línguas e a
+ * Cozinha deixa de ser área própria — os seus temas entram na Melhoria Pessoal.
+ */
+function migrarCursos() {
+  if (localStorage.getItem("venera:areas-versao") === "3") return;
+  localStorage.setItem("venera:areas-versao", "3");
+
+  const porNome = (n) => vivos("areas").find((a) => a.nome.toLowerCase() === n);
+
+  const frances = porNome("francês");
+  if (frances) {
+    frances.nome = "Línguas";
+    frances.sigla = "LN";
+    frances.rotina = "curso-linguas";
+    alterar("areas", frances);
+  }
+
+  const cozinha = porNome("cozinha");
+  const melhoria = porNome("melhoria pessoal");
+  if (cozinha && melhoria) {
+    const jaLa = new Set(melhoria.temas.map((t) => t.nome));
+    for (const tema of cozinha.temas) {
+      if (!jaLa.has(tema.nome)) melhoria.temas.push({ ...tema, nome: `Cozinha: ${tema.nome}` });
+    }
+    alterar("areas", melhoria);
+    cozinha.apagado = true;
+    alterar("areas", cozinha);
+  }
+}
+
 /** O primeiro tema por fazer de uma área — o que vem a seguir. */
 const proximoTema = (area) => area.temas.find((t) => !t.feito)?.nome || "";
 
 function desenharAprendizagem() {
   semearAreas();
   migrarAreas();
+  migrarCursos();
   const areas = vivos("areas");
   const curso = estado.edicaoCurso;
 
@@ -2605,7 +2612,9 @@ function desenharAprendizagem() {
 
   $("#aprender-numeros").innerHTML = [
     mosaico(`<svg viewBox="0 0 24 24"><path d="M4 5h7a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4zM20 5h-7a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h7z"/></svg>`, areas.length, "Áreas ativas"),
-    `<div class="mosaico">${anel(geral)}<span class="et" style="margin-top:0.3rem">Progresso geral</span></div>`,
+    // O progresso era um anel com o número lá dentro, de outro tamanho e noutro
+    // sítio. Passa a ser um número como os outros, com o anel reduzido a ícone.
+    mosaico(anel(geral), `${geral}%`, "Progresso geral"),
     mosaico(`<svg viewBox="0 0 24 24"><path d="M12 2c1 4-2 5-2 8a4 4 0 0 0 8 0c0-1-.4-2-1-3 2 2 3 4 3 6a8 8 0 0 1-16 0c0-5 5-7 8-11z"/></svg>`, sequenciaDeDias(), "Dias seguidos"),
     mosaico(`<svg viewBox="0 0 24 24"><path d="m12 3 2.6 5.6 6 .8-4.4 4.2 1.1 6L12 16.8 6.7 19.6l1.1-6L3.4 9.4l6-.8z"/></svg>`, temasFeitos + cartoesSabidos, "Conceitos sabidos"),
   ].join("");
@@ -2629,55 +2638,72 @@ function desenharAprendizagem() {
           ? `<span class="selo velho">ontem</span>`
           : `<span class="selo velho">há ${atraso} dias</span>`;
 
-  /* ------------------------------------------------------------- plano --- */
-  /* O plano do dia: as aulas saídas hoje, os cartões devidos e um tema por
-     fazer, escolhido de forma estável pelo dia do ano. */
-  const porFazer = areas.flatMap((a) => a.temas.filter((t) => !t.feito).map((t) => ({ a, t })));
-  const diaDoAno = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / DIA);
-  const sugerido = porFazer.length ? porFazer[diaDoAno % porFazer.length] : null;
-  const cartoesDevidos = devidos().length;
+  /* ------------------------------------------------------------- lição --- */
+  /* As rotinas alternam por dia da semana: segunda IA, terça História, quarta
+     Francês, quinta Melhoria Pessoal, sexta outra vez IA — o ciclo tem quatro
+     e a semana tem sete, por isso vai rodando sozinho. */
   const cursos = estado.cursos || [];
-  const aulasHoje = cursos.filter((c) => diasDesde(c.data) === 0);
+  const ROTACAO = ["inteligencia-artificial", "curso-historia", "curso-linguas", "curso-uteis"];
+  const diaSemana = (new Date().getDay() + 6) % 7; // 0 = segunda
+  const rotinaDoDia = ROTACAO[diaSemana % ROTACAO.length];
 
-  const linhaPlano = (icone, texto, extra, accao, cor) =>
-    `<button class="linha-plano" style="--marcador:${cor || "var(--latao)"}" ${accao}>
-      <span class="emoji">${icone}</span>
-      <span class="corpo"><b>${texto}</b><span>${extra}</span></span>
+  const areaDoDia = areas.find((a) => a.rotina === rotinaDoDia);
+  const aulaDoDia = cursos.find((c) => c.rotina === rotinaDoDia && diasDesde(c.data) === 0);
+  const ultimaDaArea = cursos.find((c) => c.rotina === rotinaDoDia);
+  const temaDoDia = areaDoDia ? proximoTema(areaDoDia) : "";
+
+  const nomeDoDia = NOMES[rotinaDoDia] || areaDoDia?.nome || "Hoje";
+  const corDoDia = COR[rotinaDoDia] || "var(--latao)";
+  const dias = ultimaDaArea ? diasDesde(ultimaDaArea.data) : null;
+
+  const cartaoLicao = () => {
+    // Com aula publicada hoje, é ela; sem ela, é o tema que vem a seguir no
+    // percurso da área — o estudo do dia não fica à espera da rotina.
+    const titulo = aulaDoDia?.titulo || temaDoDia || `Sem tema por fazer em ${nomeDoDia}`;
+    const meta = aulaDoDia
+      ? `Aula de hoje${aulaDoDia.progresso?.dia ? ` · Dia ${aulaDoDia.progresso.dia}` : ""}${
+          aulaDoDia.progresso?.leitura_min ? ` · ${aulaDoDia.progresso.leitura_min} min` : ""
+        }`
+      : ultimaDaArea
+        ? `Tema a seguir · última aula há ${dias} ${dias === 1 ? "dia" : "dias"}`
+        : "Tema a seguir · rotina ainda sem aulas";
+    const accao = aulaDoDia
+      ? `data-curso="${esc(aulaDoDia.rotina)}" data-data="${esc(aulaDoDia.data)}"`
+      : areaDoDia
+        ? `data-area="${esc(areaDoDia.id)}"`
+        : "";
+
+    return `<button class="cartao-licao" data-rotina="${esc(rotinaDoDia)}"
+        style="--marcador:${corDoDia}" ${accao}>
+      <span class="veu"></span>
+      <span class="dentro">
+        <span class="rotulo nome-area">${esc(nomeDoDia)}</span>
+        <b>${esc(titulo)}</b>
+        <span class="rotulo meta">${esc(meta)}</span>
+      </span>
       <span class="seta">›</span>
     </button>`;
+  };
 
-  const linhas = [
-    ...aulasHoje.map((c) =>
-      linhaPlano(
-        "📘",
-        esc(c.titulo),
-        `Aula de hoje · ${esc(NOMES[c.rotina] || c.rotina)}`,
-        `data-curso="${esc(c.rotina)}" data-data="${esc(c.data)}"`,
-        COR[c.rotina]
-      )
-    ),
-    sugerido
-      ? linhaPlano(
-          "🎯",
-          esc(sugerido.t.nome),
-          `Tema a seguir · ${esc(sugerido.a.nome)}`,
-          `data-area="${esc(sugerido.a.id)}"`,
-          CORES_AREA[sugerido.a.cor]
-        )
-      : "",
-    linhaPlano(
-      "🔁",
-      cartoesDevidos
-        ? `${cartoesDevidos} ${cartoesDevidos === 1 ? "cartão" : "cartões"} para rever`
-        : "Nada para rever hoje",
-      "Revisão espaçada",
-      'data-ir="revisao"',
-      "var(--papel-fosco)"
-    ),
-  ].filter(Boolean);
+  const cartoesDevidos = devidos().length;
+  const porFazer = areas.flatMap((a) => a.temas.filter((t) => !t.feito));
 
   $("#conta-temas").textContent = `${porFazer.length} temas por fazer`;
-  $("#aprender-plano").innerHTML = `<div class="cartao-plano">${linhas.join("")}</div>`;
+  $("#aprender-plano").innerHTML = `${cartaoLicao()}
+    <div class="cartao-plano">
+      <button class="linha-plano" style="--marcador:var(--papel-fosco)" data-ir="revisao">
+        <span class="emoji">🔁</span>
+        <span class="corpo">
+          <b>${
+            cartoesDevidos
+              ? `${cartoesDevidos} ${cartoesDevidos === 1 ? "cartão" : "cartões"} para rever`
+              : "Nada para rever hoje"
+          }</b>
+          <span>Revisão espaçada</span>
+        </span>
+        <span class="seta">›</span>
+      </button>
+    </div>`;
 
   /* ------------------------------------------------------------- áreas --- */
   /* Cada área numa linha: sigla, nome, contagem, e à direita o progresso ou a
