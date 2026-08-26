@@ -1937,15 +1937,16 @@
      abas: véu na horizontal para o texto, e fecho vertical antes do quote. */
   .heroi-notas {
     display: flex;
-    align-items: center;
-    min-height: 138px;
-    padding: 1.1rem var(--gap) 1.2rem;
+    flex-direction: column;
+    justify-content: flex-start;
+    min-height: 300px;
+    padding: 1.1rem var(--gap) 1.4rem;
     background-image:
       linear-gradient(180deg, transparent 56%, color-mix(in srgb, var(--tinta) 74%, transparent) 84%, var(--tinta) 100%),
       linear-gradient(95deg, var(--tinta) 28%, color-mix(in srgb, var(--tinta) 60%, transparent) 60%, color-mix(in srgb, var(--tinta) 18%, transparent) 96%),
       url("/notas.jpg");
     background-size: cover, cover, cover;
-    background-position: center, center, right 40%;
+    background-position: center, center, center 30%;
   }
   :root[data-tema="claro"] .heroi-notas {
     background-image:
@@ -1973,29 +1974,17 @@
   }
   .heroi-notas .sub { margin: 0.35rem 0 0; color: var(--papel-fosco); font-size: 0.82rem; }
 
-  /* A fotografia entra por CSS e vive em public/quote.jpg — o degradê por cima
-     é que garante que o texto se lê, venha a imagem clara ou escura. */
+  /* O quote deixou de ter fotografia própria: usa a do cabeçalho das notas. */
+  /* Já não é cartão: é a segunda metade do cabeçalho, sobre a mesma fotografia. */
   .quote-dia {
-    position: relative;
-    margin: 0.9rem var(--gap) 0.4rem;
-    padding: 1.2rem 1.1rem 1.1rem;
-    min-height: 190px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    border: 1px solid var(--tinta-3);
-    border-radius: 14px;
-    overflow: hidden;
-    background-image:
-      linear-gradient(100deg, var(--tinta) 30%, color-mix(in srgb, var(--tinta) 55%, transparent) 60%, transparent 88%),
-      url("/quote.jpg");
-    background-size: cover, cover;
-    background-position: center, right center;
+    margin: 1.4rem 0 0;
+    padding: 0;
+    max-width: 76%;
   }
   .quote-dia .rotulo { color: var(--latao); font-size: 0.55rem; }
   .quote-dia blockquote {
-    margin: 0.6rem 0 0.5rem;
-    max-width: 62%;
+    margin: 0.55rem 0 0.5rem;
+    max-width: 100%;
     font-family: var(--display);
     font-style: italic;
     font-weight: 600;
@@ -2005,14 +1994,11 @@
     text-wrap: balance;
   }
   .quote-dia figcaption {
-    max-width: 62%;
     font-size: 0.82rem;
     color: var(--papel-fosco);
   }
-  .quote-dia .ver-mais { align-self: flex-start; margin-top: 0.9rem; }
-  @media (max-width: 22rem) {
-    .quote-dia blockquote, .quote-dia figcaption { max-width: 100%; }
-  }
+  .quote-dia .ver-mais { display: inline-block; margin-top: 0.9rem; }
+  @media (max-width: 22rem) { .quote-dia { max-width: 100%; } }
 
   /* Notas em mosaico de dois, com a etiqueta em baixo. */
   .lista-notas {
@@ -3168,9 +3154,8 @@
         <h1><i class="emoji">📝</i>Notas</h1>
         <p class="sub"><span class="ponto-rotina" style="--ponto:var(--latao)"></span> Ideias, leituras e reflexões</p>
       </div>
+      <figure class="quote-dia" id="quote"></figure>
     </header>
-
-    <figure class="quote-dia" id="quote"></figure>
 
     <div class="cabecalho-lista">
       <span class="rotulo">As tuas notas</span>
