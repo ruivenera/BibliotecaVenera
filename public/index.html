@@ -1904,6 +1904,34 @@
   .linha-area .seta { flex: none; color: var(--papel-fosco); font-size: 1.05rem; }
   .lista-areas { margin: 0 var(--gap) 0.4rem; }
 
+  /* ------------------------------------------------------------- revisão --- */
+  .heroi-revisao {
+    padding-bottom: 0.9rem;
+    background-image:
+      linear-gradient(180deg, transparent 54%, color-mix(in srgb, var(--tinta) 74%, transparent) 82%, var(--tinta) 100%),
+      linear-gradient(95deg, var(--tinta) 26%, color-mix(in srgb, var(--tinta) 58%, transparent) 58%, color-mix(in srgb, var(--tinta) 16%, transparent) 96%),
+      url("/revisao.jpg");
+    background-size: cover, cover, cover;
+    background-position: center, center, right 45%;
+  }
+  :root[data-tema="claro"] .heroi-revisao {
+    background-image:
+      linear-gradient(180deg, transparent 46%, color-mix(in srgb, var(--tinta) 88%, transparent) 76%, var(--tinta) 100%),
+      linear-gradient(95deg, var(--tinta) 38%, color-mix(in srgb, var(--tinta) 86%, transparent) 66%, color-mix(in srgb, var(--tinta) 52%, transparent) 100%),
+      url("/revisao.jpg");
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-tema]) .heroi-revisao {
+      background-image:
+        linear-gradient(180deg, transparent 46%, color-mix(in srgb, var(--tinta) 88%, transparent) 76%, var(--tinta) 100%),
+        linear-gradient(95deg, var(--tinta) 38%, color-mix(in srgb, var(--tinta) 86%, transparent) 66%, color-mix(in srgb, var(--tinta) 52%, transparent) 100%),
+        url("/revisao.jpg");
+    }
+  }
+  /* O título da revisão segue o dourado das outras abas. */
+  .heroi-revisao h1 { color: var(--latao); }
+  .heroi-revisao .sub { font-size: 0.82rem; color: var(--papel-fosco); }
+
   /* --------------------------------------------------------------- notas --- */
   /* Cabeçalho com a secretária de notas por trás, no mesmo esquema das outras
      abas: véu na horizontal para o texto, e fecho vertical antes do quote. */
@@ -3161,10 +3189,11 @@
   <section class="vista" id="v-revisao" aria-label="Revisão">
 
     <div id="revisao-painel">
+      <header class="heroi-revisao">
       <div class="cabecalho-pagina">
         <div>
           <h1><i class="emoji">🔁</i>Revisão</h1>
-          <p class="sub rotulo">Aprendizagem ativa</p>
+          <p class="sub"><span class="ponto-rotina" style="--ponto:var(--latao)"></span> Aprendizagem ativa</p>
         </div>
         <span class="botao-icone" aria-hidden="true">
           <svg viewBox="0 0 24 24"><path d="M9.5 3A2.5 2.5 0 0 0 7 5.5 2.5 2.5 0 0 0 5 8c0 .9.5 1.7 1.2 2.1A2.5 2.5 0 0 0 5 12.3c0 1 .6 1.9 1.5 2.3A2.5 2.5 0 0 0 9 18.5c0 1.4 1.1 2.5 2.5 2.5.8 0 1.5-.4 2-1V4c-.5-.6-1.2-1-2-1zM14.5 3c.8 0 1.5.4 2 1M16.5 3A2.5 2.5 0 0 1 19 5.5 2.5 2.5 0 0 1 21 8c0 .9-.5 1.7-1.2 2.1A2.5 2.5 0 0 1 21 12.3c0 1-.6 1.9-1.5 2.3A2.5 2.5 0 0 1 17 18.5c0 1.4-1.1 2.5-2.5 2.5"/></svg>
@@ -3177,6 +3206,7 @@
         </span>
         <span class="datas"><b id="data-revisao"></b><i id="dia-revisao"></i></span>
       </div>
+      </header>
 
       <div class="grupo" style="margin-top:0.8rem">
         <div class="mosaicos" id="revisao-numeros"></div>
