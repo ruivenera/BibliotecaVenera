@@ -1754,6 +1754,41 @@
   .barra-accoes { display: flex; justify-content: flex-end; padding: 0 var(--gap) 0.5rem; }
 
   /* ------------------------------------------------------------ notícias --- */
+  /* Fundo da aba: a fotografia do jornal fica por trás do conteúdo, num plano
+     próprio. Não leva véu por cima — a nitidez mantém-se — e desaparece por
+     baixo com uma máscara. Quem faz o contraste são os cartões, que continuam
+     opacos por cima dela. */
+  #v-noticias { position: relative; isolation: isolate; }
+  #v-noticias::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 118vh;
+    z-index: -1;
+    pointer-events: none;
+    background: url("/fundo-noticias.jpg") top center / cover no-repeat;
+    opacity: 0.34;
+    -webkit-mask-image: linear-gradient(180deg, #000 0 16%, rgba(0,0,0,0.5) 54%, transparent 88%);
+    mask-image: linear-gradient(180deg, #000 0 16%, rgba(0,0,0,0.5) 54%, transparent 88%);
+  }
+  /* No claro a fotografia é escura: baixa-se a presença para o texto navy não
+     perder contraste nas zonas sem cartão. */
+  :root[data-tema="claro"] #v-noticias::before { opacity: 0.13; }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-tema]) #v-noticias::before { opacity: 0.13; }
+  }
+  /* Os cartões ganham um fio de transparência para a fotografia se adivinhar
+     por baixo sem lhes tirar legibilidade. */
+  #v-noticias .grupo,
+  #v-noticias .cartao-indice,
+  #v-noticias .cartao-geo,
+  #v-noticias .mapa-caixa,
+  #v-noticias .cartao-destaque,
+  #v-noticias .resumo-dia {
+    background-color: color-mix(in srgb, var(--tinta-2) 92%, transparent);
+    backdrop-filter: blur(2px);
+  }
+
   /* O jornal fica por trás do título, da data e das abas. São dois degradês: um
      na horizontal, para a coluna do texto ficar sobre fundo cheio, e outro na
      vertical, para as abas assentarem na página em vez de flutuarem na foto. */
