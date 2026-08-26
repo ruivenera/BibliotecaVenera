@@ -1822,6 +1822,30 @@
   }
 
   /* ------------------------------------------------------------ aprender --- */
+  /* A fotografia é da aba toda, num plano por trás de tudo — cabeçalho
+     incluído. Não leva véu por cima; quem faz o contraste são os cartões. */
+  #v-aprendizagem { position: relative; isolation: isolate; }
+  #v-aprendizagem::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 128vh;
+    z-index: -1;
+    pointer-events: none;
+    background: url("/fundo-aprender.jpg") top center / cover no-repeat;
+    opacity: 0.4;
+    -webkit-mask-image: linear-gradient(180deg, #000 0 22%, rgba(0,0,0,0.5) 58%, transparent 92%);
+    mask-image: linear-gradient(180deg, #000 0 22%, rgba(0,0,0,0.5) 58%, transparent 92%);
+  }
+  :root[data-tema="claro"] #v-aprendizagem::before { opacity: 0.15; }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-tema]) #v-aprendizagem::before { opacity: 0.15; }
+  }
+  #v-aprendizagem .mosaico,
+  #v-aprendizagem .cartao-plano {
+    background-color: color-mix(in srgb, var(--tinta-2) 92%, transparent);
+    backdrop-filter: blur(2px);
+  }
   /* A fotografia de secretária entra por baixo do título, esbatida à esquerda
      para o texto ficar legível sem caixa por trás. */
   .heroi-aprender {
@@ -1833,11 +1857,10 @@
     min-height: 132px;
     padding: 1rem var(--gap) 1.2rem;
     background-image:
-      linear-gradient(180deg, transparent 58%, color-mix(in srgb, var(--tinta) 72%, transparent) 84%, var(--tinta) 100%),
-      linear-gradient(95deg, var(--tinta) 30%, color-mix(in srgb, var(--tinta) 62%, transparent) 60%, color-mix(in srgb, var(--tinta) 20%, transparent) 95%),
-      url("/estudo.jpg");
-    background-size: cover, cover, cover;
-    background-position: center, center, right 42%;
+      linear-gradient(180deg, transparent 58%, color-mix(in srgb, var(--tinta) 62%, transparent) 88%, color-mix(in srgb, var(--tinta) 78%, transparent) 100%),
+      linear-gradient(95deg, color-mix(in srgb, var(--tinta) 82%, transparent) 0%, color-mix(in srgb, var(--tinta) 46%, transparent) 52%, transparent 100%);
+    background-size: cover, cover;
+    background-position: center, center;
   }
   .heroi-aprender h1 {
     margin: 0;
@@ -1852,19 +1875,11 @@
   .heroi-aprender .sub.data { margin-top: 0.25rem; font-size: 0.78rem; }
 
   /* No claro, véu uniforme: mais imagem à vista, texto ainda legível. */
-  :root[data-tema="claro"] .heroi-aprender {
+  :root[data-tema="claro"] .heroi-aprender,
+  :root:not([data-tema]) .heroi-aprender {
     background-image:
-    linear-gradient(180deg, transparent 52%, color-mix(in srgb, var(--tinta) 74%, transparent) 82%, var(--tinta) 100%),
-    linear-gradient(95deg, color-mix(in srgb, var(--tinta) 90%, transparent) 0%, color-mix(in srgb, var(--tinta) 60%, transparent) 46%, color-mix(in srgb, var(--tinta) 38%, transparent) 100%),
-    url("/estudo.jpg");
-  }
-  @media (prefers-color-scheme: light) {
-    :root:not([data-tema]) .heroi-aprender {
-      background-image:
-      linear-gradient(180deg, transparent 52%, color-mix(in srgb, var(--tinta) 74%, transparent) 82%, var(--tinta) 100%),
-      linear-gradient(95deg, color-mix(in srgb, var(--tinta) 90%, transparent) 0%, color-mix(in srgb, var(--tinta) 60%, transparent) 46%, color-mix(in srgb, var(--tinta) 38%, transparent) 100%),
-      url("/estudo.jpg");
-    }
+      linear-gradient(180deg, transparent 52%, color-mix(in srgb, var(--tinta) 66%, transparent) 86%, color-mix(in srgb, var(--tinta) 80%, transparent) 100%),
+      linear-gradient(95deg, color-mix(in srgb, var(--tinta) 88%, transparent) 0%, color-mix(in srgb, var(--tinta) 58%, transparent) 50%, color-mix(in srgb, var(--tinta) 22%, transparent) 100%);
   }
   .heroi-aprender .botao-icone { flex: none; }
 
@@ -1879,6 +1894,14 @@
      três blocos e não como uma coluna contínua. */
   #v-aprendizagem .cabecalho-lista { padding-top: 1.5rem; }
   #v-aprendizagem .rotulo-seccao { padding-top: 1.4rem; }
+  /* As categorias é que mandam na hierarquia desta aba: douradas e maiores do
+     que os rótulos do resto da app. */
+  #v-aprendizagem .rotulo-seccao,
+  #v-aprendizagem .cabecalho-lista > .rotulo {
+    color: var(--latao);
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+  }
   /* Os quatro cartões partilham a mesma grelha: ícone em cima, número ao meio,
      etiqueta em baixo. Com alturas fixas por linha, os números alinham-se todos
      na mesma altura, tenham as etiquetas uma linha ou duas. */
@@ -2382,9 +2405,9 @@
     margin: 0;
     font-family: var(--display);
     font-weight: 700;
-    font-size: 1.45rem;
-    line-height: 1.15;
-    color: var(--latao);
+    font-size: 1.05rem;
+    line-height: 1.25;
+    color: var(--titulo, var(--papel));
   }
   .cartao-curso-grande .baixo .rotulo { font-size: 0.54rem; }
   .cartao-curso-grande .barra-progresso { display: block; margin-top: 0.15rem; }
@@ -2549,9 +2572,9 @@
   .cartao-licao b {
     font-family: var(--display);
     font-weight: 700;
-    font-size: 1.42rem;
-    line-height: 1.2;
-    color: var(--latao);
+    font-size: 1.02rem;
+    line-height: 1.3;
+    color: var(--titulo, var(--papel));
     text-wrap: balance;
   }
   .cartao-licao .meta { font-size: 0.53rem; color: var(--papel-fosco); }
