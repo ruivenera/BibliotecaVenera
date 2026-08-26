@@ -1,6 +1,6 @@
 /* Venera — offline. O que já leste continua a abrir sem rede. */
 
-const VERSAO = "venera-v49";
+const VERSAO = "venera-v50";
 const CASCA = ["/", "/index.html", "/app.js", "/manifest.json", "/icone.svg", "/estudo.jpg", "/jornal.jpg", "/leitura.jpg", "/notas.jpg", "/revisao.jpg", "/fundo-noticias.jpg"];
 
 self.addEventListener("install", (evento) => {
@@ -106,7 +106,19 @@ self.addEventListener("fetch", (evento) => {
     return;
   }
 
+  // O resto — ícones e fotografias — vem da cache; à primeira vez guarda-se,
+  // para as imagens dos cursos não voltarem a pesar na ligação.
   evento.respondWith(
-    caches.match(pedido).then((guardado) => guardado || fetch(pedido))
+    caches.match(pedido).then(
+      (guardado) =>
+        guardado ||
+        fetch(pedido).then((resposta) => {
+          if (resposta.ok) {
+            const copia = resposta.clone();
+            caches.open(VERSAO).then((c) => c.put(pedido, copia));
+          }
+          return resposta;
+        })
+    )
   );
 });

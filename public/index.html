@@ -2298,6 +2298,79 @@
     box-shadow: inset 0 0 0 1px var(--latao);
   }
 
+  /* ---------------------------------------------------------- cursos --- */
+  .cartoes-curso { display: grid; gap: 0.7rem; margin: 0 var(--gap); }
+  .cartao-curso-grande {
+    position: relative;
+    display: block;
+    width: 100%;
+    min-height: 168px;
+    padding: 0;
+    background: var(--tinta-2);
+    background-size: cover;
+    background-position: center;
+    border: 1px solid var(--tinta-3);
+    border-left: 3px solid var(--marcador, var(--latao));
+    border-radius: 15px;
+    overflow: hidden;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .cartao-curso-grande .veu {
+    position: absolute;
+    inset: 0;
+    backdrop-filter: blur(2px);
+    background: linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--tinta) 97%, transparent) 0%,
+      color-mix(in srgb, var(--tinta) 88%, transparent) 40%,
+      color-mix(in srgb, var(--tinta) 58%, transparent) 100%
+    );
+  }
+  .cartao-curso-grande .dentro {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 168px;
+    padding: 0.85rem 0.95rem 0.95rem;
+    gap: 1rem;
+  }
+  .cartao-curso-grande .alto {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.8rem;
+  }
+  .cartao-curso-grande .sigla {
+    width: 38px; height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--tinta) 78%, transparent);
+    border: 1px solid color-mix(in srgb, var(--marcador) 45%, transparent);
+    color: var(--marcador);
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+  .cartao-curso-grande .aula { display: grid; justify-items: end; gap: 0.1rem; text-align: right; }
+  .cartao-curso-grande .aula .rotulo { font-size: 0.5rem; font-style: normal; }
+  .cartao-curso-grande .aula b { font-family: var(--meta); font-size: 0.62rem; color: var(--marcador); }
+  .cartao-curso-grande .aula.sem .rotulo { opacity: 0.75; }
+  .cartao-curso-grande .baixo { display: grid; gap: 0.3rem; }
+  .cartao-curso-grande h4 {
+    margin: 0;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 1.22rem;
+    line-height: 1.2;
+    color: var(--titulo, var(--papel));
+  }
+  .cartao-curso-grande .baixo .rotulo { font-size: 0.54rem; }
+  .cartao-curso-grande .barra-progresso { display: block; margin-top: 0.15rem; }
+
   /* ------------------------------------------------------- áreas e cursos --- */
   .cartoes-area { display: grid; gap: 0.7rem; margin: 0 var(--gap); }
   .cartao-area {
@@ -2406,8 +2479,8 @@
 
   /* ------------------------------------------------------- lição do dia --- */
   /* Cartão grande, com a fotografia do tema por trás. Os ficheiros vivem em
-     public/ com o nome da rotina: licao-ia.jpg, licao-historia.jpg,
-     licao-frances.jpg, licao-melhoria.jpg. Se algum faltar, fica só a cor. */
+     public/ com o nome do curso: curso-ia.jpg, curso-historia.jpg,
+     curso-linguas.jpg e curso-melhoria.jpg — os mesmos dos cartões da lista. */
   .cartao-licao {
     position: relative;
     display: flex;
@@ -2428,21 +2501,26 @@
     text-align: left;
     cursor: pointer;
   }
-  .cartao-licao[data-rotina="inteligencia-artificial"] { background-image: url("/licao-ia.jpg"); }
-  .cartao-licao[data-rotina="curso-historia"] { background-image: url("/licao-historia.jpg"); }
-  .cartao-licao[data-rotina="curso-linguas"] { background-image: url("/licao-linguas.jpg"); }
-  .cartao-licao[data-rotina="curso-uteis"] { background-image: url("/licao-melhoria.jpg"); }
+  .cartao-licao[data-rotina="inteligencia-artificial"],
+  .cartao-curso-grande[data-rotina="inteligencia-artificial"] { background-image: url("/curso-ia.jpg"); }
+  .cartao-licao[data-rotina="curso-historia"],
+  .cartao-curso-grande[data-rotina="curso-historia"] { background-image: url("/curso-historia.jpg"); }
+  .cartao-licao[data-rotina="curso-linguas"],
+  .cartao-curso-grande[data-rotina="curso-linguas"] { background-image: url("/curso-linguas.jpg"); }
+  .cartao-licao[data-rotina="curso-uteis"],
+  .cartao-curso-grande[data-rotina="curso-uteis"] { background-image: url("/curso-melhoria.jpg"); }
 
   /* O véu é um elemento à parte para o degradê ficar por cima da fotografia e
      por baixo do texto, sem depender da ordem das camadas de fundo. */
   .cartao-licao .veu {
     position: absolute;
     inset: 0;
+    backdrop-filter: blur(2px);
     background: linear-gradient(
       0deg,
-      color-mix(in srgb, var(--tinta) 94%, transparent) 0%,
-      color-mix(in srgb, var(--tinta) 72%, transparent) 42%,
-      color-mix(in srgb, var(--tinta) 18%, transparent) 100%
+      color-mix(in srgb, var(--tinta) 96%, transparent) 0%,
+      color-mix(in srgb, var(--tinta) 86%, transparent) 42%,
+      color-mix(in srgb, var(--tinta) 52%, transparent) 100%
     );
   }
   .cartao-licao .dentro { position: relative; flex: 1; min-width: 0; display: grid; gap: 0.3rem; }

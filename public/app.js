@@ -2706,39 +2706,44 @@ function desenharAprendizagem() {
     </div>`;
 
   /* ------------------------------------------------------------- áreas --- */
-  /* Cada área numa linha: sigla, nome, contagem, e à direita o progresso ou a
-     idade da última aula. O percurso completo abre ao tocar. */
+  /* Cada curso é um cartão grande com a sua fotografia, o progresso do percurso
+     e a idade da última aula. A imagem é escolhida pelo data-rotina no CSS. */
   $("#aprender-areas").innerHTML = areas.length
-    ? `<div class="lista-areas">${areas
+    ? `<div class="cartoes-curso">${areas
         .map((a) => {
           const pct = progressoArea(a);
           const feitos = a.temas.filter((t) => t.feito).length;
           const aula = cursos.find((c) => c.rotina === a.rotina);
-          const dias = aula ? diasDesde(aula.data) : null;
-          const idade = dias === 0 ? "hoje" : dias === 1 ? "ontem" : `há ${dias} dias`;
-          return `<button class="linha-area" data-area="${esc(a.id)}" style="--marcador:${CORES_AREA[a.cor]}">
-            <span class="sigla">${esc(a.sigla || SIGLA(a.nome))}</span>
-            <span class="corpo">
-              <h4>${esc(a.nome)}</h4>
-              <span class="rotulo">${
-                a.temas.length ? `${feitos} de ${a.temas.length} temas · ${pct}%` : "percurso pelas aulas"
-              }</span>
+          const d = aula ? diasDesde(aula.data) : null;
+          const idade = d === 0 ? "hoje" : d === 1 ? "ontem" : `há ${d} dias`;
+          return `<button class="cartao-curso-grande" data-area="${esc(a.id)}"
+              data-rotina="${esc(a.rotina || "")}" style="--marcador:${CORES_AREA[a.cor]}">
+            <span class="veu"></span>
+            <span class="dentro">
+              <span class="alto">
+                <span class="sigla">${esc(a.sigla || SIGLA(a.nome))}</span>
+                ${
+                  aula
+                    ? `<span class="aula" data-curso="${esc(aula.rotina)}" data-data="${esc(aula.data)}">
+                        <i class="rotulo">Última aula</i><b>${idade}</b>
+                      </span>`
+                    : `<span class="aula sem"><i class="rotulo">Sem aulas ainda</i></span>`
+                }
+              </span>
+              <span class="baixo">
+                <h4>${esc(a.nome)}</h4>
+                <span class="rotulo">${
+                  a.temas.length
+                    ? `${feitos} de ${a.temas.length} temas · ${pct}%`
+                    : "percurso pelas aulas"
+                }</span>
+                ${a.temas.length ? `<span class="barra-progresso"><i style="width:${pct}%"></i></span>` : ""}
+              </span>
             </span>
-            <span class="lado">
-              ${a.temas.length ? `<span class="barra-progresso"><i style="width:${pct}%"></i></span>` : ""}
-              ${
-                aula
-                  ? `<span class="aula" data-curso="${esc(aula.rotina)}" data-data="${esc(aula.data)}">
-                      <span class="rotulo">Última aula</span><b>${idade}</b>
-                    </span>`
-                  : ""
-              }
-            </span>
-            <span class="seta">›</span>
           </button>`;
         })
         .join("")}</div>`
-    : vazio("Ainda sem áreas", "Cria a primeira e liga-lhe um curso.");
+    : vazio("Ainda sem cursos", "Cria o primeiro e liga-lhe uma rotina.");
 }
 
 
