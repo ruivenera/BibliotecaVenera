@@ -1,6 +1,6 @@
 /* Venera — offline. O que já leste continua a abrir sem rede. */
 
-const VERSAO = "venera-v52";
+const VERSAO = "venera-v53";
 const CASCA = ["/", "/index.html", "/app.js", "/manifest.json", "/icone.svg", "/jornal.jpg", "/leitura.jpg", "/notas.jpg", "/revisao.jpg", "/fundo-noticias.jpg"];
 
 self.addEventListener("install", (evento) => {
