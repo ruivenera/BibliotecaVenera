@@ -2028,6 +2028,10 @@
     pointer-events: none;
     background: url("/fundo-revisao-escuro.jpg") center / cover no-repeat;
     opacity: 0.85;
+    /* Mesmo desfoque do Aprender. O scale evita a orla que o blur deixa nas
+       bordas, onde já não há imagem. O cabeçalho tem fundo próprio e fica nítido. */
+    filter: blur(3px);
+    transform: scale(1.04);
   }
   :root[data-tema="claro"] #v-revisao::before {
     background-image: url("/fundo-revisao-claro.jpg");
@@ -2097,6 +2101,10 @@
     pointer-events: none;
     background: url("/fundo-notas-escuro.jpg") center / cover no-repeat;
     opacity: 0.85;
+    /* Mesmo desfoque do Aprender. O scale evita a orla que o blur deixa nas
+       bordas, onde já não há imagem. O cabeçalho tem fundo próprio e fica nítido. */
+    filter: blur(3px);
+    transform: scale(1.04);
   }
   :root[data-tema="claro"] #v-notas::before {
     background-image: url("/fundo-notas-claro.jpg");
@@ -2286,6 +2294,10 @@
     pointer-events: none;
     background: url("/fundo-leitura-escuro.jpg") center / cover no-repeat;
     opacity: 0.85;
+    /* Mesmo desfoque do Aprender. O scale evita a orla que o blur deixa nas
+       bordas, onde já não há imagem. O cabeçalho tem fundo próprio e fica nítido. */
+    filter: blur(3px);
+    transform: scale(1.04);
   }
   :root[data-tema="claro"] #v-leitura::before {
     background-image: url("/fundo-leitura-claro.jpg");
