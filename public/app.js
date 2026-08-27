@@ -504,14 +504,17 @@ const projY = (lat) => MAPA_LAT_TOPO - lat;
 /* Cores tiradas de uma fotografia de globo: oceano azul-forte, plataforma
    continental mais clara, verde de floresta, castanho-areia no deserto, branco
    no gelo. */
+/* Paleta de satélite: oceano quase preto, terra apagada, gelo a puxar para o
+   azul. É o que faz o mapa parecer uma fotografia do espaço e não um atlas. */
 const CORES_MAPA = {
-  oceano: [37, 92, 158],
-  plataforma: [66, 129, 190],
-  verde: [76, 116, 58],
-  tropico: [48, 92, 42],
-  deserto: [198, 165, 108],
-  tundra: [110, 124, 84],
-  gelo: [238, 243, 246],
+  oceano: [9, 22, 38],
+  oceanoFundo: [6, 15, 27],
+  plataforma: [22, 52, 82],
+  verde: [58, 84, 48],
+  tropico: [38, 68, 36],
+  deserto: [136, 116, 74],
+  tundra: [78, 86, 62],
+  gelo: [226, 234, 240],
 };
 
 const DESERTOS = [
@@ -597,11 +600,15 @@ function imagemMapa() {
 
       if (eTerra) {
         cor = corTerra(lat, lon);
+        // Sombreado por latitude: os trópicos apanham mais luz do que o norte,
+        // como numa imagem de satélite composta.
+        const luz = 1 - Math.min(0.28, Math.abs(lat) / 300);
+        cor = [cor[0] * luz, cor[1] * luz, cor[2] * luz];
         // Célula de terra com água ao lado é linha de costa: escurece-se para o
         // contorno dos continentes se ler mesmo em tamanho pequeno.
         const costa =
           !terra(c - 1, r) || !terra(c + 1, r) || !terra(c, r - 1) || !terra(c, r + 1);
-        if (costa) cor = misturar(cor, [24, 38, 30], 0.4);
+        if (costa) cor = misturar(cor, [12, 20, 18], 0.45);
       } else {
         // Duas orlas de água: a plataforma continental junto à costa e um degrau
         // a seguir, que dá profundidade ao oceano.
@@ -611,16 +618,22 @@ function imagemMapa() {
           vizinha(-1, -1) || vizinha(1, -1) || vizinha(-1, 1) || vizinha(1, 1);
         const quase =
           perto || vizinha(-2, 0) || vizinha(2, 0) || vizinha(0, -2) || vizinha(0, 2);
+        // O mar escurece à medida que se afasta da costa e desce em latitude.
+        const fundo = misturar(
+          CORES_MAPA.oceano,
+          CORES_MAPA.oceanoFundo,
+          Math.min(1, Math.abs(lat) / 90 + 0.15)
+        );
         cor = perto
           ? CORES_MAPA.plataforma
           : quase
-            ? misturar(CORES_MAPA.oceano, CORES_MAPA.plataforma, 0.45)
-            : CORES_MAPA.oceano;
+            ? misturar(fundo, CORES_MAPA.plataforma, 0.5)
+            : fundo;
 
         // Paralelos e meridianos de 30 em 30 graus, quase impercetíveis.
         const grelhaLat = Math.abs(((lat + 90) % 30) - 15) > 14.7;
         const grelhaLon = Math.abs(((lon + 180) % 30) - 15) > 14.7;
-        if (grelhaLat || grelhaLon) cor = misturar(cor, [255, 255, 255], 0.06);
+        if (grelhaLat || grelhaLon) cor = misturar(cor, [120, 170, 210], 0.1);
       }
 
       const ruido = granulado(i, eTerra ? 10 : 3);
@@ -1123,7 +1136,15 @@ function desenharNoticias() {
     </div>`;
   };
 
-  /* Atividade por região: quantos acontecimentos e que peso tem cada zona. */
+  /* Atividade por região: barra em segmentos, como um medidor de painel. */
+  const COR_REGIAO = {
+    "Médio Oriente": "#e8402f",
+    "Ásia": "#f08a3c",
+    "Europa": "#f2b430",
+    "Américas": "#4b8ede",
+    "África": "#57b98a",
+  };
+
   const blocoRegioes = () => {
     const contas = REGIOES_MAPA.map((nome) => ({
       nome,
@@ -1131,16 +1152,61 @@ function desenharNoticias() {
       altos: geopoliticos.filter(({ item }) => regiao(item) === nome && item.impacto === "alto").length,
     })).filter((r) => r.n);
     if (!contas.length) return "";
+
     const maior = Math.max(...contas.map((c) => c.n));
+    const SEGMENTOS = 10;
+    const paises = new Set(marcadores.flatMap((m) => [m.origem, m.alvo].filter(Boolean)));
+
     return `<div class="cabecalho-lista"><span class="rotulo"><i class="emoji">📊</i>Atividade por região</span></div>
-      <div class="grupo quadro-regioes">${contas
-        .sort((a, b) => b.n - a.n)
+      <div class="grupo quadro-regioes">
+        ${contas
+          .sort((a, b) => b.n - a.n)
+          .map((c) => {
+            const cheios = Math.max(1, Math.round((c.n / maior) * SEGMENTOS));
+            const barras = Array.from(
+              { length: SEGMENTOS },
+              (_, i) =>
+                `<i style="${i < cheios ? `background:${COR_REGIAO[c.nome]}` : ""}"></i>`
+            ).join("");
+            return `<div class="linha-regiao">
+              <span class="nome"><i class="ponto" style="background:${COR_REGIAO[c.nome]}"></i>${esc(c.nome)}</span>
+              <b style="color:${COR_REGIAO[c.nome]}">${c.n}</b>
+              <span class="segmentos">${barras}</span>
+              <span class="rotulo altos">${c.altos ? `${c.altos} de impacto alto` : "sem impacto alto"}</span>
+            </div>`;
+          })
+          .join("")}
+        <div class="rodape-regioes">
+          <span><b>${geopoliticos.length}</b> <i class="rotulo">acontecimentos</i></span>
+          <span><b>${paises.size}</b> <i class="rotulo">países</i></span>
+        </div>
+      </div>`;
+  };
+
+  /* Destaques do dia: os cinco de maior gravidade, com origem e alvo à vista. */
+  const ORDEM_IMPACTO = { alto: 0, medio: 1, baixo: 2 };
+  const blocoDestaquesGeo = () => {
+    if (!marcadores.length) return "";
+    const topo = [...marcadores]
+      .sort((a, b) => (ORDEM_IMPACTO[a.impacto] ?? 3) - (ORDEM_IMPACTO[b.impacto] ?? 3))
+      .slice(0, 5);
+    return `<div class="cabecalho-lista">
+        <span class="rotulo"><i class="emoji">⭐</i>Destaques do dia</span>
+        <button class="ver-mais" data-abrir-edicao>Ver todas ›</button>
+      </div>
+      <div class="grupo">${topo
         .map(
-          (c) => `<div class="linha-regiao" data-alto="${c.altos ? "sim" : "nao"}">
-            <span class="nome">${esc(c.nome)}</span>
-            <span class="barra"><i style="width:${Math.round((c.n / maior) * 100)}%"></i></span>
-            <b>${c.n}</b>
-          </div>`
+          (m) => `<button class="destaque-geo" data-item-noticia="${m.i}">
+            <span class="bandeiras">
+              <i class="emoji">${emojiBandeira(m.origem)}</i>
+              ${m.alvo ? `<i class="seta-rel">→</i><i class="emoji">${emojiBandeira(m.alvo)}</i>` : ""}
+            </span>
+            <span class="corpo">
+              <b>${esc(m.item.titulo)}</b>
+              <span class="rotulo">${esc(primeiraFrase(m.item.texto).slice(0, 90))}</span>
+            </span>
+            <span class="selo-impacto" data-impacto="${esc(m.impacto)}">${esc(m.impacto)}</span>
+          </button>`
         )
         .join("")}</div>`;
   };
@@ -1404,6 +1470,7 @@ function desenharNoticias() {
       return (
         mapaHTML() +
         blocoRisco() +
+        blocoDestaquesGeo() +
         blocoRegioes() +
         blocoAlertas() +
         cabecalho("Geopolítica", EMOJI("🌍")) +

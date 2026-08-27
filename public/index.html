@@ -1494,27 +1494,92 @@
   }
   .tira-mapa .seta { flex: none; color: var(--papel-fosco); }
 
-  /* Atividade por região. */
+  /* Atividade por região: nome e número em cima, medidor em segmentos por baixo. */
   .quadro-regioes { padding: 0.35rem 0.9rem 0.5rem; }
   .linha-regiao {
     display: grid;
-    grid-template-columns: 7.5rem 1fr auto;
+    grid-template-columns: 1fr auto;
     align-items: center;
-    gap: 0.6rem;
-    padding: 0.5rem 0;
+    gap: 0.25rem 0.6rem;
+    padding: 0.6rem 0;
     border-bottom: 1px solid var(--tinta-3);
   }
-  .linha-regiao:last-child { border-bottom: 0; }
-  .linha-regiao .nome { font-size: 0.8rem; }
-  .linha-regiao .barra {
-    height: 5px;
-    border-radius: 999px;
+  .linha-regiao .nome { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
+  .linha-regiao .ponto { width: 8px; height: 8px; border-radius: 50%; }
+  .linha-regiao b { font-family: var(--display); font-size: 1.05rem; }
+  .linha-regiao .segmentos { grid-column: 1 / -1; display: flex; gap: 3px; }
+  .linha-regiao .segmentos i {
+    flex: 1;
+    height: 6px;
+    border-radius: 2px;
     background: var(--tinta-3);
+  }
+  .linha-regiao .altos { grid-column: 1 / -1; font-size: 0.5rem; }
+  .rodape-regioes {
+    display: flex;
+    gap: 1.6rem;
+    padding: 0.75rem 0 0.3rem;
+    border-top: 1px solid var(--tinta-3);
+  }
+  .rodape-regioes b { font-family: var(--display); font-size: 1.05rem; margin-right: 0.35rem; }
+  .rodape-regioes i { font-style: normal; font-size: 0.52rem; }
+
+  /* Destaques do dia: bandeiras da relação, título e selo de gravidade. */
+  .destaque-geo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.7rem 0.85rem;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--tinta-3);
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .destaque-geo:last-child { border-bottom: 0; }
+  .destaque-geo .bandeiras {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+    font-size: 0.95rem;
+  }
+  .destaque-geo .bandeiras .emoji { margin: 0; }
+  .destaque-geo .seta-rel { font-style: normal; color: var(--papel-fosco); font-size: 0.7rem; }
+  .destaque-geo .corpo { flex: 1; min-width: 0; display: grid; gap: 0.15rem; }
+  .destaque-geo .corpo b {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 0.88rem;
+    line-height: 1.25;
+    color: var(--titulo, var(--papel));
+  }
+  .destaque-geo .corpo .rotulo {
+    font-family: var(--leitura);
+    font-size: 0.76rem;
+    letter-spacing: 0;
+    text-transform: none;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  .linha-regiao .barra i { display: block; height: 100%; background: var(--latao); }
-  .linha-regiao[data-alto="sim"] .barra i { background: var(--rust); }
-  .linha-regiao b { font-family: var(--display); font-size: 0.95rem; }
+  .selo-impacto {
+    flex: none;
+    padding: 0.18rem 0.45rem;
+    border-radius: 999px;
+    font-family: var(--meta);
+    font-size: 0.5rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #f2b430;
+    background: color-mix(in srgb, #f2b430 15%, transparent);
+  }
+  .selo-impacto[data-impacto="alto"] { color: #e8402f; background: color-mix(in srgb, #e8402f 15%, transparent); }
+  .selo-impacto[data-impacto="baixo"] { color: #57b98a; background: color-mix(in srgb, #57b98a 15%, transparent); }
   .mapa-legenda {
     display: flex;
     align-items: center;
