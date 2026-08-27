@@ -1898,11 +1898,15 @@
   }
   /* Mais ar entre as secções desta aba: progresso, lição e cursos leem-se como
      três blocos e não como uma coluna contínua. */
-  #v-aprendizagem .cabecalho-lista { padding-top: 1.5rem; }
-  #v-aprendizagem .rotulo-seccao { padding-top: 1.4rem; }
+  /* Cada categoria abre com um traço quase transparente e respira antes dos
+     cartões: são três blocos separados, não uma coluna contínua. */
+  #v-aprendizagem .cabecalho-lista {
+    margin: 1.7rem var(--gap) 0;
+    padding: 1.1rem 0 1rem;
+    border-top: 1px solid color-mix(in srgb, var(--papel) 14%, transparent);
+  }
   /* As categorias é que mandam na hierarquia desta aba: douradas e maiores do
      que os rótulos do resto da app. */
-  #v-aprendizagem .rotulo-seccao,
   #v-aprendizagem .cabecalho-lista > .rotulo {
     color: var(--latao);
     font-size: 0.72rem;
@@ -1910,29 +1914,32 @@
   }
   /* Chapa por baixo das etiquetas e dos atalhos: sobre o papel de parede, o
      texto solto perdia-se nas folhas e nas peças de xadrez. */
-  #v-aprendizagem .rotulo-seccao,
+  /* Chapa preta à volta das letras, nos dois temas: sobre o papel de parede o
+     dourado precisa de fundo escuro para se destacar. */
   #v-aprendizagem .cabecalho-lista > .rotulo,
-  #v-aprendizagem .cabecalho-lista > span.rotulo,
   #v-aprendizagem .cabecalho-lista > .ver-mais,
   #v-aprendizagem .barra-accoes > .ver-mais {
     display: inline-flex;
     align-items: center;
-    padding: 0.28rem 0.6rem;
+    padding: 0.34rem 0.75rem;
     border-radius: 999px;
-    background: color-mix(in srgb, var(--tinta) 80%, transparent);
+    background: rgba(8, 10, 14, 0.78);
     backdrop-filter: blur(3px);
     white-space: nowrap;
   }
+  #v-aprendizagem .cabecalho-lista > .ver-mais,
+  #v-aprendizagem .barra-accoes > .ver-mais { color: var(--latao); }
   /* A contagem de temas é informação de apoio: fica mais pequena para o par
      caber numa linha só. */
-  #v-aprendizagem #conta-temas { font-size: 0.58rem; letter-spacing: 0.08em; }
-  #v-aprendizagem .rotulo-seccao {
-    margin: 0 var(--gap);
-    padding-left: 0.7rem;
-    padding-right: 0.8rem;
-    width: fit-content;
+  /* Sobre a chapa preta o texto é sempre claro, venha o tema que vier. */
+  #v-aprendizagem #conta-temas {
+    font-size: 0.58rem;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.82);
   }
   #v-aprendizagem .cabecalho-lista { align-items: center; gap: 0.5rem; }
+  /* A barra do "+ nova área" acompanha o mesmo recuo. */
+  #v-aprendizagem .barra-accoes { padding: 0 var(--gap) 0.9rem; }
   /* Os quatro cartões partilham a mesma grelha: ícone em cima, número ao meio,
      etiqueta em baixo. Com alturas fixas por linha, os números alinham-se todos
      na mesma altura, tenham as etiquetas uma linha ou duas. */
@@ -3444,7 +3451,9 @@
       </span>
     </header>
 
-    <span class="rotulo-seccao"><i class="emoji">📈</i>O teu progresso</span>
+    <div class="cabecalho-lista">
+      <span class="rotulo"><i class="emoji">📈</i>O teu progresso</span>
+    </div>
     <div class="mosaicos" id="aprender-numeros"></div>
 
     <div class="cabecalho-lista">
