@@ -1836,6 +1836,10 @@
     pointer-events: none;
     background: url("/fundo-aprender-escuro.jpg") center / cover no-repeat;
     opacity: 0.85;
+    /* Desfoque leve: o papel de parede recua e o conteúdo ganha primeiro plano.
+       O scale evita a orla clara que o blur deixa nas bordas. */
+    filter: blur(3px);
+    transform: scale(1.04);
   }
   :root[data-tema="claro"] #v-aprendizagem::before {
     background-image: url("/fundo-aprender-claro.jpg");
