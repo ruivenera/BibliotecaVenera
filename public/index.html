@@ -2032,8 +2032,8 @@
     opacity: 0.85;
     /* Desfoque leve: o papel de parede recua e o conteúdo ganha primeiro plano.
        O scale evita a orla clara que o blur deixa nas bordas. */
-    filter: blur(3px);
-    transform: scale(1.04);
+    filter: blur(7px);
+    transform: scale(1.09);
   }
   :root[data-tema="claro"] #v-aprendizagem::before {
     background-image: url("/fundo-aprender-claro.jpg");
@@ -2108,8 +2108,8 @@
   }
   /* Chapa por baixo das etiquetas e dos atalhos: sobre o papel de parede, o
      texto solto perdia-se nas folhas e nas peças de xadrez. */
-  /* Chapa preta à volta das letras, nos dois temas: sobre o papel de parede o
-     dourado precisa de fundo escuro para se destacar. */
+  /* Chapa à volta das letras. No escuro é preta; no claro seria uma mancha
+     pesada sobre o papel branco, por isso passa a marfim com fio dourado. */
   #v-aprendizagem .cabecalho-lista > .rotulo,
   #v-aprendizagem .cabecalho-lista > .ver-mais,
   #v-aprendizagem .barra-accoes > .ver-mais {
@@ -2130,6 +2130,22 @@
     font-size: 0.58rem;
     letter-spacing: 0.08em;
     color: rgba(255, 255, 255, 0.82);
+  }
+  :root[data-tema="claro"] #v-aprendizagem .cabecalho-lista > .rotulo,
+  :root[data-tema="claro"] #v-aprendizagem .cabecalho-lista > .ver-mais,
+  :root[data-tema="claro"] #v-aprendizagem .barra-accoes > .ver-mais {
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--latao) 30%, transparent);
+  }
+  :root[data-tema="claro"] #v-aprendizagem #conta-temas { color: var(--papel-fosco); }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-tema]) #v-aprendizagem .cabecalho-lista > .rotulo,
+    :root:not([data-tema]) #v-aprendizagem .cabecalho-lista > .ver-mais,
+    :root:not([data-tema]) #v-aprendizagem .barra-accoes > .ver-mais {
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--latao) 30%, transparent);
+    }
+    :root:not([data-tema]) #v-aprendizagem #conta-temas { color: var(--papel-fosco); }
   }
   #v-aprendizagem .cabecalho-lista { align-items: center; gap: 0.5rem; }
   /* A barra do "+ nova área" acompanha o mesmo recuo. */
@@ -2691,37 +2707,47 @@
   }
 
   /* ---------------------------------------------------------- cursos --- */
-  .cartoes-curso { display: grid; gap: 1rem; margin: 0 var(--gap) 0.5rem; }
+  .cartoes-curso { display: grid; gap: 1.1rem; margin: 0 var(--gap) 0.6rem; }
+  /* Cartão de curso: a fotografia manda, o texto assenta numa faixa escura em
+     baixo e o filete dourado dá o acabamento. */
   .cartao-curso-grande {
     position: relative;
     display: block;
     width: 100%;
-    min-height: 150px;
+    min-height: 190px;
     padding: 0;
     background: var(--tinta-2);
     background-size: cover;
     background-position: center;
-    border: 1px solid var(--tinta-3);
-    border-left: 3px solid var(--marcador, var(--latao));
-    border-radius: 15px;
+    border: 0;
+    border-radius: 17px;
     overflow: hidden;
     color: inherit;
     text-align: left;
     cursor: pointer;
+    box-shadow:
+      0 1px 0 color-mix(in srgb, var(--latao) 32%, transparent) inset,
+      0 0 0 1px color-mix(in srgb, var(--marcador) 30%, transparent),
+      0 10px 26px -14px rgba(0, 0, 0, 0.7);
   }
+  /* Cada fotografia tem o seu enquadramento: a de História é uma cronologia em
+     grelha e ficava cortada a meio das legendas. */
+  .cartao-curso-grande[data-rotina="curso-historia"] { background-position: center 22%; }
+  .cartao-curso-grande[data-rotina="curso-linguas"] { background-position: center 32%; }
+  .cartao-curso-grande[data-rotina="curso-uteis"] { background-position: center 42%; }
+  .cartao-curso-grande[data-rotina="inteligencia-artificial"] { background-position: center 30%; }
   /* O véu concentra-se na faixa de baixo, onde está o texto. Acima disso a
      fotografia fica quase limpa, e o desfoque é o mínimo para as legendas
      miúdas da imagem não competirem com o título. */
   .cartao-curso-grande .veu {
     position: absolute;
     inset: 0;
-    backdrop-filter: blur(0.6px);
     background: linear-gradient(
       0deg,
-      color-mix(in srgb, var(--tinta) 94%, transparent) 0%,
-      color-mix(in srgb, var(--tinta) 78%, transparent) 34%,
-      color-mix(in srgb, var(--tinta) 28%, transparent) 62%,
-      color-mix(in srgb, var(--tinta) 8%, transparent) 100%
+      color-mix(in srgb, var(--tinta) 96%, transparent) 0%,
+      color-mix(in srgb, var(--tinta) 82%, transparent) 30%,
+      color-mix(in srgb, var(--tinta) 22%, transparent) 58%,
+      transparent 100%
     );
   }
   .cartao-curso-grande .dentro {
@@ -2729,8 +2755,8 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 150px;
-    padding: 0.8rem 0.9rem 0.9rem;
+    min-height: 190px;
+    padding: 0.85rem 1rem 1rem;
     gap: 1rem;
   }
   .cartao-curso-grande .alto {
@@ -2739,8 +2765,9 @@
     justify-content: space-between;
     gap: 0.8rem;
   }
+  .cartao-curso-grande .marca { display: flex; align-items: center; gap: 0.5rem; }
   .cartao-curso-grande .sigla {
-    width: 38px; height: 38px;
+    width: 40px; height: 40px;
     display: grid;
     place-items: center;
     border-radius: 10px;
@@ -2770,12 +2797,35 @@
     margin: 0;
     font-family: var(--display);
     font-weight: 700;
-    font-size: 1rem;
-    line-height: 1.25;
+    font-size: 1.32rem;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
     color: var(--papel);
   }
-  .cartao-curso-grande .baixo .rotulo { font-size: 0.54rem; }
-  .cartao-curso-grande .barra-progresso { display: block; margin-top: 0.15rem; }
+  .cartao-curso-grande .baixo { gap: 0.45rem; }
+  .cartao-curso-grande .baixo .rotulo { font-size: 0.55rem; color: var(--papel-fosco); }
+  /* Barra fina, cheia com a cor do curso e com um brilho na ponta. */
+  .cartao-curso-grande .barra-progresso {
+    display: block;
+    height: 3px;
+    margin-top: 0.2rem;
+    background: color-mix(in srgb, var(--papel) 18%, transparent);
+  }
+  .cartao-curso-grande .barra-progresso i {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--marcador) 60%, transparent), var(--marcador));
+    box-shadow: 0 0 6px color-mix(in srgb, var(--marcador) 60%, transparent);
+  }
+  /* Selo do curso do dia. */
+  .cartao-curso-grande .hoje {
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--latao) 88%, transparent);
+    color: #14161c;
+    font-family: var(--meta);
+    font-size: 0.5rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
 
   /* ------------------------------------------------------- áreas e cursos --- */
   .cartoes-area { display: grid; gap: 0.7rem; margin: 0 var(--gap); }
@@ -3658,11 +3708,6 @@
     </header>
 
     <div class="cabecalho-lista">
-      <span class="rotulo"><i class="emoji">📈</i>O teu progresso</span>
-    </div>
-    <div class="mosaicos" id="aprender-numeros"></div>
-
-    <div class="cabecalho-lista">
       <span class="rotulo"><i class="emoji">🎯</i>A lição de hoje</span>
       <span class="rotulo" id="conta-temas"></span>
     </div>
@@ -3672,8 +3717,13 @@
       <span class="rotulo"><i class="emoji">📚</i>Os meus cursos</span>
       <button class="ver-mais" data-ir="aprendizagem-arquivo">Aulas anteriores ›</button>
     </div>
-    <div class="barra-accoes"><button class="ver-mais" id="btn-area-nova">+ Nova área</button></div>
     <div id="aprender-areas"></div>
+    <div class="barra-accoes"><button class="ver-mais" id="btn-area-nova">+ Nova área</button></div>
+
+    <div class="cabecalho-lista">
+      <span class="rotulo"><i class="emoji">📈</i>O teu progresso</span>
+    </div>
+    <div class="mosaicos" id="aprender-numeros"></div>
 
     <div id="aprender-arquivo" hidden>
       <span class="rotulo-seccao">Aulas anteriores</span>

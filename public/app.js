@@ -2796,7 +2796,10 @@ function desenharAprendizagem() {
             <span class="veu"></span>
             <span class="dentro">
               <span class="alto">
-                <span class="sigla">${esc(a.sigla || SIGLA(a.nome))}</span>
+                <span class="marca">
+                  <span class="sigla">${esc(a.sigla || SIGLA(a.nome))}</span>
+                  ${a.rotina === rotinaDoDia ? `<span class="hoje">hoje</span>` : ""}
+                </span>
                 ${
                   aula
                     ? `<span class="aula" data-curso="${esc(aula.rotina)}" data-data="${esc(aula.data)}">
