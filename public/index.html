@@ -2310,10 +2310,16 @@
     background: color-mix(in srgb, var(--tinta) 80%, transparent);
     backdrop-filter: blur(3px);
   }
+  /* Mesma presença do cabeçalho da Leitura: 168px, para a fotografia do quadro
+     de revisão se ver e não ficar uma tira. */
   .heroi-revisao {
-    padding-bottom: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 168px;
+    padding-bottom: 1.1rem;
     background-image:
-      linear-gradient(180deg, transparent 54%, color-mix(in srgb, var(--tinta) 74%, transparent) 82%, var(--tinta) 100%),
+      linear-gradient(180deg, transparent 62%, color-mix(in srgb, var(--tinta) 72%, transparent) 86%, var(--tinta) 100%),
       linear-gradient(95deg, var(--tinta) 26%, color-mix(in srgb, var(--tinta) 58%, transparent) 58%, color-mix(in srgb, var(--tinta) 16%, transparent) 96%),
       url("/revisao.jpg");
     background-size: cover, cover, cover;
@@ -2529,6 +2535,165 @@
     color: var(--papel);
   }
   .convite-livros .duas-colunas span { font-size: 0.75rem; line-height: 1.45; color: var(--papel-fosco); }
+
+  /* --------------------------------------------------- painel de leitura --- */
+  .cartao-leitura {
+    display: block;
+    width: calc(100% - 2 * var(--gap));
+    margin: 0 var(--gap) 0.8rem;
+    padding: 0.95rem 1rem 1rem;
+    background: color-mix(in srgb, var(--tinta-2) 94%, transparent);
+    backdrop-filter: blur(3px);
+    border: 1px solid var(--tinta-3);
+    border-radius: 15px;
+    color: inherit;
+    text-align: left;
+  }
+  .cartao-leitura .cabeca {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    margin-bottom: 0.7rem;
+  }
+  .cartao-leitura .cabeca .rotulo { color: var(--latao); font-size: 0.53rem; }
+  .cartao-leitura .cabeca .gen, .cartao-leitura .cabeca .editar { color: var(--papel-fosco); }
+
+  /* A ler agora: capa em letra, título, percentagem e barra. */
+  .cartao-leitura.atual .corpo { display: flex; align-items: center; gap: 0.85rem; }
+  .cartao-leitura .capa {
+    flex: none;
+    width: 46px; height: 64px;
+    display: grid;
+    place-items: center;
+    border-radius: 6px;
+    background: linear-gradient(150deg, color-mix(in srgb, var(--latao) 22%, var(--tinta-3)), var(--tinta-3));
+    border: 1px solid color-mix(in srgb, var(--latao) 35%, transparent);
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: var(--latao);
+  }
+  .cartao-leitura .quem { flex: 1; min-width: 0; }
+  .cartao-leitura h3 {
+    margin: 0;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 1.12rem;
+    line-height: 1.2;
+    color: var(--titulo, var(--papel));
+  }
+  .cartao-leitura .quem p { margin: 0.2rem 0 0; font-size: 0.82rem; color: var(--papel-fosco); }
+  .cartao-leitura .pct { font-family: var(--display); font-size: 1.25rem; color: var(--latao); }
+  .cartao-leitura .barra-progresso { display: block; margin: 0.8rem 0 0.4rem; }
+  .cartao-leitura .paginas { display: block; font-size: 0.52rem; }
+  .cartao-leitura .btn { width: 100%; margin-top: 0.85rem; }
+
+  /* Estado vazio: compacto, sem o bloco enorme de antes. */
+  .vazio-leitura { text-align: center; padding: 1.2rem 1rem 1.3rem; }
+  .vazio-leitura h3 { margin: 0.5rem 0 0.35rem; font-size: 1.05rem; }
+  .vazio-leitura p { margin: 0 0 1rem; color: var(--papel-fosco); font-size: 0.86rem; }
+  .vazio-leitura .btn { width: auto; margin: 0; }
+
+  /* Objetivo e ritmo, lado a lado. */
+  .par-leitura { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; margin: 0 var(--gap) 0.8rem; }
+  .par-leitura .cartao-leitura { width: 100%; margin: 0; padding: 0.8rem 0.85rem 0.85rem; }
+  /* Nos dois cartões estreitos o cabeçalho empilha: lado a lado, o "Ritmo de
+     leitura" partia-se em três linhas. */
+  .par-leitura .cabeca {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    margin-bottom: 0.5rem;
+  }
+  .par-leitura .rotulo { font-size: 0.48rem; }
+  .cartao-leitura.ritmo .fogo { font-size: 0.72rem; }
+  .cartao-leitura .grande {
+    display: block;
+    font-family: var(--display);
+    font-size: 1.5rem;
+    color: var(--papel);
+  }
+  .cartao-leitura .grande i { font-style: normal; font-size: 0.72rem; color: var(--papel-fosco); }
+  .cartao-leitura.objetivo .rotulo { font-size: 0.5rem; text-transform: none; letter-spacing: 0.04em; }
+  .cartao-leitura.ritmo .fogo { font-size: 0.68rem; color: var(--papel); white-space: nowrap; }
+  .barras-dias { display: flex; align-items: flex-end; gap: 3px; height: 36px; margin: 0.3rem 0 0.5rem; }
+  .barras-dias i {
+    flex: 1;
+    border-radius: 2px;
+    background: var(--tinta-3);
+  }
+  .barras-dias i[data-lido="sim"] { background: var(--latao); }
+
+  /* Ideias vindas das notas. */
+  .ideias-leitura { padding: 0.2rem 0.9rem 0.5rem; }
+  .ideia {
+    display: block;
+    width: 100%;
+    padding: 0.7rem 0;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--tinta-3);
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .ideia:last-child { border-bottom: 0; }
+  .ideia p {
+    margin: 0 0 0.3rem;
+    font-family: var(--leitura);
+    font-style: italic;
+    font-size: 0.92rem;
+    line-height: 1.4;
+    color: var(--papel);
+  }
+  .ideia .rotulo { font-size: 0.5rem; }
+
+  /* Próximas leituras em fila horizontal. */
+  .proximas {
+    display: flex;
+    gap: 0.7rem;
+    overflow-x: auto;
+    padding: 0 var(--gap) 0.9rem;
+    scrollbar-width: none;
+  }
+  .proximas::-webkit-scrollbar { display: none; }
+  .proxima {
+    flex: none;
+    width: 118px;
+    display: grid;
+    gap: 0.2rem;
+    padding: 0.7rem;
+    background: color-mix(in srgb, var(--tinta-2) 94%, transparent);
+    border: 1px solid var(--tinta-3);
+    border-radius: 12px;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .proxima .capa { width: 34px; height: 46px; font-size: 1rem; margin-bottom: 0.35rem; }
+  .proxima b { font-family: var(--display); font-size: 0.84rem; line-height: 1.2; }
+  .proxima .rotulo { font-size: 0.5rem; }
+  .proxima .fino { color: var(--papel-fosco); opacity: 0.85; }
+
+  /* Fichas de género com contagem. */
+  .fichas-genero .ficha-genero .corpo { display: grid; gap: 0.1rem; text-align: left; }
+  .fichas-genero .ficha-genero .corpo b { font-size: 0.62rem; color: var(--papel); }
+  .fichas-genero .ficha-genero .corpo i { font-style: normal; font-size: 0.5rem; }
+
+  /* Estrelas na folha do livro. */
+  .par-campos { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+  .estrelas { display: flex; gap: 0.35rem; margin-bottom: 0.6rem; }
+  .estrelas button {
+    background: none;
+    border: 0;
+    padding: 0.1rem;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--tinta-3);
+    cursor: pointer;
+  }
+  .estrelas button[aria-current="true"] { color: var(--latao); }
 
   /* ------------------------------------------------------------- leitura --- */
   /* Papel de parede fixo, um por tema. O cabeçalho tem fundo próprio e fica por
@@ -3787,8 +3952,8 @@
     <header class="heroi-leitura">
       <div class="dizeres">
         <p class="rotulo"><i class="emoji">📖</i>Leitura</p>
-        <h1>A tua jornada começa aqui.</h1>
-        <p class="sub">Organiza, acompanha e aproveita cada livro ao máximo.</p>
+        <h1>O que estás a ler</h1>
+        <p class="sub">Continua a tua jornada de leitura.</p>
       </div>
     </header>
 
@@ -3797,13 +3962,8 @@
       <button class="btn" data-tom="forte" id="btn-livro-novo">+ Novo livro</button>
     </div>
 
-    <div id="numeros-livros"></div>
+    <div id="painel-leitura"></div>
     <div id="lista-livros"></div>
-
-    <div class="cabecalho-lista">
-      <span class="rotulo"><i class="emoji">✨</i>Inspiração para ler</span>
-    </div>
-    <div class="fichas-genero" id="generos-livros"></div>
   </section>
 
   <!-- -------------------------------------------------------------- artigo -->
@@ -4089,7 +4249,17 @@
   <div class="segmentado" role="group" aria-label="Estado do livro">
     <button class="btn" data-livro-estado="a_ler">A ler</button>
     <button class="btn" data-livro-estado="lido">Lido</button>
-    <button class="btn" data-livro-estado="recomendado">Recomendado</button>
+    <button class="btn" data-livro-estado="recomendado">Quero ler</button>
+  </div>
+  <div class="par-campos">
+    <input class="campo" id="livro-pagina" type="number" inputmode="numeric" min="0" placeholder="Página atual">
+    <input class="campo" id="livro-paginas" type="number" inputmode="numeric" min="0" placeholder="Total de páginas">
+  </div>
+  <p class="rotulo">Avaliação</p>
+  <div class="estrelas" id="livro-avaliacao" role="group" aria-label="Avaliação">
+    <button data-estrela="1">★</button><button data-estrela="2">★</button>
+    <button data-estrela="3">★</button><button data-estrela="4">★</button>
+    <button data-estrela="5">★</button>
   </div>
   <textarea class="campo" id="livro-resumo" placeholder="Resumo, notas de leitura, citações…"></textarea>
   <div class="accoes">

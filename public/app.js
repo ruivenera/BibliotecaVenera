@@ -1,6 +1,14 @@
 /* Venera — biblioteca de estudo. Estado local primeiro, servidor a seguir. */
 
 const $ = (s) => document.querySelector(s);
+/* A primeira frase de um texto. Vive aqui em cima porque tanto as abas de
+   notícias como a de leitura mostram só isto, deixando o corpo para o artigo. */
+const primeiraFrase = (texto) => {
+  const limpo = String(texto || "").trim();
+  const fim = limpo.search(/[.!?](\s|$)/);
+  return fim > 0 ? limpo.slice(0, fim + 1) : limpo;
+};
+
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
@@ -1144,14 +1152,6 @@ function desenharNoticias() {
   /* Os blocos ricos do painel viviam só na edição completa. Passam a aparecer
      também nas abas, que é onde se lê o dia sem abrir mais nada. */
   const emPainel = (html) => (html ? `<div class="painel painel-aba">${html}</div>` : "");
-
-  /* Nas abas fica a primeira frase; o texto completo é para quando se abre mesmo
-     a notícia ou a edição. */
-  const primeiraFrase = (texto) => {
-    const limpo = String(texto || "").trim();
-    const fim = limpo.search(/[.!?](\s|$)/);
-    return fim > 0 ? limpo.slice(0, fim + 1) : limpo;
-  };
 
   const blocoDestaque = () => {
     const d = painel.destaque;
@@ -2985,7 +2985,7 @@ document.querySelector('[data-ir="aprendizagem-arquivo"]').addEventListener("cli
 
 /* ---------------------------------------------------------------- livros --- */
 
-const ESTADOS_LIVRO = { a_ler: "A ler", lido: "Lido", recomendado: "Recomendado" };
+const ESTADOS_LIVRO = { a_ler: "A ler", lido: "Lido", recomendado: "Quero ler" };
 
 let livroAberto = null;
 
@@ -2996,94 +2996,326 @@ const GENEROS = [
   ["🏛️", "História"],
   ["👤", "Biografias"],
   ["🔬", "Ciência"],
+  ["🧠", "Filosofia"],
+  ["💶", "Finanças"],
 ];
 
-/** Género escolhido nas fichas de inspiração. Vazio é a biblioteca toda. */
+/** Género escolhido nas fichas de biblioteca. Vazio é tudo. */
 let generoEscolhido = "";
 
 const ICONE_LIVRO = {
   livros: `<svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h5v18H6a2 2 0 0 1-2-2zM20 5a2 2 0 0 0-2-2h-5v18h5a2 2 0 0 0 2-2z"/></svg>`,
-  aLer: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
-  lido: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>`,
-  depois: `<svg viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg>`,
-  organiza: `<svg viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></svg>`,
-  acompanha: `<svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>`,
-  descobre: `<svg viewBox="0 0 24 24"><path d="M12 4l2.4 5.2 5.6.7-4.2 3.9 1.2 5.6L12 16.6 6.9 19.4l1.2-5.6L4 9.9l5.6-.7z"/></svg>`,
+  paginas: `<svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h6M9 16h4"/></svg>`,
+  dias: `<svg viewBox="0 0 24 24"><path d="M12 3c1.6 3.2.4 5-1 6.5C9.2 11.4 8 12.9 8 15a4 4 0 0 0 8 0c0-1.6-.7-2.8-1.5-3.8"/></svg>`,
+  nota: `<svg viewBox="0 0 24 24"><path d="M12 4l2.4 5.2 5.6.7-4.2 3.9 1.2 5.6L12 16.6 6.9 19.4l1.2-5.6L4 9.9l5.6-.7z"/></svg>`,
 };
+
+/* Objetivo anual e registo de leitura vivem só neste aparelho: são hábitos,
+   não conteúdo, e não valia a pena mais um tipo no sincronismo. */
+const META_CHAVE = "venera:meta-livros";
+const REGISTO_CHAVE = "venera:leitura-registo";
+const metaLivros = () => Number(localStorage.getItem(META_CHAVE)) || 24;
+const registoLeitura = () => {
+  try {
+    return JSON.parse(localStorage.getItem(REGISTO_CHAVE) || "{}");
+  } catch {
+    return {};
+  }
+};
+
+/** Marca no registo as páginas lidas hoje, quando o marcador avança. */
+function anotarLeitura(paginas) {
+  if (paginas <= 0) return;
+  const reg = registoLeitura();
+  const hoje = new Date().toISOString().slice(0, 10);
+  reg[hoje] = (reg[hoje] || 0) + paginas;
+  // Guarda-se um ano; o resto não interessa a ninguém.
+  const limite = new Date(Date.now() - 365 * DIA).toISOString().slice(0, 10);
+  for (const dia of Object.keys(reg)) if (dia < limite) delete reg[dia];
+  localStorage.setItem(REGISTO_CHAVE, JSON.stringify(reg));
+}
+
+/** Dias seguidos com leitura, a contar de hoje ou de ontem. */
+function sequenciaLeitura(reg) {
+  let dias = 0;
+  const d = new Date();
+  if (!reg[d.toISOString().slice(0, 10)]) d.setDate(d.getDate() - 1);
+  for (;;) {
+    if (!reg[d.toISOString().slice(0, 10)]) break;
+    dias += 1;
+    d.setDate(d.getDate() - 1);
+  }
+  return dias;
+}
+
+const percentagemLivro = (l) =>
+  l.paginas > 0 ? Math.min(100, Math.round(((l.pagina || 0) / l.paginas) * 100)) : 0;
 
 function desenharLivros() {
   const procura = $("#procura-livros").value.trim().toLowerCase();
   const todos = vivos("livros");
+  const lidos = todos.filter((l) => l.estado === "lido");
+  const aLer = todos
+    .filter((l) => l.estado === "a_ler")
+    .sort((a, b) => b.atualizado_em - a.atualizado_em);
+  const depois = todos.filter((l) => l.estado === "recomendado");
+  const atual = aLer[0] || null;
 
-  // Painel da biblioteca: as quatro contas que dizem em que pé vai a leitura.
-  const conta = (icone, n, l1, l2) =>
-    `<div class="celula">${icone}<b>${n}</b><span>${l1}<br>${l2}</span></div>`;
-  $("#numeros-livros").innerHTML = `<div class="painel-livros">
-    ${conta(ICONE_LIVRO.livros, todos.length, "Livros", "na biblioteca")}
-    ${conta(ICONE_LIVRO.aLer, todos.filter((l) => l.estado === "a_ler").length, "A ler", "agora")}
-    ${conta(ICONE_LIVRO.lido, todos.filter((l) => l.estado === "lido").length, "Lidos", "concluídos")}
-    ${conta(ICONE_LIVRO.depois, todos.filter((l) => l.estado === "recomendado").length, "Quero ler", "mais tarde")}
-  </div>`;
+  /* ------------------------------------------------------- a ler agora --- */
+  const blocoAtual = () => {
+    if (!atual) {
+      return `<div class="cartao-leitura vazio-leitura">
+        <span class="rotulo">A ler agora</span>
+        <h3>Ainda não estás a ler nenhum livro</h3>
+        <p>${
+          todos.length
+            ? "Escolhe um livro da tua biblioteca para começar."
+            : "Adiciona o primeiro e a tua estante começa aqui."
+        }</p>
+        <button class="btn" data-tom="forte" id="btn-escolher-livro">${
+          todos.length ? "Escolher livro" : "Adicionar primeiro livro"
+        }</button>
+      </div>`;
+    }
+    const pct = percentagemLivro(atual);
+    return `<article class="cartao-leitura atual">
+      <div class="cabeca">
+        <span class="rotulo">A ler agora</span>
+        ${atual.genero ? `<span class="rotulo gen">${esc(atual.genero)}</span>` : ""}
+      </div>
+      <div class="corpo">
+        <span class="capa" data-livro="${esc(atual.id)}">${esc(
+      (atual.titulo || "?").trim().charAt(0).toUpperCase()
+    )}</span>
+        <div class="quem">
+          <h3>${esc(atual.titulo || "Sem título")}</h3>
+          ${atual.autor ? `<p>${esc(atual.autor)}</p>` : ""}
+        </div>
+        <b class="pct">${pct}%</b>
+      </div>
+      <span class="barra-progresso"><i style="width:${pct}%"></i></span>
+      <p class="paginas rotulo">${
+        atual.paginas
+          ? `Página ${atual.pagina || 0} de ${atual.paginas}`
+          : "Sem número de páginas — abre o livro para o indicar"
+      }</p>
+      <button class="btn" data-tom="forte" data-livro="${esc(atual.id)}">Continuar a ler →</button>
+    </article>`;
+  };
 
-  $("#generos-livros").innerHTML = GENEROS.map(
-    ([emoji, nome]) => `<button class="ficha-genero" data-genero="${esc(nome)}"
-      aria-current="${generoEscolhido === nome}"><i class="emoji">${emoji}</i>${esc(nome)}</button>`
-  ).join("");
+  /* --------------------------------------------------------- objetivo --- */
+  const blocoObjetivo = () => {
+    const meta = metaLivros();
+    const feitos = lidos.length;
+    const pct = Math.min(100, Math.round((feitos / meta) * 100));
+    const faltam = Math.max(0, meta - feitos);
+    return `<button class="cartao-leitura objetivo" id="btn-meta">
+      <div class="cabeca">
+        <span class="rotulo">Objetivo ${new Date().getFullYear()}</span>
+        <span class="rotulo editar">alterar</span>
+      </div>
+      <b class="grande">${feitos} <i>/ ${meta} livros</i></b>
+      <span class="barra-progresso"><i style="width:${pct}%"></i></span>
+      <p class="rotulo">${
+        faltam ? `${faltam} ${faltam === 1 ? "livro" : "livros"} para atingir o objetivo` : "objetivo cumprido"
+      }</p>
+    </button>`;
+  };
 
+  /* ------------------------------------------------------------ ritmo --- */
+  const blocoRitmo = () => {
+    const reg = registoLeitura();
+    const dias = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(Date.now() - i * DIA).toISOString().slice(0, 10);
+      dias.push({ dia: d, paginas: reg[d] || 0 });
+    }
+    const semana = dias.slice(7);
+    const paginasSemana = semana.reduce((t, d) => t + d.paginas, 0);
+    const sessoes = semana.filter((d) => d.paginas).length;
+    const maior = Math.max(1, ...dias.map((d) => d.paginas));
+    return `<div class="cartao-leitura ritmo">
+      <div class="cabeca">
+        <span class="rotulo">Ritmo de leitura</span>
+        <span class="fogo">🔥 ${sequenciaLeitura(reg)} ${
+      sequenciaLeitura(reg) === 1 ? "dia seguido" : "dias seguidos"
+    }</span>
+      </div>
+      <div class="barras-dias">${dias
+        .map(
+          (d) =>
+            `<i style="height:${d.paginas ? 14 + Math.round((d.paginas / maior) * 20) : 4}px"
+                data-lido="${d.paginas ? "sim" : "nao"}" title="${d.dia}"></i>`
+        )
+        .join("")}</div>
+      <p class="rotulo">Esta semana · ${sessoes} ${sessoes === 1 ? "sessão" : "sessões"} · ${paginasSemana} ${
+      paginasSemana === 1 ? "página" : "páginas"
+    }</p>
+    </div>`;
+  };
+
+  /* ---------------------------------------------------------- ideias --- */
+  const blocoIdeias = () => {
+    const notas = vivos("notas")
+      .filter((n) => n.etiqueta === "Leituras")
+      .sort((a, b) => b.atualizado_em - a.atualizado_em)
+      .slice(0, 3);
+    if (!notas.length) return "";
+    return `<div class="cabecalho-lista">
+        <span class="rotulo"><i class="emoji">💡</i>Ideias recentes</span>
+        <button class="ver-mais" data-ir="notas">Ver todas ›</button>
+      </div>
+      <div class="grupo ideias-leitura">${notas
+        .map(
+          (n) => `<button class="ideia" data-nota="${esc(n.id)}">
+            <p>“${esc(primeiraFrase(n.texto) || n.titulo)}”</p>
+            <span class="rotulo">${esc(n.titulo || "Nota de leitura")}</span>
+          </button>`
+        )
+        .join("")}</div>`;
+  };
+
+  /* ------------------------------------------------- próximas leituras --- */
+  const blocoProximas = () => {
+    if (!depois.length) return "";
+    return `<div class="cabecalho-lista">
+        <span class="rotulo"><i class="emoji">🔖</i>Próximas leituras</span>
+      </div>
+      <div class="proximas">${depois
+        .slice(0, 6)
+        .map(
+          (l) => `<button class="proxima" data-livro="${esc(l.id)}">
+            <span class="capa">${esc((l.titulo || "?").trim().charAt(0).toUpperCase())}</span>
+            <b>${esc(l.titulo || "Sem título")}</b>
+            <span class="rotulo">${esc(l.autor || "")}</span>
+            <span class="rotulo fino">${[l.genero, l.paginas ? `${l.paginas} páginas` : ""]
+              .filter(Boolean)
+              .join(" · ")}</span>
+          </button>`
+        )
+        .join("")}</div>`;
+  };
+
+  /* ----------------------------------------------------- a tua leitura --- */
+  const blocoEstatisticas = () => {
+    const reg = registoLeitura();
+    const paginasLidas =
+      lidos.reduce((t, l) => t + (l.paginas || 0), 0) +
+      aLer.reduce((t, l) => t + (l.pagina || 0), 0);
+    const comNota = todos.filter((l) => l.avaliacao > 0);
+    const media = comNota.length
+      ? (comNota.reduce((t, l) => t + l.avaliacao, 0) / comNota.length).toFixed(1).replace(".", ",")
+      : "—";
+    const cela = (icone, valor, etiqueta) =>
+      `<div class="celula">${icone}<b>${valor}</b><span>${etiqueta}</span></div>`;
+    return `<div class="cabecalho-lista">
+        <span class="rotulo"><i class="emoji">📊</i>A tua leitura</span>
+      </div>
+      <div class="painel-livros">
+        ${cela(ICONE_LIVRO.livros, lidos.length, "Livros lidos")}
+        ${cela(ICONE_LIVRO.paginas, paginasLidas.toLocaleString("pt-PT"), "Páginas")}
+        ${cela(ICONE_LIVRO.dias, Object.keys(reg).length, "Dias de leitura")}
+        ${cela(ICONE_LIVRO.nota, media, "Avaliação média")}
+      </div>`;
+  };
+
+  /* -------------------------------------------------------- biblioteca --- */
+  const blocoBiblioteca = () => {
+    const generos = GENEROS.map(([emoji, nome]) => {
+      const doGenero = todos.filter((l) => l.genero === nome);
+      return { emoji, nome, n: doGenero.length, lidos: doGenero.filter((l) => l.estado === "lido").length };
+    }).filter((g) => g.n || !todos.length);
+    return `<div class="cabecalho-lista">
+        <span class="rotulo"><i class="emoji">📚</i>Explora a tua biblioteca</span>
+        ${generoEscolhido ? `<button class="ver-mais" data-genero="">Limpar ›</button>` : ""}
+      </div>
+      <div class="fichas-genero">${generos
+        .map(
+          (g) => `<button class="ficha-genero" data-genero="${esc(g.nome)}"
+            aria-current="${generoEscolhido === g.nome}">
+            <i class="emoji">${g.emoji}</i>
+            <span class="corpo"><b>${esc(g.nome)}</b>${
+            g.n ? `<i>${g.n} ${g.n === 1 ? "livro" : "livros"} · ${g.lidos} ${g.lidos === 1 ? "concluído" : "concluídos"}</i>` : ""
+          }</span>
+          </button>`
+        )
+        .join("")}</div>`;
+  };
+
+  $("#painel-leitura").innerHTML =
+    blocoAtual() +
+    `<div class="par-leitura">${blocoObjetivo()}${blocoRitmo()}</div>` +
+    blocoIdeias() +
+    blocoProximas() +
+    blocoEstatisticas() +
+    blocoBiblioteca();
+
+  /* ---------------------------------------------- a estante, se filtrada --- */
   const lista = todos
     .filter((l) => !generoEscolhido || l.genero === generoEscolhido)
     .filter((l) => !procura || `${l.titulo} ${l.autor} ${l.genero} ${l.resumo}`.toLowerCase().includes(procura))
     .sort((a, b) => b.atualizado_em - a.atualizado_em);
 
-  if (lista.length) {
-    $("#lista-livros").innerHTML = lista
-      .map(
-        (l) => `<button class="livro" data-livro="${esc(l.id)}">
-          <span class="rotulo estado-livro" data-estado="${esc(l.estado)}">${esc(
-          ESTADOS_LIVRO[l.estado] || l.estado
-        )}</span>
-          <h4>${esc(l.titulo || "Sem título")}</h4>
-          ${l.autor ? `<p>${esc(l.autor)}</p>` : ""}
-          ${l.genero ? `<p class="rotulo">${esc(l.genero)}</p>` : ""}
-          ${l.resumo ? `<p>${esc(l.resumo.slice(0, 120))}${l.resumo.length > 120 ? "…" : ""}</p>` : ""}
-        </button>`
-      )
-      .join("");
-    return;
-  }
-
-  // Sem resultados a lista dá lugar ao convite — ou ao aviso de procura vazia.
   const filtrado = procura || generoEscolhido;
-  $("#lista-livros").innerHTML = todos.length && filtrado
-    ? vazio(
-        "Nada encontrado",
-        generoEscolhido
-          ? `Ainda não tens livros em ${generoEscolhido}.`
-          : "Não há livros com esse termo."
-      )
-    : `<div class="convite-livros">
-        <span class="medalha">${ICONE_LIVRO.livros}</span>
-        <h3>Ainda não tens livros na biblioteca</h3>
-        <p>Adiciona o teu primeiro livro e começa a tua jornada de leitura.</p>
-        <button class="btn" data-tom="forte" id="btn-primeiro-livro">Adicionar primeiro livro</button>
-        <div class="tres">
-          <div>${ICONE_LIVRO.organiza}<b>Organiza</b><span>A tua biblioteca do teu jeito</span></div>
-          <div>${ICONE_LIVRO.acompanha}<b>Acompanha</b><span>O teu progresso de leitura</span></div>
-          <div>${ICONE_LIVRO.descobre}<b>Descobre</b><span>Novos livros e autores</span></div>
-        </div>
-      </div>`;
+  $("#lista-livros").innerHTML = !filtrado
+    ? ""
+    : lista.length
+      ? `<div class="cabecalho-lista"><span class="rotulo">${
+          generoEscolhido ? esc(generoEscolhido) : "Resultados"
+        } · ${lista.length}</span></div>` +
+        lista
+          .map(
+            (l) => `<button class="livro" data-livro="${esc(l.id)}">
+              <span class="rotulo estado-livro" data-estado="${esc(l.estado)}">${esc(
+              ESTADOS_LIVRO[l.estado] || l.estado
+            )}</span>
+              <h4>${esc(l.titulo || "Sem título")}</h4>
+              ${l.autor ? `<p>${esc(l.autor)}</p>` : ""}
+              ${l.paginas ? `<p class="rotulo">${percentagemLivro(l)}% · ${l.pagina || 0}/${l.paginas}</p>` : ""}
+            </button>`
+          )
+          .join("")
+      : vazio("Nada encontrado", procura ? "Não há livros com esse termo." : `Ainda não tens livros em ${generoEscolhido}.`);
 }
 
-$("#generos-livros").addEventListener("click", (e) => {
+$("#painel-leitura").addEventListener("click", (e) => {
   const ficha = e.target.closest("[data-genero]");
-  if (!ficha) return;
-  // Tocar outra vez na mesma ficha limpa o filtro.
-  generoEscolhido = generoEscolhido === ficha.dataset.genero ? "" : ficha.dataset.genero;
-  desenharLivros();
+  if (ficha) {
+    generoEscolhido = generoEscolhido === ficha.dataset.genero ? "" : ficha.dataset.genero;
+    return desenharLivros();
+  }
+
+  const nota = e.target.closest("[data-nota]");
+  if (nota) return abrirFolha("nota-editar", notaParaFolha(estado.biblioteca.notas[nota.dataset.nota]));
+
+  const ir = e.target.closest("[data-ir]");
+  if (ir) return irPara(ir.dataset.ir);
+
+  if (e.target.closest("#btn-escolher-livro")) return abrirLivro(null);
+
+  if (e.target.closest("#btn-meta")) {
+    const valor = prompt("Quantos livros queres ler este ano?", metaLivros());
+    const n = Number(valor);
+    if (n > 0) localStorage.setItem(META_CHAVE, String(Math.min(999, Math.round(n))));
+    return desenharLivros();
+  }
+
+  const livro = e.target.closest("[data-livro]");
+  if (livro) abrirLivro(estado.biblioteca.livros[livro.dataset.livro]);
+});
+
+/** A folha de nota recebe sempre os mesmos campos; fica num sítio só. */
+const notaParaFolha = (n) => ({
+  id: n.id,
+  frente: n.titulo,
+  verso: n.texto,
+  origem: n.origem,
+  etiqueta: n.etiqueta,
 });
 
 $("#lista-livros").addEventListener("click", (e) => {
-  if (e.target.closest("#btn-primeiro-livro")) abrirLivro(null);
+  const alvo = e.target.closest("[data-livro]");
+  if (alvo) abrirLivro(estado.biblioteca.livros[alvo.dataset.livro]);
 });
 
 function abrirLivro(livro) {
@@ -3092,8 +3324,11 @@ function abrirLivro(livro) {
     titulo: "",
     autor: "",
     estado: "a_ler",
-    // A ficha de género escolhida entra já preenchida no livro novo.
+    // O género escolhido na biblioteca entra já preenchido no livro novo.
     genero: generoEscolhido || "",
+    paginas: 0,
+    pagina: 0,
+    avaliacao: 0,
     resumo: "",
     criado_em: Date.now(),
     apagado: false,
@@ -3102,8 +3337,11 @@ function abrirLivro(livro) {
   $("#livro-titulo").value = livroAberto.titulo;
   $("#livro-autor").value = livroAberto.autor;
   $("#livro-genero").value = livroAberto.genero || "";
+  $("#livro-pagina").value = livroAberto.pagina || "";
+  $("#livro-paginas").value = livroAberto.paginas || "";
   $("#livro-resumo").value = livroAberto.resumo;
   $("#livro-apagar").style.display = livro ? "" : "none";
+  marcarEstrelas(livroAberto.avaliacao || 0);
   marcarEstadoLivro(livroAberto.estado);
   $("#folha-livro").showModal();
 }
@@ -3112,20 +3350,30 @@ function marcarEstadoLivro(valor) {
   livroAberto.estado = valor;
   document
     .querySelectorAll("[data-livro-estado]")
-    .forEach((b) => b.setAttribute("aria-current", b.dataset.livroEstado === valor ? "true" : "false"));
+    .forEach((b) => b.setAttribute("aria-current", b.dataset.livroEstado === valor));
 }
 
-document
-  .querySelectorAll("[data-livro-estado]")
-  .forEach((b) => b.addEventListener("click", () => marcarEstadoLivro(b.dataset.livroEstado)));
+document.querySelectorAll("[data-livro-estado]").forEach((b) =>
+  b.addEventListener("click", () => marcarEstadoLivro(b.dataset.livroEstado))
+);
+
+function marcarEstrelas(valor) {
+  if (livroAberto) livroAberto.avaliacao = valor;
+  document
+    .querySelectorAll("#livro-avaliacao [data-estrela]")
+    .forEach((b) => b.setAttribute("aria-current", Number(b.dataset.estrela) <= valor));
+}
+
+// Tocar na estrela já marcada tira a avaliação.
+$("#livro-avaliacao").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-estrela]");
+  if (!b) return;
+  const n = Number(b.dataset.estrela);
+  marcarEstrelas(livroAberto?.avaliacao === n ? 0 : n);
+});
 
 $("#btn-livro-novo").addEventListener("click", () => abrirLivro(null));
 $("#procura-livros").addEventListener("input", desenharLivros);
-
-$("#lista-livros").addEventListener("click", (e) => {
-  const alvo = e.target.closest("[data-livro]");
-  if (alvo) abrirLivro(estado.biblioteca.livros[alvo.dataset.livro]);
-});
 
 
 $("#livro-cancelar").addEventListener("click", () => $("#folha-livro").close());
@@ -3134,6 +3382,11 @@ $("#livro-guardar").addEventListener("click", () => {
   livroAberto.titulo = $("#livro-titulo").value.trim();
   livroAberto.autor = $("#livro-autor").value.trim();
   livroAberto.genero = $("#livro-genero").value.trim();
+  // O avanço do marcador é o que alimenta o ritmo de leitura.
+  const paginaAntes = livroAberto.pagina || 0;
+  livroAberto.pagina = Math.max(0, Number($("#livro-pagina").value) || 0);
+  livroAberto.paginas = Math.max(0, Number($("#livro-paginas").value) || 0);
+  anotarLeitura(livroAberto.pagina - paginaAntes);
   livroAberto.resumo = $("#livro-resumo").value;
   if (!livroAberto.titulo) return;
   alterar("livros", livroAberto);
