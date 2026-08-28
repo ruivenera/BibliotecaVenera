@@ -278,7 +278,9 @@ async function carregarModulo(rotina) {
       estado.edicaoCurso = feed.edicoes.find((e) => e.rotina === rotina) || null;
       // O cabeçalho é a data de hoje, não a da última aula: a página é de hoje,
       // a aula é que pode ser velha — e isso já se diz no cartão dela.
-      $("#data-aprendizagem").textContent = porExtensoComDia(new Date().toISOString().slice(0, 10));
+      const agora = new Date();
+      $("#data-aprendizagem").textContent = porExtenso(agora.toISOString().slice(0, 10));
+      $("#dia-aprendizagem").textContent = agora.toLocaleDateString("pt-PT", { weekday: "long" });
       desenharAprendizagem();
     }
 
