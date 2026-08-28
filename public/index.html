@@ -311,7 +311,25 @@
   .linha .texto { flex: 1; min-width: 0; }
   .linha .texto strong { display: block; font-family: var(--display); font-weight: 600; font-size: 1.02rem; }
   .linha .texto span { display: block; color: var(--papel-fosco); font-size: 0.82rem; line-height: 1.4; }
-  .linha .valor { font-family: var(--meta); font-size: 0.76rem; color: var(--papel-fosco); white-space: nowrap; }
+  /* O valor à direita não pode crescer sem limite: com uma linha comprida
+     espremia a coluna do texto até esta partir letra a letra. */
+  .linha .valor {
+    flex: 0 1 auto;
+    max-width: 45%;
+    font-family: var(--meta);
+    font-size: 0.76rem;
+    color: var(--papel-fosco);
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+  /* Detalhe por baixo do texto, para informação que não cabe ao lado. */
+  .linha .texto .detalhe {
+    margin-top: 0.35rem;
+    font-family: var(--meta);
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    color: var(--papel-fosco);
+  }
   .linha[data-perigo] .texto strong, .linha[data-perigo] .icone-tile { color: var(--desce); }
 
   .icone-tile {
@@ -3840,8 +3858,11 @@
       </button>
       <div class="linha">
         <span class="icone-tile"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></span>
-        <div class="texto"><strong>Armazenamento</strong><span>O que está guardado neste aparelho.</span></div>
-        <span class="valor" id="def-armazenamento"></span>
+        <div class="texto">
+          <strong>Armazenamento</strong>
+          <span>O que está guardado neste aparelho.</span>
+          <span class="detalhe" id="def-armazenamento"></span>
+        </div>
       </div>
       <button class="linha" id="def-markdown">
         <span class="icone-tile"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6zM15 3v4h4M9 13h6M9 17h4"/></svg></span>

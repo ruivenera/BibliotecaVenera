@@ -3464,8 +3464,15 @@ function desenharDefinicoes() {
   const bytes = new Blob([JSON.stringify(estado.biblioteca)]).size;
   const n = (t) => vivos(t).length;
 
-  $("#def-armazenamento").textContent =
-    `${(bytes / 1024).toFixed(1)} kB · ${n("notas")} notas, ${n("cartoes")} cartões, ${n("livros")} livros`;
+  // Singular e plural conforme a conta: "1 notas" dava má impressão logo ali.
+  const conta = (t, um, muitos) => `${n(t)} ${n(t) === 1 ? um : muitos}`;
+  $("#def-armazenamento").textContent = [
+    `${(bytes / 1024).toFixed(1)} kB`,
+    conta("notas", "nota", "notas"),
+    conta("cartoes", "cartão", "cartões"),
+    conta("livros", "livro", "livros"),
+    conta("areas", "área", "áreas"),
+  ].join(" · ");
 
   const ultima = Number(localStorage.getItem("venera:ultima-copia")) || 0;
   $("#def-ultima-copia").textContent = ultima
