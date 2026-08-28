@@ -486,20 +486,30 @@ const E_GEO = (item) =>
 /* ------------------------------------------------------------ mapa do mundo --- */
 
 /**
- * O mapa é uma fotografia: public/mapa-mundo.jpg, gerada à parte a 0,18° por
- * pixel com biomas, relevo e batimetria. Antes era pintado no telemóvel a cada
- * abertura, o que limitava a resolução ao que o canvas aguentava e obrigava a
- * carregar 36 KB de máscara em base64 dentro deste ficheiro.
- *
- * Cobre de 78°N a 58°S — fora fica só calote, onde não há acontecimentos.
+ * O mapa é uma fotografia: public/mapa-mundo.jpg, uma composição de satélite
+ * equirretangular recortada entre os 82°N e os 60°S — fora fica só calote, onde
+ * não há acontecimentos. As legendas gravadas na imagem original (nomes de
+ * continentes e graus) foram apagadas antes de a meter na app.
  */
-const MAPA_LAT_TOPO = 78;
-const MAPA_LAT_BASE = -58;
+const MAPA_LAT_TOPO = 82;
+const MAPA_LAT_BASE = -60;
 const MAPA_LARG = 360;
 /* A altura de desenho é maior do que a proporção real: o mapa fica mais alto no
    ecrã, que é o que se quer num telemóvel, ao custo de esticar as latitudes. */
 const MAPA_ALT = 172;
 const MAPA_ESCALA_Y = MAPA_ALT / (MAPA_LAT_TOPO - MAPA_LAT_BASE);
+
+/* Os nomes dos continentes vinham gravados na fotografia e ficavam ilegíveis ao
+   tamanho do telemóvel. Voltam como texto do próprio mapa: nítidos em qualquer
+   ampliação e na tipografia da app. */
+const CONTINENTES = [
+  ["América do Norte", 48, -102],
+  ["América do Sul", -20, -60],
+  ["Europa", 57, 26],
+  ["África", 6, 18],
+  ["Ásia", 48, 96],
+  ["Oceânia", -27, 134],
+];
 
 /** Projeção equirretangular: longitude para x, latitude para y. */
 const projX = (lon) => lon + 180;
@@ -948,6 +958,10 @@ function desenharNoticias() {
           <g class="mundo" id="mapa-mundo">
             <image href="/mapa-mundo.jpg" x="0" y="0" width="${MAPA_LARG}" height="${MAPA_ALT}"
                    preserveAspectRatio="none"/>
+            ${CONTINENTES.map(
+              ([nome, la, lo]) =>
+                `<text class="continente" x="${projX(lo).toFixed(1)}" y="${projY(la).toFixed(1)}">${esc(nome)}</text>`
+            ).join("")}
             ${arcos}
             ${pontos}
           </g>
