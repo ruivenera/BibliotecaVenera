@@ -634,12 +634,12 @@ const PAISES = [
   ["TR", /turquia|turco|ancara|erdogan/i],
   ["SA", /ar[áa]bia saudita|saudita|riade|\bopep\b/i],
   ["AE", /emirados|dubai|abu dhabi/i],
-  ["QA", /catar|qatar|doha/i],
+  ["QA", /\bcatar\b|\bqatar\b|\bdoha\b/i],
   ["YE", /i[ée]men|houthi|mar vermelho/i],
   ["LB", /l[íi]bano|libanês|beirute|hezbollah/i],
-  ["SY", /s[íi]ria|damasco/i],
+  ["SY", /\bs[íi]ria\b|damasco/i],
   ["IQ", /iraque|bagdade/i],
-  ["EG", /egito|cairo|suez/i],
+  ["EG", /\begito\b|\bcairo\b|\bsuez\b/i],
   ["VE", /venezuela|caracas|maduro/i],
   ["BR", /brasil|bras[íi]lia|petrobras/i],
   ["MX", /m[ée]xico|cidade do m[ée]xico/i],
@@ -647,26 +647,26 @@ const PAISES = [
   ["GB", /reino unido|brit[âa]nico|londres|inglaterra|banco de inglaterra/i],
   ["DE", /alemanha|alem[ãa]o|berlim|bundesbank/i],
   ["FR", /fran[çc]a|franc[êe]s|paris/i],
-  ["IT", /it[áa]lia|italiano|roma\b/i],
+  ["IT", /it[áa]lia|italiano|\broma\b/i],
   ["ES", /espanha|espanhol|madrid/i],
   ["PT", /portugal|portugu[êe]s|lisboa/i],
   ["NL", /pa[íi]ses baixos|holanda|amesterd[ãa]o|\basml\b/i],
   ["PL", /pol[óo]nia|vars[óo]via/i],
   ["GR", /gr[ée]cia|atenas/i],
-  ["NO", /noruega|oslo/i],
+  ["NO", /noruega|\boslo\b/i],
   ["SE", /su[ée]cia|estocolmo/i],
-  ["CH", /su[íi][çc]a|zurique|berna/i],
+  ["CH", /su[íi][çc]a|zurique|\bberna\b/i],
   ["BY", /bielorr[úu]ssia|minsk/i],
   ["HU", /hungria|budapeste|orb[áa]n/i],
   ["RO", /rom[ée]nia|bucareste/i],
   ["RS", /s[ée]rvia|belgrado/i],
   ["NG", /nig[ée]ria|abuja|lagos/i],
   ["ZA", /[áa]frica do sul|joanesburgo|pret[óo]ria/i],
-  ["DZ", /arg[ée]lia|argel\b/i],
-  ["LY", /l[íi]bia|tr[íi]poli/i],
+  ["DZ", /arg[ée]lia|\bargel\b/i],
+  ["LY", /\bl[íi]bia\b|tr[íi]poli/i],
   ["SD", /sud[ãa]o|cartum/i],
   ["ET", /eti[óo]pia|adis abeba/i],
-  ["MA", /marrocos|rabat/i],
+  ["MA", /marrocos|\brabat\b/i],
   ["PK", /paquist[ãa]o|islamabade/i],
   ["AF", /afeganist[ãa]o|cabul|talib[ãa]/i],
   ["ID", /indon[ée]sia|jacarta/i],
@@ -675,13 +675,13 @@ const PAISES = [
   ["TH", /tail[âa]ndia|banguecoque/i],
   ["AU", /austr[áa]lia|camberra|sydney/i],
   ["AR", /argentina|buenos aires|milei/i],
-  ["CL", /chile|santiago do chile|l[íi]tio/i],
+  ["CL", /\bchile\b|santiago do chile/i],
   ["CO", /col[ôo]mbia|bogot[áa]/i],
-  ["PE", /\bperu\b|lima\b/i],
+  ["PE", /\bperu\b|\blima\b/i],
   ["KZ", /cazaquist[ãa]o|astana/i],
   ["AZ", /azerbaij[ãa]o|baku/i],
-  ["AM", /arm[ée]nia|erevan/i],
-  ["SG", /singapura/i],
+  ["AM", /\barm[ée]nia\b|erevan/i],
+  ["SG", /\bsingapura\b/i],
   ["MY", /mal[áa]sia|kuala lumpur/i],
   ["EU", /uni[ãa]o europeia|\bue\b|bruxelas|banco central europeu|\bbce\b|zona euro/i],
 ];
@@ -883,6 +883,19 @@ function desenharNoticias() {
       });
     }
 
+    /* Dois acontecimentos no mesmo país nascem no mesmo pixel, e aí o empurrão
+       não sabe para que lado ir: a direção é o vetor entre eles, que é zero.
+       Dá-se-lhes um desvio inicial em leque, cada um no seu ângulo. */
+    const porPais = new Map();
+    for (const m of feitos) {
+      const ordem = porPais.get(m.origem) || 0;
+      porPais.set(m.origem, ordem + 1);
+      if (!ordem) continue;
+      const angulo = ordem * 2.3;
+      m.x += Math.cos(angulo) * 3;
+      m.y += Math.sin(angulo) * 3;
+    }
+
     /* Afastamento por relaxação: enquanto dois pontos estiverem mais perto do
        que o diâmetro de toque, empurram-se um ao outro. É o que garante que
        todos são tocáveis, mesmo quando os países são vizinhos — Israel e o
@@ -892,10 +905,18 @@ function desenharNoticias() {
       let mexeu = false;
       for (let a = 0; a < feitos.length; a++) {
         for (let b = a + 1; b < feitos.length; b++) {
-          const dx = feitos[b].x - feitos[a].x;
-          const dy = feitos[b].y - feitos[a].y;
-          const d = Math.hypot(dx, dy) || 0.01;
+          let dx = feitos[b].x - feitos[a].x;
+          let dy = feitos[b].y - feitos[a].y;
+          let d = Math.hypot(dx, dy);
           if (d >= MIN) continue;
+          // Rede de segurança: se ainda assim coincidirem, separa-se por um
+          // ângulo fixo em vez de dividir por zero.
+          if (d < 0.05) {
+            const angulo = (a * 1.7 + b) % (Math.PI * 2);
+            dx = Math.cos(angulo);
+            dy = Math.sin(angulo);
+            d = 1;
+          }
           const empurra = (MIN - d) / 2;
           const ux = (dx / d) * empurra;
           const uy = (dy / d) * empurra;
