@@ -1427,6 +1427,15 @@
   .mapa-mundo .foco[data-impacto="baixo"] .anel { stroke: #57b98a; }
   .mapa-mundo .foco[data-impacto="baixo"] .halo { fill: #57b98a; opacity: 0.16; }
 
+  /* Fio até ao país, quando o ponto teve de se afastar para não sobrepor. */
+  .mapa-mundo .fio {
+    stroke: rgba(255, 255, 255, 0.5);
+    stroke-width: 0.45;
+    stroke-dasharray: 1.6 1.2;
+  }
+  .mapa-mundo .raiz { fill: rgba(255, 255, 255, 0.75); }
+  .mapa-mundo .fio[data-impacto="alto"], .mapa-mundo .raiz[data-impacto="alto"] { stroke: rgba(232, 64, 47, 0.75); fill: rgba(232, 64, 47, 0.9); }
+
   /* Arco de relação: de quem age para quem é afetado. */
   .mapa-mundo .arco {
     fill: none;

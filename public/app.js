@@ -518,19 +518,19 @@ const projY = (lat) => (MAPA_LAT_TOPO - lat) * MAPA_ESCALA_Y;
 /* Onde pousar o ponto de cada país. Centróides aproximados — a capital exata não
    mudava nada a esta escala. */
 const COORD = {
-  US: [39.5, -98.5], CN: [35, 105], RU: [60, 90], UA: [49, 32], IR: [32, 53],
-  IL: [31.6, 35.1], PS: [31.4, 34.3], TW: [23.7, 121], JP: [36, 138], KP: [40, 127],
-  KR: [36.5, 127.8], IN: [22, 79], TR: [39, 35], SA: [24, 45], AE: [24, 54],
-  QA: [25.3, 51.2], YE: [15.5, 48], LB: [33.9, 35.9], SY: [35, 38], IQ: [33, 44],
-  EG: [26, 30], VE: [7, -66], BR: [-10, -52], MX: [23, -102], CA: [58, -106],
-  GB: [54, -2], DE: [51, 10], FR: [46.5, 2.5], IT: [42.8, 12.5], ES: [40, -3.5],
-  PT: [39.5, -8], NL: [52.2, 5.5], PL: [52, 19.5], GR: [39, 22], NO: [62, 10],
-  SE: [62, 15], CH: [46.8, 8.2], BY: [53.5, 28], HU: [47, 19.5], RO: [46, 25],
-  RS: [44, 20.8], NG: [9.5, 8], ZA: [-29, 24], DZ: [28, 3], LY: [27, 17],
-  SD: [15.5, 30], ET: [9, 39.5], MA: [32, -6], PK: [30, 70], AF: [34, 66],
+  US: [38.5, -96], CN: [34, 104], RU: [58, 68], UA: [49, 31.5], IR: [32.5, 53.5],
+  IL: [31.5, 34.9], PS: [31.5, 34.5], TW: [23.7, 121], JP: [36.5, 138], KP: [40, 127],
+  KR: [36.5, 127.8], IN: [22.5, 79], TR: [39, 35.5], SA: [23.5, 45], AE: [24, 54],
+  QA: [25.3, 51.2], YE: [15.5, 47.5], LB: [33.9, 35.9], SY: [35, 38.5], IQ: [33, 43.5],
+  EG: [26.5, 30], VE: [7, -66], BR: [-10, -52], MX: [23.5, -102], CA: [56, -100],
+  GB: [53, -2], DE: [51, 10.5], FR: [46.5, 2.5], IT: [42.8, 12.8], ES: [40, -3.5],
+  PT: [39.5, -8], NL: [52.2, 5.5], PL: [52, 19.5], GR: [39, 22.5], NO: [62, 10],
+  SE: [62, 15.5], CH: [46.8, 8.2], BY: [53.5, 28], HU: [47, 19.5], RO: [45.8, 25],
+  RS: [44, 20.8], NG: [9.5, 8], ZA: [-29, 24.5], DZ: [28, 2.5], LY: [27, 17],
+  SD: [15.5, 30], ET: [9, 39.5], MA: [31.8, -6.5], PK: [30, 69.5], AF: [34, 66],
   ID: [-2, 118], VN: [16, 106], PH: [12.5, 122], TH: [15, 101], AU: [-25, 134],
-  AR: [-35, -64], CL: [-35, -71], CO: [4, -73], PE: [-10, -76], KZ: [48, 68],
-  AZ: [40.3, 47.7], AM: [40.2, 45], SG: [1.35, 103.8], MY: [4, 102], EU: [50.8, 4.4],
+  AR: [-35, -64], CL: [-35, -71], CO: [4, -73], PE: [-10, -76], KZ: [48, 67],
+  AZ: [40.3, 47.7], AM: [40.2, 45], SG: [1.35, 103.8], MY: [4, 102], EU: [50.5, 5],
 };
 
 const NOME_PAIS = {
@@ -865,28 +865,62 @@ function desenharNoticias() {
      segundo o alvo, e desenha-se um arco entre eles. */
   const marcadores = (marcadoresDoDia = (() => {
     const feitos = [];
-    const porPais = new Map();
     for (const { item, i } of geopoliticos) {
       const isos = isosDe(item.titulo, item.rubrica).filter((iso) => COORD[iso]);
       if (!isos.length) continue;
       const origem = isos[0];
       const alvo = isos.find((iso) => iso !== origem) || "";
-      // Vários acontecimentos no mesmo país afastam-se num pequeno leque, senão
-      // ficavam empilhados no mesmo ponto.
-      const ordem = porPais.get(origem) || 0;
-      porPais.set(origem, ordem + 1);
-      const angulo = (ordem * 2.4) % (Math.PI * 2);
-      const raio = ordem ? 2.6 + ordem * 0.6 : 0;
       const [la, lo] = COORD[origem];
       feitos.push({
         i,
         item,
         origem,
         alvo,
-        x: projX(lo) + Math.cos(angulo) * raio,
-        y: projY(la) + Math.sin(angulo) * raio,
+        casa: { x: projX(lo), y: projY(la) },   // o sítio verdadeiro do país
+        x: projX(lo),
+        y: projY(la),
         impacto: item.impacto || "medio",
       });
+    }
+
+    /* Afastamento por relaxação: enquanto dois pontos estiverem mais perto do
+       que o diâmetro de toque, empurram-se um ao outro. É o que garante que
+       todos são tocáveis, mesmo quando os países são vizinhos — Israel e o
+       Líbano ficavam por baixo um do outro. */
+    const MIN = 14.5;
+    for (let passo = 0; passo < 120; passo++) {
+      let mexeu = false;
+      for (let a = 0; a < feitos.length; a++) {
+        for (let b = a + 1; b < feitos.length; b++) {
+          const dx = feitos[b].x - feitos[a].x;
+          const dy = feitos[b].y - feitos[a].y;
+          const d = Math.hypot(dx, dy) || 0.01;
+          if (d >= MIN) continue;
+          const empurra = (MIN - d) / 2;
+          const ux = (dx / d) * empurra;
+          const uy = (dy / d) * empurra;
+          feitos[a].x -= ux;
+          feitos[a].y -= uy;
+          feitos[b].x += ux;
+          feitos[b].y += uy;
+          mexeu = true;
+        }
+      }
+      // Puxão de volta para casa: sem isto, um grupo grande espalhava-se pelo
+      // mapa inteiro e os pontos deixavam de dizer onde é a notícia. Só nas
+      // primeiras voltas — a puxar até ao fim, o empurrão nunca ganhava e os
+      // pontos acabavam mais perto do que o dedo distingue.
+      if (passo < 70) {
+        for (const m of feitos) {
+          m.x += (m.casa.x - m.x) * 0.07;
+          m.y += (m.casa.y - m.y) * 0.07;
+        }
+      }
+      for (const m of feitos) {
+        m.x = Math.min(MAPA_LARG - 6, Math.max(6, m.x));
+        m.y = Math.min(MAPA_ALT - 6, Math.max(6, m.y));
+      }
+      if (!mexeu && passo > 70) break;
     }
     return feitos;
   })());
@@ -927,6 +961,17 @@ function desenharNoticias() {
       })
       .join("");
 
+    // Quando um ponto teve de sair do sítio, fica um fio a ligá-lo ao país.
+    const fios = marcadores
+      .filter((m) => Math.hypot(m.x - m.casa.x, m.y - m.casa.y) > 3)
+      .map(
+        (m) => `<line class="fio" data-impacto="${esc(m.impacto)}"
+          x1="${m.casa.x.toFixed(1)}" y1="${m.casa.y.toFixed(1)}"
+          x2="${m.x.toFixed(1)}" y2="${m.y.toFixed(1)}"/>
+          <circle class="raiz" data-impacto="${esc(m.impacto)}" cx="${m.casa.x.toFixed(1)}" cy="${m.casa.y.toFixed(1)}" r="1"/>`
+      )
+      .join("");
+
     const pontos = marcadores
       .map((m) => {
         const r = RAIO[m.impacto] || RAIO.medio;
@@ -963,6 +1008,7 @@ function desenharNoticias() {
                 `<text class="continente" x="${projX(lo).toFixed(1)}" y="${projY(la).toFixed(1)}">${esc(nome)}</text>`
             ).join("")}
             ${arcos}
+            ${fios}
             ${pontos}
           </g>
         </svg>
