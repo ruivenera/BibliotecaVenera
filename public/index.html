@@ -1342,6 +1342,7 @@
 
   /* ------------------------------------------------------ mapa do mundo --- */
   .mapa-caixa {
+    overflow: hidden;
     margin: 0.5rem var(--gap) 0.85rem;
     padding: 0.7rem 0.75rem 0.75rem;
     background: var(--tinta-2);
@@ -1362,6 +1363,11 @@
     overflow: hidden;
     line-height: 0;
   }
+  /* O mapa é o elemento central da aba: ocupa a largura toda do ecrã, sem as
+     margens laterais do cartão. Um mapa equirretangular é sempre mais largo do
+     que alto — para o fazer mais alto teria de cortar longitudes, e perdia-se
+     o Pacífico. Ganha-se área alargando-o em vez de o cortar. */
+  .mapa-palco { margin: 0 calc(-1 * var(--gap)); border-radius: 0; border-left: 0; border-right: 0; }
   .mapa-mundo { display: block; width: 100%; height: auto; }
   /* A imagem do mapa é pintada num canvas e vem já com as cores todas. No tema
      escuro só se baixa o brilho, para não competir com o resto da página. */

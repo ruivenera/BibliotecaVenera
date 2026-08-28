@@ -506,16 +506,61 @@ const projY = (lat) => MAPA_LAT_TOPO - lat;
    no gelo. */
 /* Paleta de satélite: oceano quase preto, terra apagada, gelo a puxar para o
    azul. É o que faz o mapa parecer uma fotografia do espaço e não um atlas. */
+/* Paleta de satélite. Mais classes do que antes: a savana e a estepe são o que
+   faltava para o interior dos continentes deixar de ser uma mancha verde. */
 const CORES_MAPA = {
   oceano: [9, 22, 38],
-  oceanoFundo: [6, 15, 27],
+  oceanoFundo: [5, 13, 24],
   plataforma: [22, 52, 82],
   verde: [58, 84, 48],
-  tropico: [38, 68, 36],
-  deserto: [136, 116, 74],
-  tundra: [78, 86, 62],
+  boreal: [42, 62, 44],
+  tropico: [34, 66, 32],
+  savana: [110, 108, 62],
+  estepe: [122, 116, 76],
+  deserto: [146, 124, 80],
+  tundra: [86, 88, 68],
+  serra: [104, 96, 84],
   gelo: [226, 234, 240],
 };
+
+/* Cordilheiras: sem elas o Himalaia, os Andes e as Rochosas ficam verdes como
+   uma planície qualquer. Cada caixa é [lat0, lat1, lon0, lon1, força]. */
+const SERRAS = [
+  [27, 40, 70, 98, 1],      // Himalaia e Tibete
+  [-40, 8, -79, -66, 0.9],  // Andes
+  [32, 62, -128, -105, 0.7],// Rochosas
+  [42, 48, 5, 16, 0.6],     // Alpes
+  [28, 36, -10, 2, 0.6],    // Atlas
+  [30, 40, 44, 62, 0.6],    // Zagros e Elburz
+  [50, 68, 56, 66, 0.5],    // Urais
+  [-12, 4, 28, 40, 0.5],    // Rift africano
+  [36, 44, 36, 48, 0.6],    // Cáucaso
+  [30, 46, 130, 145, 0.4],  // Japão
+];
+
+/* Ruído de valor com interpolação. A primeira versão usava o vizinho mais
+   próximo e via-se a quadrícula do próprio ruído; interpolar resolve isso. */
+const semente = (x, y) => {
+  const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
+  return n - Math.floor(n);
+};
+
+function ruidoSuave(x, y) {
+  const x0 = Math.floor(x);
+  const y0 = Math.floor(y);
+  const fx = suave(x - x0);
+  const fy = suave(y - y0);
+  const a = semente(x0, y0);
+  const b = semente(x0 + 1, y0);
+  const c = semente(x0, y0 + 1);
+  const d = semente(x0 + 1, y0 + 1);
+  const cima = a + (b - a) * fx;
+  const baixo = c + (d - c) * fx;
+  return cima + (baixo - cima) * fy;
+}
+
+/** Duas oitavas: manchas largas mais um grão fino por cima. */
+const ondulado = (c, r) => ruidoSuave(c / 8, r / 8) * 0.62 + ruidoSuave(c / 2.6, r / 2.6) * 0.38;
 
 const DESERTOS = [
   [15, 32, -17, 35],    // Sara
@@ -558,15 +603,39 @@ const misturar = (a, b, t) => [
 ];
 
 /** A cor de cada célula de terra, já com as transições feitas. */
-function corTerra(lat, lon) {
+function corTerra(lat, lon, textura) {
+  const aridez = pesoMaximo(lat, lon, DESERTOS);
+  const tropical = pesoMaximo(lat, lon, TROPICOS);
+
   let cor = CORES_MAPA.verde;
-  cor = misturar(cor, CORES_MAPA.tropico, pesoMaximo(lat, lon, TROPICOS));
-  cor = misturar(cor, CORES_MAPA.deserto, pesoMaximo(lat, lon, DESERTOS));
-  // O frio entra devagar entre os 54° e os 68°, e o gelo a partir daí.
-  cor = misturar(cor, CORES_MAPA.tundra, suave((lat - 54) / 14));
+  // Floresta boreal entre os 48° e os 66°, mais escura do que o verde temperado.
+  cor = misturar(cor, CORES_MAPA.boreal, suave((lat - 46) / 16) * (1 - aridez));
+  cor = misturar(cor, CORES_MAPA.tropico, tropical);
+  // Estepe e savana: a orla dos desertos, que é o que dá o degradê do Sahel e
+  // do interior asiático em vez de um corte seco entre areia e floresta.
+  // A savana é só a orla: no coração do deserto some-se e fica a areia.
+  cor = misturar(cor, CORES_MAPA.savana, suave(aridez * 2.2) * (1 - suave(aridez * 1.4)));
+  cor = misturar(cor, CORES_MAPA.deserto, suave(aridez * 1.15));
+  cor = misturar(cor, CORES_MAPA.tundra, suave((lat - 58) / 12));
+
+  // Serras por cima de tudo, com neve nos cumes mais frios.
+  const serra = SERRAS.reduce(
+    (m, [la0, la1, lo0, lo1, forca]) =>
+      Math.max(m, pesoCaixa(lat, lon, [la0, la1, lo0, lo1], 4) * forca),
+    0
+  );
+  if (serra > 0.05) {
+    cor = misturar(cor, CORES_MAPA.serra, serra * 0.75);
+    const neve = serra * suave((Math.abs(lat) - 28) / 26) * 0.7;
+    cor = misturar(cor, CORES_MAPA.gelo, neve);
+  }
+
   const gronelandia = lat > 58 && lon > -73 && lon < -20 ? suave((lat - 58) / 6) : 0;
-  cor = misturar(cor, CORES_MAPA.gelo, Math.max(suave((lat - 68) / 6), gronelandia, suave((-56 - lat) / 4)));
-  return cor;
+  cor = misturar(cor, CORES_MAPA.gelo, Math.max(suave((lat - 70) / 6), gronelandia, suave((-56 - lat) / 4)));
+
+  // A textura clareia ou escurece cada célula: é o que dá o grão de satélite.
+  const desvio = (textura - 0.5) * 30;
+  return [cor[0] + desvio, cor[1] + desvio * 0.92, cor[2] + desvio * 0.7];
 }
 
 /** Ruído estável por célula: sem ele o verde fica uma mancha de tinta plana.
@@ -599,7 +668,7 @@ function imagemMapa() {
       let cor;
 
       if (eTerra) {
-        cor = corTerra(lat, lon);
+        cor = corTerra(lat, lon, ondulado(c, r));
         // Sombreado por latitude: os trópicos apanham mais luz do que o norte,
         // como numa imagem de satélite composta.
         const luz = 1 - Math.min(0.28, Math.abs(lat) / 300);
@@ -628,7 +697,7 @@ function imagemMapa() {
           ? CORES_MAPA.plataforma
           : quase
             ? misturar(fundo, CORES_MAPA.plataforma, 0.5)
-            : fundo;
+            : misturar(fundo, CORES_MAPA.plataforma, ondulado(c, r) * 0.16);
 
         // Paralelos e meridianos de 30 em 30 graus, quase impercetíveis.
         const grelhaLat = Math.abs(((lat + 90) % 30) - 15) > 14.7;
@@ -636,7 +705,7 @@ function imagemMapa() {
         if (grelhaLat || grelhaLon) cor = misturar(cor, [120, 170, 210], 0.1);
       }
 
-      const ruido = granulado(i, eTerra ? 10 : 3);
+      const ruido = granulado(i, eTerra ? 6 : 2);
       const p = i * 4;
       img.data[p] = Math.max(0, Math.min(255, cor[0] + ruido));
       img.data[p + 1] = Math.max(0, Math.min(255, cor[1] + ruido));
