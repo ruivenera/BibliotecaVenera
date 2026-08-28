@@ -2058,8 +2058,8 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 1rem;
-    min-height: 132px;
-    padding: 1rem var(--gap) 1.4rem;
+    min-height: 120px;
+    padding: 0.9rem var(--gap) 0.9rem;
     background: linear-gradient(
       180deg,
       color-mix(in srgb, var(--tinta) 88%, transparent) 0%,
@@ -2079,11 +2079,47 @@
   .heroi-aprender .sub { margin: 0.35rem 0 0; color: var(--papel-fosco); font-size: 0.82rem; }
   /* A caixa de data vive dentro do cabeçalho, por isso não leva o recuo lateral
      que tem nas notícias. */
-  .heroi-aprender .caixa-data { padding: 0.75rem 0 0; }
+  .heroi-aprender .caixa-data { padding: 0.6rem 0 0; }
 
   /* No claro, véu uniforme: mais imagem à vista, texto ainda legível. */
 
   .heroi-aprender .botao-icone { flex: none; }
+  /* Coluna direita do cabeçalho: o botão de estatísticas e, por baixo, os
+     quatro números do progresso — que antes ocupavam uma secção inteira a
+     meio da página para dizer quatro coisas curtas. */
+  .heroi-aprender .lado {
+    flex: none;
+    display: grid;
+    justify-items: end;
+    gap: 0.5rem;
+  }
+  .heroi-aprender .mosaicos {
+    grid-template-columns: repeat(2, 63px);
+    gap: 0.3rem;
+    padding: 0;
+  }
+  .heroi-aprender .mosaico {
+    grid-template-rows: 13px auto auto;
+    gap: 0.05rem;
+    padding: 0.3rem 0.2rem 0.35rem;
+    border-radius: 9px;
+    background: color-mix(in srgb, var(--tinta-2) 86%, transparent);
+    backdrop-filter: blur(3px);
+  }
+  .heroi-aprender .mosaico svg,
+  .heroi-aprender .mosaico .anel { width: 13px; height: 13px; }
+  .heroi-aprender .mosaico .n { font-size: 0.88rem; }
+  .heroi-aprender .mosaico .et { font-size: 0.36rem; line-height: 1.2; letter-spacing: 0.06em; }
+
+  /* A coluna da esquerda encolhe para a direita caber: sem isto o subtítulo e a
+     data partiam-se em duas linhas cada. */
+  .heroi-aprender .dizeres { flex: 1; min-width: 0; }
+  .heroi-aprender h1 { font-size: clamp(1.1rem, 4.6vw, 1.3rem); }
+  .heroi-aprender .sub { font-size: 0.74rem; }
+  .heroi-aprender .caixa-data { gap: 0.55rem; }
+  .heroi-aprender .caixa-data .icone-data { width: 32px; height: 32px; }
+  .heroi-aprender .datas b { font-size: 0.66rem; }
+  .heroi-aprender .datas i { font-size: 0.6rem; }
 
   /* Cada conta no seu cartão, como na maqueta. */
   .mosaicos {
@@ -3712,9 +3748,12 @@
           </span>
         </div>
       </div>
-      <span class="botao-icone" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
-      </span>
+      <div class="lado">
+        <span class="botao-icone" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+        </span>
+        <div class="mosaicos" id="aprender-numeros"></div>
+      </div>
     </header>
 
     <div class="cabecalho-lista">
@@ -3730,10 +3769,7 @@
     <div id="aprender-areas"></div>
     <div class="barra-accoes"><button class="ver-mais" id="btn-area-nova">+ Nova área</button></div>
 
-    <div class="cabecalho-lista">
-      <span class="rotulo"><i class="emoji">📈</i>O teu progresso</span>
-    </div>
-    <div class="mosaicos" id="aprender-numeros"></div>
+
 
     <div id="aprender-arquivo" hidden>
       <span class="rotulo-seccao">Aulas anteriores</span>
