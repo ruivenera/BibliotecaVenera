@@ -628,6 +628,14 @@ function limparLivro(l) {
     autor: String(l.autor || "").slice(0, 120),
     estado: ["a_ler", "lido", "recomendado"].includes(l.estado) ? l.estado : "a_ler",
     genero: String(l.genero || "").slice(0, 60),
+    // Páginas, marcador e avaliação: é o que faz a aba Leitura deixar de ser
+    // uma lista e passar a acompanhar a leitura.
+    paginas: Math.max(0, Math.min(20000, Number(l.paginas) || 0)),
+    pagina: Math.max(0, Math.min(20000, Number(l.pagina) || 0)),
+    avaliacao: Math.max(0, Math.min(5, Number(l.avaliacao) || 0)),
+    // Endereço da capa. Só https e só de fontes de capas: o campo é preenchido
+    // pela app a partir do catálogo aberto, não escrito à mão.
+    capa: /^https:\/\/covers\.openlibrary\.org\//.test(String(l.capa || "")) ? String(l.capa).slice(0, 300) : "",
     resumo: String(l.resumo || "").slice(0, 40000),
     criado_em: Number(l.criado_em) || agora(),
     atualizado_em: Number(l.atualizado_em) || agora(),
