@@ -3505,7 +3505,10 @@ function desenharLivros() {
         } · ${lista.length}</span></div>` +
         lista
           .map(
-            (l) => `<button class="livro" data-livro="${esc(l.id)}">
+            (l) => `<button class="livro com-fundo" data-livro="${esc(l.id)}">
+              <img class="fundo-livro" src="${esc(nomeFundo(l.titulo))}" alt="" loading="lazy"
+                onerror="this.closest('.livro').classList.remove('com-fundo'); this.remove()">
+              <span class="veu"></span>
               <span class="rotulo estado-livro" data-estado="${esc(l.estado)}">${esc(
               ESTADOS_LIVRO[l.estado] || l.estado
             )}</span>

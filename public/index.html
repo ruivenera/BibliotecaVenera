@@ -2709,17 +2709,16 @@
      gradiente cobre a metade de baixo e o texto assenta nesse escuro; o topo
      da arte fica à vista. Sem ficheiro de arte, o JS tira a classe e o cartão
      volta ao aspeto de sempre. */
-  .cartao-leitura.com-fundo {
+  .com-fundo {
     position: relative;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    min-height: 236px;
     background: var(--tinta-2);
   }
-  .cartao-leitura.com-fundo > * { position: relative; z-index: 1; }
-  .cartao-leitura.com-fundo > .fundo-livro,
-  .cartao-leitura.com-fundo > .veu {
+  .com-fundo > * { position: relative; z-index: 1; }
+  .com-fundo > .fundo-livro,
+  .com-fundo > .veu {
     position: absolute;
     inset: 0;
     z-index: 0;
@@ -2727,7 +2726,8 @@
     width: 100%;
     height: 100%;
   }
-  .cartao-leitura.com-fundo > .fundo-livro { object-fit: cover; object-position: center; }
+  .com-fundo > .fundo-livro { object-fit: cover; object-position: center; }
+  .cartao-leitura.com-fundo { min-height: 236px; }
   .cartao-leitura.com-fundo > .veu {
     background: linear-gradient(
       to bottom,
@@ -2750,6 +2750,38 @@
     background: color-mix(in srgb, var(--tinta) 62%, transparent);
     backdrop-filter: blur(6px);
   }
+
+  /* A estante filtrada. Os cartões estavam colados às margens do ecrã — a
+     primeira letra de cada título ficava a tocar no vidro. Passam a ter a
+     mesma margem lateral dos outros cartões e a arte do livro por trás, mas
+     baixos: aqui a lista pode ter dezenas de linhas. */
+  #v-leitura .livro {
+    width: calc(100% - 2 * var(--gap));
+    margin: 0 var(--gap) 0.6rem;
+    padding: 0.75rem 0.9rem 0.8rem;
+    border: 1px solid var(--tinta-3);
+    border-radius: 14px;
+  }
+  #v-leitura .livro.com-fundo {
+    min-height: 104px;
+    justify-content: flex-end;
+  }
+  /* O véu corre da esquerda para a direita: o texto assenta no escuro e a arte
+     respira do lado de onde ninguém está a ler. */
+  #v-leitura .livro.com-fundo > .veu {
+    background: linear-gradient(
+      to right,
+      color-mix(in srgb, var(--tinta) 94%, transparent) 0%,
+      color-mix(in srgb, var(--tinta) 86%, transparent) 42%,
+      color-mix(in srgb, var(--tinta) 52%, transparent) 78%,
+      color-mix(in srgb, var(--tinta) 36%, transparent) 100%
+    );
+  }
+  /* O texto não avança para a metade da direita, senão o degradê deixava de
+     chegar para o tapar. */
+  #v-leitura .livro.com-fundo h4,
+  #v-leitura .livro.com-fundo p { max-width: 68%; }
+  #v-leitura .livro.com-fundo h4 { margin: 0.25rem 0 0.15rem; }
 
   /* Estado vazio: compacto, sem o bloco enorme de antes. */
   .vazio-leitura { text-align: center; padding: 1.2rem 1rem 1.3rem; }
