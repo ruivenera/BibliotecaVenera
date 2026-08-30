@@ -2074,11 +2074,109 @@ function comecarRevisao() {
   desenharPainelRevisao();
 }
 
-function arrancarSessao() {
-  estado.fila = devidos().sort((a, b) => a.sm2.proxima - b.sm2.proxima);
+/**
+ * Os métodos de estudo. Cada um é uma forma diferente de escolher e apresentar
+ * os cartões — não são etiquetas decorativas: a fila muda mesmo.
+ */
+const METODOS = {
+  espacada: {
+    nome: "Revisão ativa e espaçada",
+    texto: "Revê no momento certo e retém por mais tempo.",
+    cor: "var(--indigo)",
+    icone: `<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>`,
+    fila: () => devidos().sort((a, b) => a.sm2.proxima - b.sm2.proxima),
+    vazio: "Nada devido. Os cartões voltam sozinhos quando chegar a altura.",
+  },
+  flashcards: {
+    nome: "Flashcards",
+    texto: "Frente e verso, com o verso escondido até dizeres.",
+    cor: "var(--latao)",
+    icone: `<svg viewBox="0 0 24 24"><rect x="3" y="6" width="14" height="11" rx="2"/><path d="M7 4h14v11"/></svg>`,
+    fila: (todos) => baralhar(todos),
+    vazio: "Ainda não há cartões. Faz um a partir de uma nota ou de uma edição.",
+  },
+  intercalada: {
+    nome: "Prática intercalada",
+    texto: "Mistura assuntos: dois seguidos do mesmo tema é o que se evita.",
+    cor: "var(--rust)",
+    icone: `<svg viewBox="0 0 24 24"><path d="M4 17c5 0 5-10 10-10M14 7h5m0 0-2-2m2 2-2 2"/><circle cx="4" cy="17" r="1.5"/></svg>`,
+    fila: (todos) => intercalar(baralhar(todos)),
+    vazio: "Ainda não há cartões para misturar.",
+  },
+  micro: {
+    nome: "Micro-learning",
+    texto: "Cinco cartões, poucos minutos, várias vezes ao dia.",
+    cor: "var(--sobe)",
+    icone: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
+    fila: (todos) => (devidos().length ? devidos() : baralhar(todos)).slice(0, 5),
+    vazio: "Ainda não há cartões.",
+  },
+  recuperacao: {
+    nome: "Recuperação ativa",
+    texto: "Escreve a resposta de cabeça antes de a veres.",
+    cor: "var(--latao)",
+    icone: `<svg viewBox="0 0 24 24"><path d="M12 3a7 7 0 0 0-4 12.7V19h8v-3.3A7 7 0 0 0 12 3z"/><path d="M9 21h6"/></svg>`,
+    fila: (todos) => baralhar(devidos().length ? devidos() : todos),
+    escrever: true,
+    vazio: "Ainda não há cartões para testar.",
+  },
+  palacio: {
+    nome: "Palácio da memória",
+    texto: "Associa cada ideia a um lugar da casa e percorre-o.",
+    cor: "var(--indigo)",
+    icone: `<svg viewBox="0 0 24 24"><path d="M4 21V10l8-6 8 6v11z"/><path d="M9 21v-6h6v6"/></svg>`,
+    fila: (todos) => baralhar(todos).slice(0, LUGARES.length),
+    lugares: true,
+    vazio: "Ainda não há cartões para arrumar no palácio.",
+  },
+};
+
+/* Os lugares do percurso. São sempre os mesmos e pela mesma ordem: é isso que
+   faz o método funcionar — o sítio é a pista para a memória. */
+const LUGARES = [
+  "à porta de entrada",
+  "no corredor",
+  "na sala, junto ao sofá",
+  "na cozinha, sobre a bancada",
+  "à mesa de jantar",
+  "na secretária",
+  "no quarto, na mesa de cabeceira",
+];
+
+const baralhar = (lista) => {
+  const c = [...lista];
+  for (let i = c.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [c[i], c[j]] = [c[j], c[i]];
+  }
+  return c;
+};
+
+/** Reordena para que dois cartões seguidos não venham do mesmo assunto. */
+function intercalar(lista) {
+  const porAssunto = new Map();
+  for (const c of lista) {
+    const chave = assuntoDoCartao(c);
+    if (!porAssunto.has(chave)) porAssunto.set(chave, []);
+    porAssunto.get(chave).push(c);
+  }
+  const montes = [...porAssunto.values()].sort((a, b) => b.length - a.length);
+  const saida = [];
+  while (montes.some((m) => m.length)) {
+    for (const monte of montes) if (monte.length) saida.push(monte.shift());
+  }
+  return saida;
+}
+
+function arrancarSessao(metodo = "espacada") {
+  const m = METODOS[metodo] || METODOS.espacada;
+  estado.metodo = metodo;
+  estado.fila = m.fila(vivos("cartoes"));
   estado.total = estado.fila.length;
+  estado.resposta = "";
   $("#revisao-painel").hidden = true;
   $("#revisao-sessao").hidden = false;
+  $("#nome-metodo").textContent = m.nome;
   proximoCartao();
 }
 
@@ -2138,27 +2236,14 @@ function desenharPainelRevisao() {
   $("#btn-comecar-revisao").textContent = paraHoje.length ? "▶ Começar revisão" : "Nada para rever agora";
 
   // Métodos: só os que existem de facto.
-  $("#revisao-metodos").innerHTML = [
-    {
-      icone: `<svg viewBox="0 0 24 24"><rect x="3" y="6" width="14" height="11" rx="2"/><path d="M7 4h14v11"/></svg>`,
-      nome: "Flashcards",
-      texto: "Frente e verso, com o verso escondido até dizeres.",
-      cor: "var(--latao)",
-    },
-    {
-      icone: `<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>`,
-      nome: "Revisão espaçada",
-      texto: "SM-2, com os quatro prazos visíveis em cada botão.",
-      cor: "var(--indigo)",
-    },
-  ]
+  $("#revisao-metodos").innerHTML = Object.entries(METODOS)
     .map(
-      (m) => `<div class="metodo" style="--ponto:${m.cor}">
+      ([chave, m]) => `<button class="metodo" data-metodo="${chave}" style="--ponto:${m.cor}">
         <span class="icone">${m.icone}</span>
-        <h4>${m.nome}</h4>
-        <p>${m.texto}</p>
-        <span class="selo">Ativo</span>
-      </div>`
+        <h4>${esc(m.nome)}</h4>
+        <p>${esc(m.texto)}</p>
+        <span class="selo">Começar ›</span>
+      </button>`
     )
     .join("");
 
@@ -2191,12 +2276,43 @@ function desenharPainelRevisao() {
     `<p class="linha"><span class="texto"><span>Sem revisões agendadas. Faz cartões a partir das notas ou dos temas.</span></span></p>`;
 }
 
-$("#btn-comecar-revisao").addEventListener("click", arrancarSessao);
+$("#btn-comecar-revisao").addEventListener("click", () => arrancarSessao("espacada"));
+
+// Cada método arranca a sua sessão; a técnica de Feynman abre uma nota.
+/* As duas metades da aba: estudar agora ou ver a evolução. */
+document.querySelectorAll("[data-meia-revisao]").forEach((b) =>
+  b.addEventListener("click", () => {
+    const meia = b.dataset.meiaRevisao;
+    document
+      .querySelectorAll("[data-meia-revisao]")
+      .forEach((x) => x.setAttribute("aria-selected", x.dataset.meiaRevisao === meia));
+    $("#meia-estudar").hidden = meia !== "estudar";
+    $("#meia-progresso").hidden = meia !== "progresso";
+  })
+);
+
+$("#revisao-metodos").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-metodo]");
+  if (b) arrancarSessao(b.dataset.metodo);
+});
+
+$("#revisao-feynman").addEventListener("click", () => {
+  const cartoes = vivos("cartoes");
+  const alvo = baralhar(devidos().length ? devidos() : cartoes)[0];
+  abrirFolha("nota-nova", {
+    frente: alvo ? `Explicar: ${alvo.frente}` : "Explicar em palavras minhas",
+    verso: alvo
+      ? `${alvo.frente}\n\nExplica como se estivesses a ensinar alguém que nunca ouviu falar disto. Onde tropeçares, é aí que ainda não sabes.\n\n`
+      : "Escolhe um conceito e explica-o como se estivesses a ensinar alguém.\n\n",
+    etiqueta: "Ideias",
+  });
+});
 $("#btn-sair-revisao").addEventListener("click", comecarRevisao);
 
 function proximoCartao() {
   estado.cartaoAtual = estado.fila[0] || null;
   estado.versoVisivel = false;
+  estado.resposta = "";
   desenharRevisao();
 }
 
@@ -2206,20 +2322,38 @@ function desenharRevisao() {
   $("#progresso-revisao").textContent = estado.total ? `${feitos} de ${estado.total}` : "";
   $("#barra-revisao").style.width = estado.total ? `${(feitos / estado.total) * 100}%` : "0%";
 
+  const metodo = METODOS[estado.metodo] || METODOS.espacada;
+
   if (!estado.cartaoAtual) {
     const totalCartoes = vivos("cartoes").length;
     palco.innerHTML = totalCartoes
-      ? vazio("Revisão em dia", "Os cartões voltam sozinhos quando chegar a altura de os rever.")
+      ? vazio(estado.total ? "Sessão terminada" : "Nada a rever", metodo.vazio)
       : vazio("Ainda não há cartões", "Abre uma edição e transforma um tema num cartão.");
     contarRevisao();
     return;
   }
 
   const c = estado.cartaoAtual;
+  const posicao = (estado.total || 0) - estado.fila.length;
+
   palco.innerHTML = `
+    ${
+      // No palácio da memória o lugar vem antes da pergunta: é o sítio que
+      // serve de pista, e é por isso que a ordem é sempre a mesma.
+      metodo.lugares
+        ? `<p class="lugar-palacio"><i>📍</i>${esc(LUGARES[posicao % LUGARES.length])}</p>`
+        : ""
+    }
     <div class="cartao">
       <div class="frente">${esc(c.frente)}</div>
       ${estado.versoVisivel ? `<div class="verso">${esc(c.verso)}</div>` : ""}
+      ${
+        // Recuperação ativa: escreve-se de cabeça antes de revelar, e depois
+        // fica lado a lado com a resposta certa.
+        metodo.escrever && estado.versoVisivel && estado.resposta
+          ? `<div class="tua-resposta"><span class="rotulo">o que escreveste</span>${esc(estado.resposta)}</div>`
+          : ""
+      }
     </div>
     ${
       estado.versoVisivel
@@ -2229,7 +2363,14 @@ function desenharRevisao() {
                 agendar(c.sm2, n.q).intervalo
               )}</small></button>`
           ).join("")}</div>`
-        : `<div class="accoes" style="margin-top:0.9rem">
+        : `${
+            metodo.escrever
+              ? `<textarea class="campo" id="resposta-revisao" placeholder="Escreve a resposta de cabeça">${esc(
+                  estado.resposta || ""
+                )}</textarea>`
+              : ""
+          }
+           <div class="accoes" style="margin-top:0.9rem">
              <button class="btn" data-tom="forte" id="btn-ver" style="flex:1">Ver resposta</button>
              <button class="btn" data-editar-cartao="${esc(c.id)}">Editar</button>
            </div>`
@@ -2377,6 +2518,9 @@ document.addEventListener("click", (evento) => {
 
   switch (alvo.id) {
     case "btn-ver":
+      // Na recuperação ativa guarda-se o que foi escrito, para ficar lado a
+      // lado com a resposta certa.
+      estado.resposta = $("#resposta-revisao")?.value.trim() || "";
       estado.versoVisivel = true;
       return desenharRevisao();
     case "btn-nota-nova":
