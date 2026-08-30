@@ -2331,8 +2331,13 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.6rem;
-    padding: 0.9rem var(--gap) 0.2rem;
+    padding: 0.7rem var(--gap) 0.2rem;
   }
+  /* Mais ar entre as secções desta aba, mas tudo mais acima na página. */
+  #v-revisao .rotulo-seccao { padding-top: 1.5rem; }
+  #v-revisao .grupo { margin-bottom: 0.3rem; }
+  #v-revisao .metodos { padding-bottom: 0.4rem; }
+  #v-revisao .cartao-feynman { margin-top: 1.4rem; }
   .metade {
     padding: 0.6rem 0.5rem 0.65rem;
     background: color-mix(in srgb, var(--tinta-2) 90%, transparent);
@@ -2406,12 +2411,19 @@
   }
   /* Mesma presença do cabeçalho da Leitura: 168px, para a fotografia do quadro
      de revisão se ver e não ficar uma tira. */
+  /* O cabeçalho acompanha a rolagem: numa aba com muitos cartões, perder o
+     título e a data de vista deixava a página sem âncora. */
   .heroi-revisao {
+    position: sticky;
+    /* A barra da app já está colada no topo com 61px: sem este desvio, o
+       cabeçalho da aba encostava-se por baixo dela e perdia o título. */
+    top: 61px;
+    z-index: 3;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    min-height: 168px;
-    padding-bottom: 1.1rem;
+    min-height: 150px;
+    padding-bottom: 0.9rem;
     background-image:
       linear-gradient(180deg, transparent 62%, color-mix(in srgb, var(--tinta) 72%, transparent) 86%, var(--tinta) 100%),
       linear-gradient(95deg, var(--tinta) 26%, color-mix(in srgb, var(--tinta) 58%, transparent) 58%, color-mix(in srgb, var(--tinta) 16%, transparent) 96%),
@@ -2922,20 +2934,25 @@
     }
   }
   .heroi-leitura .dizeres { flex: 1; min-width: 0; max-width: 74%; }
+  /* Mesmo cabeçalho das outras abas: título grande e dourado, ponto e frase. */
   .heroi-leitura h1 {
-    margin: 0.35rem 0 0.4rem;
+    margin: 0;
     font-family: var(--display);
     font-weight: 700;
-    font-size: 1.32rem;
-    line-height: 1.15;
-    letter-spacing: -0.01em;
-    color: var(--titulo, var(--papel));
-    text-wrap: balance;
+    font-size: clamp(1.2rem, 5.2vw, 1.45rem);
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: var(--latao);
   }
   .heroi-leitura .sub {
-    margin: 0;
-    font-size: 0.86rem;
-    line-height: 1.5;
+    margin: 0.35rem 0 0;
+    font-size: 0.82rem;
+    color: var(--papel-fosco);
+  }
+  .heroi-leitura .sub2 {
+    margin: 0.25rem 0 0;
+    font-size: 0.78rem;
+    line-height: 1.45;
     color: var(--papel-fosco);
     text-wrap: pretty;
   }
@@ -3798,12 +3815,48 @@
     padding: 0 var(--gap);
   }
   @media (max-width: 23.5rem) { .metodos { grid-template-columns: 1fr 1fr; } }
+  /* Cartão de estratégia: filete da cor do método em cima, ícone em medalha e
+     rodapé com o que a sessão vai usar. */
+  /* Bloco simples, não flex: com o rodapé colado ao fundo por margem
+     automática, o cálculo da altura da linha da grelha ficava curto e a última
+     linha do texto passava por baixo do rodapé. */
   .metodo {
-    background: color-mix(in srgb, var(--tinta-2) 88%, transparent);
+    position: relative;
+    display: block;
+    background: color-mix(in srgb, var(--tinta-2) 90%, transparent);
     backdrop-filter: blur(3px);
     border: 1px solid var(--tinta-3);
+    border-top: 2px solid var(--ponto, var(--latao));
     border-radius: 12px;
-    padding: 0.7rem 0.55rem 0.75rem;
+    padding: 0.75rem 0.6rem 0.7rem;
+    box-shadow: 0 6px 18px -14px rgba(0, 0, 0, 0.8);
+  }
+  .metodo .icone {
+    width: 34px; height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--ponto, var(--latao)) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--ponto, var(--latao)) 30%, transparent);
+  }
+  .metodo .icone svg { stroke: var(--ponto, var(--latao)); }
+  /* O rodapé é que desce até ao fundo. Com flex:1 no parágrafo, a base zero
+     encolhia-o e o texto saía por cima do rodapé. */
+  .metodo .rodape {
+    margin-top: 0.15rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.3rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--tinta-3);
+  }
+  .metodo .quantos {
+    font-family: var(--meta);
+    font-size: 0.44rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--papel-fosco);
   }
   .metodo .icone { color: var(--ponto, var(--latao)); }
   .metodo .icone svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.5; }
@@ -3816,7 +3869,21 @@
     text-transform: none;
     margin: 0.5rem 0 0.3rem;
   }
-  .metodo p { margin: 0 0 0.55rem; font-size: 0.68rem; line-height: 1.35; color: var(--papel-fosco); }
+  /* Três linhas no máximo. O flex:none é essencial: um item de flex com
+     overflow escondido passa a poder encolher até zero, e era isso que fazia o
+     rodapé subir por cima da última linha. */
+  /* Sem corte de linhas nem overflow escondido: um item de flex com overflow
+     escondido pode encolher até zero e era isso que comia a última linha. As
+     descrições são curtas, e a grelha iguala a altura da fila. */
+  .metodo p {
+    flex: none;
+    margin: 0 0 0.6rem;
+    font-size: 0.68rem;
+    /* 1,4 era apertado para a Spectral: as caudas do p e do g saíam da caixa
+       da linha e desenhavam-se por cima do filete do rodapé. */
+    line-height: 1.55;
+    color: var(--papel-fosco);
+  }
   .metodo .selo { color: var(--ponto, var(--latao)); font-size: 0.46rem; padding: 0.16rem 0.42rem; }
   .metodo .icone svg { width: 21px; height: 21px; }
 
@@ -4109,9 +4176,9 @@
   <section class="vista" id="v-leitura" aria-label="Leitura">
     <header class="heroi-leitura">
       <div class="dizeres">
-        <p class="rotulo"><i class="emoji">📖</i>Leitura</p>
-        <h1>O que estás a ler</h1>
-        <p class="sub">Continua a tua jornada de leitura.</p>
+        <h1><i class="emoji">📖</i>Leitura</h1>
+        <p class="sub"><span class="ponto-rotina" style="--ponto:var(--latao)"></span> O que estás a ler</p>
+        <p class="sub2">Continua a tua jornada de leitura.</p>
       </div>
     </header>
 

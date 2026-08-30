@@ -2081,7 +2081,7 @@ function comecarRevisao() {
 const METODOS = {
   espacada: {
     nome: "Revisão ativa e espaçada",
-    texto: "Revê no momento certo e retém por mais tempo.",
+    texto: "Revê no momento certo, retém mais tempo.",
     cor: "var(--indigo)",
     icone: `<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>`,
     fila: () => devidos().sort((a, b) => a.sm2.proxima - b.sm2.proxima),
@@ -2097,7 +2097,7 @@ const METODOS = {
   },
   intercalada: {
     nome: "Prática intercalada",
-    texto: "Mistura assuntos: dois seguidos do mesmo tema é o que se evita.",
+    texto: "Mistura assuntos: nunca dois seguidos do mesmo tema.",
     cor: "var(--rust)",
     icone: `<svg viewBox="0 0 24 24"><path d="M4 17c5 0 5-10 10-10M14 7h5m0 0-2-2m2 2-2 2"/><circle cx="4" cy="17" r="1.5"/></svg>`,
     fila: (todos) => intercalar(baralhar(todos)),
@@ -2113,7 +2113,7 @@ const METODOS = {
   },
   recuperacao: {
     nome: "Recuperação ativa",
-    texto: "Escreve a resposta de cabeça antes de a veres.",
+    texto: "Escreve de cabeça antes de ver a resposta.",
     cor: "var(--latao)",
     icone: `<svg viewBox="0 0 24 24"><path d="M12 3a7 7 0 0 0-4 12.7V19h8v-3.3A7 7 0 0 0 12 3z"/><path d="M9 21h6"/></svg>`,
     fila: (todos) => baralhar(devidos().length ? devidos() : todos),
@@ -2122,7 +2122,7 @@ const METODOS = {
   },
   palacio: {
     nome: "Palácio da memória",
-    texto: "Associa cada ideia a um lugar da casa e percorre-o.",
+    texto: "Associa cada ideia a um lugar da casa.",
     cor: "var(--indigo)",
     icone: `<svg viewBox="0 0 24 24"><path d="M4 21V10l8-6 8 6v11z"/><path d="M9 21v-6h6v6"/></svg>`,
     fila: (todos) => baralhar(todos).slice(0, LUGARES.length),
@@ -2238,12 +2238,20 @@ function desenharPainelRevisao() {
   // Métodos: só os que existem de facto.
   $("#revisao-metodos").innerHTML = Object.entries(METODOS)
     .map(
-      ([chave, m]) => `<button class="metodo" data-metodo="${chave}" style="--ponto:${m.cor}">
-        <span class="icone">${m.icone}</span>
-        <h4>${esc(m.nome)}</h4>
-        <p>${esc(m.texto)}</p>
-        <span class="selo">Começar ›</span>
-      </button>`
+      ([chave, m]) => {
+        // Quantos cartões esta estratégia usaria agora: é a diferença entre
+        // escolher às cegas e saber o que vem a seguir.
+        const quantos = m.fila(cartoes).length;
+        return `<button class="metodo" data-metodo="${chave}" style="--ponto:${m.cor}">
+          <span class="icone">${m.icone}</span>
+          <h4>${esc(m.nome)}</h4>
+          <p>${esc(m.texto)}</p>
+          <span class="rodape">
+            <i class="quantos">${quantos} ${quantos === 1 ? "cartão" : "cartões"}</i>
+            <span class="selo">Começar ›</span>
+          </span>
+        </button>`;
+      }
     )
     .join("");
 
