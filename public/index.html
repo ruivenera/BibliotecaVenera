@@ -2332,14 +2332,15 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.6rem;
-    padding: 0.55rem var(--gap) 0.2rem;
+    padding: 0.5rem var(--gap) 0.2rem;
   }
+  #v-revisao .heroi-revisao .caixa-data { padding-bottom: 0; }
   /* Mais ar entre as secções desta aba, mas tudo mais acima na página. */
   #v-revisao .rotulo-seccao { padding-top: 1.5rem; }
   #v-revisao .grupo { margin-bottom: 0.3rem; }
   #v-revisao .metodos { padding-bottom: 0.4rem; }
   #v-revisao .cartao-feynman { margin-top: 1.4rem; }
-  .metade {
+  .meia-revisao {
     padding: 0.6rem 0.5rem 0.65rem;
     background: color-mix(in srgb, var(--tinta-2) 90%, transparent);
     backdrop-filter: blur(3px);
@@ -2349,20 +2350,20 @@
     text-align: center;
     cursor: pointer;
   }
-  .metade b {
+  .meia-revisao b {
     display: block;
     font-family: var(--meta);
     font-size: 0.62rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
   }
-  .metade span { font-size: 0.72rem; }
-  .metade[aria-selected="true"] {
+  .meia-revisao span { font-size: 0.72rem; }
+  .meia-revisao[aria-selected="true"] {
     color: var(--papel);
     border-color: color-mix(in srgb, var(--latao) 55%, transparent);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--latao) 30%, transparent);
   }
-  .metade[aria-selected="true"] b { color: var(--latao); }
+  .meia-revisao[aria-selected="true"] b { color: var(--latao); }
 
   /* Três estratégias por linha, como na maqueta. */
   /* Papel de parede fixo, um por tema. O cabeçalho tem fundo próprio e fica por
@@ -2414,12 +2415,15 @@
      de revisão se ver e não ficar uma tira. */
   /* Sem sticky: colado ao topo, o cabeçalho tapava as metades e as etiquetas de
      secção à medida que a página rolava, e deixava um vazio por baixo de si. */
+  /* Sem altura mínima nem centragem: o conteúdo é curto e o resto da altura
+     virava espaço morto por baixo da data. Ficam 12px, que com os 8px das
+     metades dão os 20 pedidos. */
   .heroi-revisao {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    min-height: 150px;
-    padding-bottom: 0.9rem;
+    padding-bottom: 0.75rem;
+    /* A caixa da data já traz recuo por cima; o que fica por baixo dela até às
+       metades são estes 12px mais os 8px delas. */
     background-image:
       linear-gradient(180deg, transparent 62%, color-mix(in srgb, var(--tinta) 72%, transparent) 86%, var(--tinta) 100%),
       linear-gradient(95deg, var(--tinta) 26%, color-mix(in srgb, var(--tinta) 58%, transparent) 58%, color-mix(in srgb, var(--tinta) 16%, transparent) 96%),
@@ -4280,10 +4284,10 @@
 
       <!-- Duas metades: estudar agora e ver a evolução. -->
       <div class="metades-revisao" role="tablist">
-        <button class="metade" data-meia-revisao="estudar" aria-selected="true">
+        <button class="meia-revisao" data-meia-revisao="estudar" aria-selected="true">
           <b>Revisão</b><span>Estudar com inteligência</span>
         </button>
-        <button class="metade" data-meia-revisao="progresso" aria-selected="false">
+        <button class="meia-revisao" data-meia-revisao="progresso" aria-selected="false">
           <b>Progresso</b><span>Acompanhar evolução</span>
         </button>
       </div>

@@ -1849,7 +1849,7 @@ function geopoliticaHTML(g) {
     );
   }
 
-  return html ? `<div class="metade"><span class="rotulo divisor">Geopolítica</span>${html}</div>` : "";
+  return html ? `<div class="meia-revisao"><span class="rotulo divisor">Geopolítica</span>${html}</div>` : "";
 }
 
 /** Onde vai o curso de IA. */
