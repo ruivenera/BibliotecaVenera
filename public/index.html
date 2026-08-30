@@ -4128,6 +4128,205 @@
     min-height: 1.1rem;
   }
 
+  /* ------------------------------------------------- ficha do livro (ecrã) */
+  /* A folha do livro deixa de ser uma gaveta a subir do fundo: é a única do
+     conjunto com capa, progresso, estado, avaliação e notas, e a meio ecrã
+     obrigava a rolar dentro de uma caixa pequena. Passa a ocupar o telefone
+     todo, com cabeçalho e rodapé fixos e só o meio a rolar. */
+  #folha-livro[open] {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: var(--tinta);
+    overflow: hidden;
+  }
+
+  .topo-ficha {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: calc(0.9rem + env(safe-area-inset-top, 0px)) var(--gap) 0.9rem;
+    border-bottom: 1px solid var(--tinta-3);
+    background: var(--tinta-2);
+  }
+  .emblema-ficha {
+    flex: none;
+    width: 42px; height: 42px;
+    display: grid;
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--latao) 55%, transparent);
+    border-radius: 11px;
+    background: color-mix(in srgb, var(--latao) 12%, transparent);
+    color: var(--latao);
+  }
+  .emblema-ficha svg { width: 21px; height: 21px; }
+  .topo-ficha svg { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .dizeres-ficha { flex: 1; min-width: 0; }
+  .dizeres-ficha h2 {
+    margin: 0;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 1.12rem;
+    color: var(--titulo, var(--papel));
+  }
+  .dizeres-ficha p {
+    margin: 0.15rem 0 0;
+    font-family: var(--meta);
+    font-size: 0.66rem;
+    color: var(--papel-fosco);
+  }
+  .fechar-ficha {
+    flex: none;
+    width: 38px; height: 38px;
+    display: grid;
+    place-items: center;
+    background: none;
+    border: 1px solid var(--tinta-3);
+    border-radius: 50%;
+    color: var(--papel-fosco);
+    cursor: pointer;
+  }
+  .fechar-ficha svg { width: 17px; height: 17px; }
+
+  /* Só o meio rola: o botão de guardar fica sempre à vista. */
+  .corpo-ficha {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.9rem var(--gap) 1.2rem;
+  }
+  .bloco-ficha {
+    background: var(--tinta-2);
+    border: 1px solid var(--tinta-3);
+    border-radius: 14px;
+    padding: 0.9rem 0.95rem 1rem;
+    margin-bottom: 0.7rem;
+  }
+  .titulo-bloco {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0 0 0.8rem;
+    font-family: var(--meta);
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--latao);
+  }
+  .titulo-bloco svg {
+    width: 16px; height: 16px;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .titulo-bloco i { font-style: normal; color: var(--papel-fosco); letter-spacing: 0.06em; }
+  .nota-bloco { margin: 0; font-family: var(--meta); font-size: 0.62rem; line-height: 1.5; color: var(--papel-fosco); }
+  .rotulo-campo {
+    display: block;
+    margin: 0 0 0.3rem;
+    font-family: var(--meta);
+    font-size: 0.58rem;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--papel-fosco);
+  }
+  /* Dentro da ficha os campos param de empurrar margem própria: o espaçamento
+     é o do bloco, senão as etiquetas descolavam-se dos campos. */
+  #folha-livro .campo { margin-bottom: 0.75rem; }
+  #folha-livro .par-campos > div > .campo,
+  #folha-livro textarea.campo { margin-bottom: 0; }
+  #folha-livro textarea.campo { min-height: 8.5rem; }
+  #folha-livro .par-campos { align-items: end; }
+
+  /* Capa: pré-visualização à esquerda, o que se pode fazer com ela à direita. */
+  .bloco-capa { display: flex; gap: 0.9rem; align-items: flex-start; }
+  .pre-capa {
+    flex: none;
+    width: 104px; height: 150px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 9px;
+    border: 1px solid color-mix(in srgb, var(--latao) 35%, transparent);
+    background: linear-gradient(150deg, color-mix(in srgb, var(--latao) 22%, var(--tinta-3)), var(--tinta-3));
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 2.4rem;
+    color: var(--latao);
+  }
+  .pre-capa img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .lado-capa { flex: 1; min-width: 0; }
+  .lado-capa .titulo-bloco { margin-bottom: 0.45rem; }
+  .accoes-capa { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.7rem; }
+  .accoes-capa .btn { font-size: 0.62rem; padding: 0.45rem 0.65rem; }
+
+  /* Progresso: o anel dá a leitura de relance, o campo é que a muda. */
+  .progresso-ficha { display: flex; align-items: center; gap: 1rem; position: relative; }
+  .anel-ficha { flex: none; width: 92px; height: 92px; transform: rotate(-90deg); }
+  .anel-ficha circle { fill: none; stroke-width: 7; }
+  .anel-ficha .trilho { stroke: var(--tinta-3); }
+  .anel-ficha .marca {
+    stroke: var(--latao);
+    stroke-linecap: round;
+    stroke-dasharray: 263.9;
+    stroke-dashoffset: 263.9;
+    transition: stroke-dashoffset 0.35s ease;
+  }
+  .pct-ficha {
+    position: absolute;
+    left: 46px;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--display);
+    font-size: 1.15rem;
+    color: var(--papel);
+  }
+  .numeros-ficha { flex: 1; min-width: 0; }
+  #folha-livro .numeros-ficha .campo { margin-bottom: 0.35rem; }
+
+  #folha-livro .estrelas { margin: 0; gap: 0.5rem; }
+  #folha-livro .estrelas button { font-size: 1.85rem; }
+  .conta-ficha {
+    margin: 0.4rem 0 0;
+    text-align: right;
+    font-family: var(--meta);
+    font-size: 0.6rem;
+    color: var(--papel-fosco);
+  }
+
+  .rodape-ficha {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.75rem var(--gap) calc(0.75rem + var(--seguro-baixo));
+    border-top: 1px solid var(--tinta-3);
+    background: var(--tinta-2);
+  }
+  .rodape-ficha .btn { padding: 0.7rem 0.6rem; }
+  .rodape-ficha #livro-guardar { flex: 1; }
+
+  /* Ecrãs largos: a ficha deixa de ser um telefone esticado e volta a ser uma
+     folha centrada, com a capa e as informações lado a lado. */
+  @media (min-width: 720px) {
+    #folha-livro[open] {
+      width: min(50rem, 100%);
+      height: min(46rem, 100dvh);
+      border-radius: 18px;
+      border: 1px solid var(--tinta-3);
+      margin: auto;
+    }
+  }
+
   .rodape-folha { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; margin-top: 0.3rem; }
   .rodape-folha #folha-para-cartao { margin-right: auto; }
 
@@ -4581,37 +4780,110 @@
   </div>
 </dialog>
 
-<dialog id="folha-livro">
-  <p class="rotulo" id="livro-rotulo">Livro</p>
-  <input class="campo" id="livro-titulo" placeholder="Título">
-  <input class="campo" id="livro-autor" placeholder="Autor">
-  <input class="campo" id="livro-genero" placeholder="Género (ex.: Biografias)" list="generos-sugeridos">
-  <datalist id="generos-sugeridos">
-    <option value="Ficção"></option><option value="Desenvolvimento Pessoal"></option>
-    <option value="Negócios"></option><option value="História"></option>
-    <option value="Biografias"></option><option value="Ciência"></option>
-  </datalist>
-  <div class="segmentado" role="group" aria-label="Estado do livro">
-    <button class="btn" data-livro-estado="a_ler">A ler</button>
-    <button class="btn" data-livro-estado="lido">Lido</button>
-    <button class="btn" data-livro-estado="recomendado">Quero ler</button>
+<dialog id="folha-livro" aria-label="Ficha do livro">
+  <header class="topo-ficha">
+    <span class="emblema-ficha" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M4 5h5.5a3 3 0 0 1 2.5 1.4V19a2.6 2.6 0 0 0-2.5-1.6H4z"/><path d="M20 5h-5.5a3 3 0 0 0-2.5 1.4V19a2.6 2.6 0 0 1 2.5-1.6H20z"/></svg>
+    </span>
+    <div class="dizeres-ficha">
+      <h2 id="livro-rotulo">Novo livro</h2>
+      <p id="livro-sub">Cada livro conta uma história.</p>
+    </div>
+    <button class="fechar-ficha" id="livro-fechar" aria-label="Fechar">
+      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </header>
+
+  <div class="corpo-ficha">
+    <section class="bloco-ficha bloco-capa">
+      <div class="pre-capa" id="livro-capa"></div>
+      <div class="lado-capa">
+        <p class="titulo-bloco"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 15l5-4 4 3 3-2 6 5"/><circle cx="9" cy="9" r="1.4"/></svg>Capa do livro</p>
+        <p class="nota-bloco">Procurada no catálogo aberto pelo título e pelo autor.</p>
+        <div class="accoes-capa">
+          <button class="btn" id="livro-capa-procurar">Procurar capa</button>
+          <button class="btn" data-tom="perigo" id="livro-capa-remover">Remover</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="bloco-ficha">
+      <p class="titulo-bloco"><svg viewBox="0 0 24 24"><path d="M4 5h7a2 2 0 0 1 2 2v12a2 2 0 0 0-2-1.6H4z"/><path d="M20 5h-7a2 2 0 0 0-2 2v12a2 2 0 0 1 2-1.6h7z"/></svg>Informações principais</p>
+      <label class="rotulo-campo" for="livro-titulo">Título</label>
+      <input class="campo" id="livro-titulo" placeholder="Título do livro">
+      <label class="rotulo-campo" for="livro-autor">Autor</label>
+      <input class="campo" id="livro-autor" placeholder="Quem o escreveu">
+      <div class="par-campos">
+        <div>
+          <label class="rotulo-campo" for="livro-genero">Categoria / tema</label>
+          <input class="campo" id="livro-genero" placeholder="Ex.: História" list="generos-sugeridos">
+        </div>
+        <div>
+          <label class="rotulo-campo" for="livro-paginas">Páginas</label>
+          <input class="campo" id="livro-paginas" type="number" inputmode="numeric" min="0" placeholder="0">
+        </div>
+      </div>
+      <datalist id="generos-sugeridos">
+        <option value="Ficção"></option><option value="Desenvolvimento Pessoal"></option>
+        <option value="Negócios"></option><option value="História"></option>
+        <option value="Biografias"></option><option value="Ciência"></option>
+        <option value="Psicologia"></option><option value="Filosofia"></option>
+        <option value="Finanças"></option>
+      </datalist>
+    </section>
+
+    <section class="bloco-ficha">
+      <p class="titulo-bloco"><svg viewBox="0 0 24 24"><path d="M6 4h12v16l-6-4-6 4z"/></svg>Estado de leitura</p>
+      <div class="segmentado" role="group" aria-label="Estado do livro">
+        <button class="btn seg" data-livro-estado="a_ler">
+          <svg viewBox="0 0 24 24"><path d="M4 5h6a2.5 2.5 0 0 1 2 1.2V19a2.4 2.4 0 0 0-2-1.4H4z"/><path d="M20 5h-6a2.5 2.5 0 0 0-2 1.2V19a2.4 2.4 0 0 1 2-1.4h6z"/></svg>A ler
+        </button>
+        <button class="btn seg" data-livro-estado="lido">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.2l2.4 2.4 4.6-4.9"/></svg>Lido
+        </button>
+        <button class="btn seg" data-livro-estado="recomendado">
+          <svg viewBox="0 0 24 24"><path d="M7 4h10v16l-5-3.4L7 20z"/></svg>Quero ler
+        </button>
+      </div>
+    </section>
+
+    <section class="bloco-ficha">
+      <p class="titulo-bloco"><svg viewBox="0 0 24 24"><path d="M4 17l5-5 3.5 3L20 7"/><path d="M15 7h5v5"/></svg>Progresso de leitura</p>
+      <div class="progresso-ficha">
+        <svg class="anel-ficha" viewBox="0 0 100 100" aria-hidden="true">
+          <circle class="trilho" cx="50" cy="50" r="42"></circle>
+          <circle class="marca" id="livro-anel" cx="50" cy="50" r="42"></circle>
+        </svg>
+        <b class="pct-ficha" id="livro-pct">0%</b>
+        <div class="numeros-ficha">
+          <label class="rotulo-campo" for="livro-pagina">Página atual</label>
+          <input class="campo" id="livro-pagina" type="number" inputmode="numeric" min="0" placeholder="0">
+          <p class="nota-bloco" id="livro-de">de 0 páginas</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="bloco-ficha">
+      <p class="titulo-bloco"><svg viewBox="0 0 24 24"><path d="M12 4l2.5 5.2 5.5.8-4 3.9 1 5.6-5-2.7-5 2.7 1-5.6-4-3.9 5.5-.8z"/></svg>Avaliação <i>(opcional)</i></p>
+      <div class="estrelas" id="livro-avaliacao" role="group" aria-label="Avaliação">
+        <button data-estrela="1">★</button><button data-estrela="2">★</button>
+        <button data-estrela="3">★</button><button data-estrela="4">★</button>
+        <button data-estrela="5">★</button>
+      </div>
+    </section>
+
+    <section class="bloco-ficha">
+      <p class="titulo-bloco"><svg viewBox="0 0 24 24"><path d="M4 20l1-4.5L15.5 5a2 2 0 0 1 2.8 2.8L7.8 18.4z"/><path d="M14 6.5l3.5 3.5"/></svg>Notas e resumo <i>(opcional)</i></p>
+      <textarea class="campo" id="livro-resumo" placeholder="Resumo, notas de leitura, citações…"></textarea>
+      <p class="conta-ficha" id="livro-conta">0 carateres</p>
+    </section>
   </div>
-  <div class="par-campos">
-    <input class="campo" id="livro-pagina" type="number" inputmode="numeric" min="0" placeholder="Página atual">
-    <input class="campo" id="livro-paginas" type="number" inputmode="numeric" min="0" placeholder="Total de páginas">
-  </div>
-  <p class="rotulo">Avaliação</p>
-  <div class="estrelas" id="livro-avaliacao" role="group" aria-label="Avaliação">
-    <button data-estrela="1">★</button><button data-estrela="2">★</button>
-    <button data-estrela="3">★</button><button data-estrela="4">★</button>
-    <button data-estrela="5">★</button>
-  </div>
-  <textarea class="campo" id="livro-resumo" placeholder="Resumo, notas de leitura, citações…"></textarea>
-  <div class="accoes">
-    <button class="btn" id="livro-apagar">Apagar</button>
+
+  <footer class="rodape-ficha">
+    <button class="btn" data-tom="perigo" id="livro-apagar">Apagar</button>
     <button class="btn" id="livro-cancelar">Cancelar</button>
-    <button class="btn" data-tom="forte" id="livro-guardar">Guardar</button>
-  </div>
+    <button class="btn" data-tom="forte" id="livro-guardar">Guardar livro</button>
+  </footer>
 </dialog>
 
 <dialog id="folha">

@@ -3151,6 +3151,8 @@ document.querySelector('[data-ir="aprendizagem-arquivo"]').addEventListener("cli
 const ESTADOS_LIVRO = { a_ler: "A ler", lido: "Lido", recomendado: "Quero ler" };
 
 let livroAberto = null;
+/* Tirar a capa é uma decisão: sem isto, o guardar voltava a procurá-la. */
+let capaRemovida = false;
 
 const GENEROS = [
   ["📖", "Ficção"],
@@ -3212,24 +3214,32 @@ function sequenciaLeitura(reg) {
 }
 
 /**
- * Procura a capa no Open Library pelo título e autor. Falha em silêncio: sem
- * rede, ou sem resultado, o cartão fica com a inicial em vez da capa.
+ * Pergunta ao Open Library qual é a capa deste título. Devolve o endereço ou
+ * cadeia vazia. Falha em silêncio: sem rede, ou sem resultado, quem chamou
+ * fica com a inicial em vez da capa.
  */
-async function procurarCapa(livro) {
-  if (!livro.titulo || livro.capa) return;
+async function buscarCapa(titulo, autor) {
+  if (!titulo) return "";
   try {
-    const q = new URLSearchParams({ title: livro.titulo, limit: "1" });
-    if (livro.autor) q.set("author", livro.autor);
+    const q = new URLSearchParams({ title: titulo, limit: "1" });
+    if (autor) q.set("author", autor);
     const r = await fetch(`https://openlibrary.org/search.json?${q}&fields=cover_i`);
     const d = await r.json();
     const id = d?.docs?.[0]?.cover_i;
-    if (!id) return;
-    livro.capa = `https://covers.openlibrary.org/b/id/${id}-M.jpg`;
-    alterar("livros", livro);
-    desenharLivros();
+    return id ? `https://covers.openlibrary.org/b/id/${id}-M.jpg` : "";
   } catch {
-    /* sem rede: fica a inicial */
+    return "";
   }
+}
+
+/** A procura em segundo plano, ao guardar: só para quem ainda não tem capa. */
+async function procurarCapa(livro) {
+  if (!livro.titulo || livro.capa) return;
+  const url = await buscarCapa(livro.titulo, livro.autor);
+  if (!url) return;
+  livro.capa = url;
+  alterar("livros", livro);
+  desenharLivros();
 }
 
 /** A capa do livro, ou a inicial do título quando não há. */
@@ -3577,6 +3587,9 @@ function abrirLivro(livro) {
     apagado: false,
   };
   $("#livro-rotulo").textContent = livro ? "Editar livro" : "Novo livro";
+  $("#livro-sub").textContent = livro
+    ? "Atualiza o que mudou desde a última sessão."
+    : "Cada livro conta uma história.";
   $("#livro-titulo").value = livroAberto.titulo;
   $("#livro-autor").value = livroAberto.autor;
   $("#livro-genero").value = livroAberto.genero || "";
@@ -3584,10 +3597,77 @@ function abrirLivro(livro) {
   $("#livro-paginas").value = livroAberto.paginas || "";
   $("#livro-resumo").value = livroAberto.resumo;
   $("#livro-apagar").style.display = livro ? "" : "none";
+  $("#livro-capa-procurar").textContent = "Procurar capa";
+  $("#livro-capa-procurar").disabled = false;
+  capaRemovida = false;
   marcarEstrelas(livroAberto.avaliacao || 0);
   marcarEstadoLivro(livroAberto.estado);
+  pintarCapaFicha();
+  pintarProgressoFicha();
+  pintarContaFicha();
   $("#folha-livro").showModal();
+  // O corpo pode ficar rolado da vez anterior.
+  $(".corpo-ficha").scrollTop = 0;
 }
+
+/** A capa na ficha: a imagem quando existe, a inicial do título quando não. */
+function pintarCapaFicha() {
+  const url = livroAberto?.capa || "";
+  const inicial = (livroAberto?.titulo || $("#livro-titulo").value || "?").trim().charAt(0).toUpperCase();
+  $("#livro-capa").innerHTML = url
+    ? `<img src="${esc(url)}" alt="" onerror="this.remove()">`
+    : esc(inicial || "?");
+  $("#livro-capa-remover").disabled = !url;
+}
+
+/** O anel e a linha "de N páginas" seguem os campos enquanto se escreve. */
+function pintarProgressoFicha() {
+  const pagina = Math.max(0, Number($("#livro-pagina").value) || 0);
+  const paginas = Math.max(0, Number($("#livro-paginas").value) || 0);
+  const pct = paginas > 0 ? Math.min(100, Math.round((pagina / paginas) * 100)) : 0;
+  $("#livro-pct").textContent = `${pct}%`;
+  // 263.9 é o perímetro do círculo de raio 42 desenhado no HTML.
+  $("#livro-anel").style.strokeDashoffset = String(263.9 * (1 - pct / 100));
+  $("#livro-de").textContent = paginas
+    ? `de ${paginas} páginas`
+    : "total de páginas por indicar";
+}
+
+function pintarContaFicha() {
+  const n = $("#livro-resumo").value.length;
+  $("#livro-conta").textContent = n === 1 ? "1 caráter" : `${n} carateres`;
+}
+
+$("#livro-pagina").addEventListener("input", pintarProgressoFicha);
+$("#livro-paginas").addEventListener("input", pintarProgressoFicha);
+$("#livro-resumo").addEventListener("input", pintarContaFicha);
+$("#livro-fechar").addEventListener("click", () => $("#folha-livro").close());
+
+/* A capa não se escreve à mão: procura-se, ou tira-se. */
+$("#livro-capa-procurar").addEventListener("click", async (e) => {
+  const b = e.currentTarget;
+  const titulo = $("#livro-titulo").value.trim();
+  if (!titulo || !livroAberto) return;
+  capaRemovida = false;
+  b.disabled = true;
+  b.textContent = "A procurar…";
+  const url = await buscarCapa(titulo, $("#livro-autor").value.trim());
+  b.disabled = false;
+  if (url) {
+    livroAberto.capa = url;
+    b.textContent = "Procurar outra";
+    pintarCapaFicha();
+  } else {
+    b.textContent = "Sem capa no catálogo";
+  }
+});
+
+$("#livro-capa-remover").addEventListener("click", () => {
+  if (!livroAberto) return;
+  livroAberto.capa = "";
+  capaRemovida = true;
+  pintarCapaFicha();
+});
 
 function marcarEstadoLivro(valor) {
   livroAberto.estado = valor;
@@ -3632,7 +3712,7 @@ $("#livro-guardar").addEventListener("click", () => {
   anotarLeitura(livroAberto.pagina - paginaAntes);
   livroAberto.resumo = $("#livro-resumo").value;
   // Capa: procura-se em segundo plano e o cartão atualiza-se quando chegar.
-  procurarCapa(livroAberto);
+  if (!capaRemovida) procurarCapa(livroAberto);
   if (!livroAberto.titulo) return;
   alterar("livros", livroAberto);
   $("#folha-livro").close();
