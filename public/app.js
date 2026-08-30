@@ -3192,6 +3192,34 @@ function sequenciaLeitura(reg) {
   return dias;
 }
 
+/**
+ * Procura a capa no Open Library pelo título e autor. Falha em silêncio: sem
+ * rede, ou sem resultado, o cartão fica com a inicial em vez da capa.
+ */
+async function procurarCapa(livro) {
+  if (!livro.titulo || livro.capa) return;
+  try {
+    const q = new URLSearchParams({ title: livro.titulo, limit: "1" });
+    if (livro.autor) q.set("author", livro.autor);
+    const r = await fetch(`https://openlibrary.org/search.json?${q}&fields=cover_i`);
+    const d = await r.json();
+    const id = d?.docs?.[0]?.cover_i;
+    if (!id) return;
+    livro.capa = `https://covers.openlibrary.org/b/id/${id}-M.jpg`;
+    alterar("livros", livro);
+    desenharLivros();
+  } catch {
+    /* sem rede: fica a inicial */
+  }
+}
+
+/** A capa do livro, ou a inicial do título quando não há. */
+const capaHTML = (l, classe = "capa") =>
+  l.capa
+    ? `<span class="${classe} com-capa"><img src="${esc(l.capa)}" alt="" loading="lazy"
+        onerror="this.remove()"></span>`
+    : `<span class="${classe}">${esc((l.titulo || "?").trim().charAt(0).toUpperCase())}</span>`;
+
 const percentagemLivro = (l) =>
   l.paginas > 0 ? Math.min(100, Math.round(((l.pagina || 0) / l.paginas) * 100)) : 0;
 
@@ -3228,9 +3256,7 @@ function desenharLivros() {
         ${atual.genero ? `<span class="rotulo gen">${esc(atual.genero)}</span>` : ""}
       </div>
       <div class="corpo">
-        <span class="capa" data-livro="${esc(atual.id)}">${esc(
-      (atual.titulo || "?").trim().charAt(0).toUpperCase()
-    )}</span>
+        ${capaHTML(atual)}
         <div class="quem">
           <h3>${esc(atual.titulo || "Sem título")}</h3>
           ${atual.autor ? `<p>${esc(atual.autor)}</p>` : ""}
@@ -3329,7 +3355,7 @@ function desenharLivros() {
         .slice(0, 6)
         .map(
           (l) => `<button class="proxima" data-livro="${esc(l.id)}">
-            <span class="capa">${esc((l.titulo || "?").trim().charAt(0).toUpperCase())}</span>
+            ${capaHTML(l)}
             <b>${esc(l.titulo || "Sem título")}</b>
             <span class="rotulo">${esc(l.autor || "")}</span>
             <span class="rotulo fino">${[l.genero, l.paginas ? `${l.paginas} páginas` : ""]
@@ -3386,11 +3412,61 @@ function desenharLivros() {
         .join("")}</div>`;
   };
 
+  /* Os outros que estão a meio: o destaque mostra um, mas lê-se mais do que um
+     livro ao mesmo tempo. */
+  const blocoTambem = () => {
+    const outros = aLer.slice(1);
+    if (!outros.length) return "";
+    return `<div class="cabecalho-lista">
+        <span class="rotulo"><i class="emoji">📚</i>Também estás a ler</span>
+      </div>
+      <div class="proximas">${outros
+        .map((l) => {
+          const pct = percentagemLivro(l);
+          return `<button class="proxima a-meio" data-livro="${esc(l.id)}">
+            ${capaHTML(l)}
+            <b>${esc(l.titulo || "Sem título")}</b>
+            <span class="rotulo">${esc(l.autor || "")}</span>
+            <span class="barra-progresso"><i style="width:${pct}%"></i></span>
+            <span class="rotulo fino">${
+              l.paginas ? `${pct}% · página ${l.pagina || 0}` : "sem páginas indicadas"
+            }</span>
+          </button>`;
+        })
+        .join("")}</div>`;
+  };
+
+  /* Coleção: a estante do que já foi lido, por capas. */
+  const blocoColecao = () => {
+    if (!lidos.length) return "";
+    const porData = [...lidos].sort((a, b) => b.atualizado_em - a.atualizado_em);
+    return `<div class="cabecalho-lista">
+        <span class="rotulo"><i class="emoji">🏆</i>Coleção · ${lidos.length} ${
+      lidos.length === 1 ? "livro lido" : "livros lidos"
+    }</span>
+      </div>
+      <div class="colecao">${porData
+        .map(
+          (l) => `<button class="lombo" data-livro="${esc(l.id)}">
+            ${capaHTML(l, "capa grande")}
+            <b>${esc(l.titulo || "Sem título")}</b>
+            ${
+              l.avaliacao
+                ? `<span class="estrelinhas">${"★".repeat(l.avaliacao)}${"☆".repeat(5 - l.avaliacao)}</span>`
+                : `<span class="rotulo">${esc(l.autor || "")}</span>`
+            }
+          </button>`
+        )
+        .join("")}</div>`;
+  };
+
   $("#painel-leitura").innerHTML =
     blocoAtual() +
+    blocoTambem() +
     `<div class="par-leitura">${blocoObjetivo()}${blocoRitmo()}</div>` +
     blocoIdeias() +
     blocoProximas() +
+    blocoColecao() +
     blocoEstatisticas() +
     blocoBiblioteca();
 
@@ -3532,6 +3608,8 @@ $("#livro-guardar").addEventListener("click", () => {
   livroAberto.paginas = Math.max(0, Number($("#livro-paginas").value) || 0);
   anotarLeitura(livroAberto.pagina - paginaAntes);
   livroAberto.resumo = $("#livro-resumo").value;
+  // Capa: procura-se em segundo plano e o cartão atualiza-se quando chegar.
+  procurarCapa(livroAberto);
   if (!livroAberto.titulo) return;
   alterar("livros", livroAberto);
   $("#folha-livro").close();

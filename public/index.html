@@ -2655,6 +2655,16 @@
 
   /* A ler agora: capa em letra, título, percentagem e barra. */
   .cartao-leitura.atual .corpo { display: flex; align-items: center; gap: 0.85rem; }
+  /* Capa: imagem quando existe, inicial quando não. O contentor é o mesmo para
+     as duas, para o alinhamento não mudar conforme houver ou não capa. */
+  .cartao-leitura .capa,
+  .proxima .capa,
+  .lombo .capa {
+    overflow: hidden;
+    position: relative;
+  }
+  .capa.com-capa { padding: 0; background: var(--tinta-3); }
+  .capa img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .cartao-leitura .capa {
     flex: none;
     width: 46px; height: 64px;
@@ -2765,7 +2775,54 @@
     text-align: left;
     cursor: pointer;
   }
-  .proxima .capa { width: 34px; height: 46px; font-size: 1rem; margin-bottom: 0.35rem; }
+  .proxima .capa { width: 40px; height: 56px; font-size: 1rem; margin-bottom: 0.35rem; }
+  /* Os que estão a meio levam barra de progresso por baixo do autor. */
+  .proxima.a-meio { width: 132px; }
+  .proxima .barra-progresso { display: block; margin: 0.3rem 0 0.15rem; }
+
+  /* Coleção: as capas do que já foi lido, em grelha de três. */
+  .colecao {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.7rem;
+    margin: 0 var(--gap) 0.6rem;
+  }
+  .lombo {
+    display: grid;
+    gap: 0.25rem;
+    padding: 0;
+    background: none;
+    border: 0;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .lombo .capa.grande {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    height: auto;
+    display: grid;
+    place-items: center;
+    border-radius: 7px;
+    background: linear-gradient(150deg, color-mix(in srgb, var(--latao) 22%, var(--tinta-3)), var(--tinta-3));
+    border: 1px solid color-mix(in srgb, var(--latao) 30%, transparent);
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 1.6rem;
+    color: var(--latao);
+  }
+  .lombo b {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 0.76rem;
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .lombo .rotulo { font-size: 0.48rem; }
+  .lombo .estrelinhas { font-size: 0.62rem; color: var(--latao); letter-spacing: 0.06em; }
   .proxima b { font-family: var(--display); font-size: 0.84rem; line-height: 1.2; }
   .proxima .rotulo { font-size: 0.5rem; }
   .proxima .fino { color: var(--papel-fosco); opacity: 0.85; }
@@ -2886,7 +2943,7 @@
   .barra-livros {
     display: flex;
     gap: 0.6rem;
-    padding: 0.2rem var(--gap) 0.8rem;
+    padding: 1.1rem var(--gap) 0.9rem;
   }
   .barra-livros .campo { flex: 1; margin: 0; }
   .barra-livros .btn { flex: none; white-space: nowrap; }
