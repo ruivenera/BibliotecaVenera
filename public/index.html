@@ -2332,7 +2332,7 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.6rem;
-    padding: 0.7rem var(--gap) 0.2rem;
+    padding: 0.55rem var(--gap) 0.2rem;
   }
   /* Mais ar entre as secções desta aba, mas tudo mais acima na página. */
   #v-revisao .rotulo-seccao { padding-top: 1.5rem; }
@@ -2412,14 +2412,9 @@
   }
   /* Mesma presença do cabeçalho da Leitura: 168px, para a fotografia do quadro
      de revisão se ver e não ficar uma tira. */
-  /* O cabeçalho acompanha a rolagem: numa aba com muitos cartões, perder o
-     título e a data de vista deixava a página sem âncora. */
+  /* Sem sticky: colado ao topo, o cabeçalho tapava as metades e as etiquetas de
+     secção à medida que a página rolava, e deixava um vazio por baixo de si. */
   .heroi-revisao {
-    position: sticky;
-    /* A barra da app já está colada no topo com 61px: sem este desvio, o
-       cabeçalho da aba encostava-se por baixo dela e perdia o título. */
-    top: 61px;
-    z-index: 3;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -3812,10 +3807,10 @@
   .metodos {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    /* start, e não stretch: o cartão é um <button>, e esticado à altura da
-       linha o navegador não recalcula a altura do texto lá dentro — era o que
-       fazia a última frase passar por baixo do rodapé. */
-    align-items: start;
+    /* Todos do mesmo tamanho: as linhas partilham a altura da mais alta e os
+       cartões esticam-se até lá. */
+    grid-auto-rows: 1fr;
+    align-items: stretch;
     gap: 0.8rem;
     padding: 0 var(--gap);
   }
@@ -3827,7 +3822,8 @@
      linha do texto passava por baixo do rodapé. */
   .metodo {
     position: relative;
-    display: block;
+    display: flex;
+    flex-direction: column;
     background: color-mix(in srgb, var(--tinta-2) 92%, transparent);
     backdrop-filter: blur(3px);
     border: 1px solid var(--tinta-3);
@@ -3853,8 +3849,9 @@
   /* Chama-se rodape-metodo e não rodape: .rodape é a barra de navegação da app,
      que é fixa no fundo do ecrã — o rodapé do cartão saía do fluxo e desenhava-se
      por cima do texto. */
+  /* O rodapé desce ao fundo, para os "Começar" ficarem alinhados entre cartões. */
   .metodo .rodape-metodo {
-    margin-top: 0.15rem;
+    margin-top: auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
