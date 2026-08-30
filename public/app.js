@@ -2082,8 +2082,8 @@ const METODOS = {
   espacada: {
     nome: "Revisão ativa e espaçada",
     texto: "Revê no momento certo, retém mais tempo.",
-    cor: "var(--indigo)",
-    icone: `<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>`,
+    cor: "var(--latao)",
+    icone: `<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/><circle cx="8" cy="14" r="1"/><circle cx="12" cy="14" r="1"/><circle cx="16" cy="14" r="1"/><circle cx="8" cy="18" r="1"/><circle cx="12" cy="18" r="1"/></svg>`,
     fila: () => devidos().sort((a, b) => a.sm2.proxima - b.sm2.proxima),
     vazio: "Nada devido. Os cartões voltam sozinhos quando chegar a altura.",
   },
@@ -2091,22 +2091,22 @@ const METODOS = {
     nome: "Flashcards",
     texto: "Frente e verso, com o verso escondido até dizeres.",
     cor: "var(--latao)",
-    icone: `<svg viewBox="0 0 24 24"><rect x="3" y="6" width="14" height="11" rx="2"/><path d="M7 4h14v11"/></svg>`,
+    icone: `<svg viewBox="0 0 24 24"><rect x="2.5" y="8" width="14" height="10.5" rx="2"/><path d="M6 6h11.5a2 2 0 0 1 2 2v8.5"/><path d="M9 4h9a2.5 2.5 0 0 1 2.5 2.5V15"/><path d="M6 12h7M6 15h4"/></svg>`,
     fila: (todos) => baralhar(todos),
     vazio: "Ainda não há cartões. Faz um a partir de uma nota ou de uma edição.",
   },
   intercalada: {
     nome: "Prática intercalada",
     texto: "Mistura assuntos: nunca dois seguidos do mesmo tema.",
-    cor: "var(--rust)",
-    icone: `<svg viewBox="0 0 24 24"><path d="M4 17c5 0 5-10 10-10M14 7h5m0 0-2-2m2 2-2 2"/><circle cx="4" cy="17" r="1.5"/></svg>`,
+    cor: "var(--latao)",
+    icone: `<svg viewBox="0 0 24 24"><path d="M5 18c3.5 0 3-6 7-8s6 1 7-3" stroke-dasharray="2.2 2.4"/><circle cx="5" cy="18" r="2" fill="currentColor" stroke="none"/><circle cx="19" cy="6" r="2" fill="currentColor" stroke="none"/></svg>`,
     fila: (todos) => intercalar(baralhar(todos)),
     vazio: "Ainda não há cartões para misturar.",
   },
   micro: {
     nome: "Micro-learning",
     texto: "Cinco cartões, poucos minutos, várias vezes ao dia.",
-    cor: "var(--sobe)",
+    cor: "var(--latao)",
     icone: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
     fila: (todos) => (devidos().length ? devidos() : baralhar(todos)).slice(0, 5),
     vazio: "Ainda não há cartões.",
@@ -2115,7 +2115,7 @@ const METODOS = {
     nome: "Recuperação ativa",
     texto: "Escreve de cabeça antes de ver a resposta.",
     cor: "var(--latao)",
-    icone: `<svg viewBox="0 0 24 24"><path d="M12 3a7 7 0 0 0-4 12.7V19h8v-3.3A7 7 0 0 0 12 3z"/><path d="M9 21h6"/></svg>`,
+    icone: `<svg viewBox="0 0 24 24"><path d="M9.5 4.5A3.5 3.5 0 0 0 6 8a3 3 0 0 0-2 5.2A3.2 3.2 0 0 0 7 19h2.5z"/><path d="M14.5 4.5A3.5 3.5 0 0 1 18 8a3 3 0 0 1 2 5.2A3.2 3.2 0 0 1 17 19h-2.5z"/><path d="M12 4v16M9 9h1.5M14.5 9H13M9.5 14H11M14.5 14H13"/></svg>`,
     fila: (todos) => baralhar(devidos().length ? devidos() : todos),
     escrever: true,
     vazio: "Ainda não há cartões para testar.",
@@ -2123,8 +2123,8 @@ const METODOS = {
   palacio: {
     nome: "Palácio da memória",
     texto: "Associa cada ideia a um lugar da casa.",
-    cor: "var(--indigo)",
-    icone: `<svg viewBox="0 0 24 24"><path d="M4 21V10l8-6 8 6v11z"/><path d="M9 21v-6h6v6"/></svg>`,
+    cor: "var(--latao)",
+    icone: `<svg viewBox="0 0 24 24"><path d="M4 21V9l2-2 2 2V9h8V7l2-2 2 2v12z"/><path d="M10 21v-5h4v5"/><path d="M18 5V2.5l2.5 1L18 5"/></svg>`,
     fila: (todos) => baralhar(todos).slice(0, LUGARES.length),
     lugares: true,
     vazio: "Ainda não há cartões para arrumar no palácio.",
@@ -2242,15 +2242,18 @@ function desenharPainelRevisao() {
         // Quantos cartões esta estratégia usaria agora: é a diferença entre
         // escolher às cegas e saber o que vem a seguir.
         const quantos = m.fila(cartoes).length;
-        return `<button class="metodo" data-metodo="${chave}" style="--ponto:${m.cor}">
+        // Div e não button: o navegador aperta o conteúdo de um <button> a uma
+        // altura própria, e as últimas linhas do texto acabavam por baixo do
+        // rodapé. Com role e tabindex continua a ser tocável e navegável.
+        return `<div class="metodo" role="button" tabindex="0" data-metodo="${chave}" style="--ponto:${m.cor}">
           <span class="icone">${m.icone}</span>
           <h4>${esc(m.nome)}</h4>
           <p>${esc(m.texto)}</p>
-          <span class="rodape">
+          <span class="rodape-metodo">
             <i class="quantos">${quantos} ${quantos === 1 ? "cartão" : "cartões"}</i>
             <span class="selo">Começar ›</span>
           </span>
-        </button>`;
+        </div>`;
       }
     )
     .join("");
@@ -2298,6 +2301,14 @@ document.querySelectorAll("[data-meia-revisao]").forEach((b) =>
     $("#meia-progresso").hidden = meia !== "progresso";
   })
 );
+
+$("#revisao-metodos").addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const alvo = e.target.closest("[data-metodo]");
+  if (!alvo) return;
+  e.preventDefault();
+  alvo.click();
+});
 
 $("#revisao-metodos").addEventListener("click", (e) => {
   const b = e.target.closest("[data-metodo]");

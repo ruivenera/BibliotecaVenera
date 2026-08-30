@@ -2273,7 +2273,8 @@
     cursor: pointer;
     font-family: inherit;
   }
-  .metodo .selo { color: var(--ponto); border-color: color-mix(in srgb, var(--ponto) 45%, transparent); }
+  .metodo:focus-visible { outline: 2px solid var(--latao); outline-offset: 2px; }
+  .metodo .selo { color: var(--latao); border-color: color-mix(in srgb, var(--latao) 45%, transparent); }
 
   /* Feynman: cartão largo, com o retrato à esquerda. */
   .cartao-feynman {
@@ -3811,7 +3812,11 @@
   .metodos {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem;
+    /* start, e não stretch: o cartão é um <button>, e esticado à altura da
+       linha o navegador não recalcula a altura do texto lá dentro — era o que
+       fazia a última frase passar por baixo do rodapé. */
+    align-items: start;
+    gap: 0.8rem;
     padding: 0 var(--gap);
   }
   @media (max-width: 23.5rem) { .metodos { grid-template-columns: 1fr 1fr; } }
@@ -3823,26 +3828,32 @@
   .metodo {
     position: relative;
     display: block;
-    background: color-mix(in srgb, var(--tinta-2) 90%, transparent);
+    background: color-mix(in srgb, var(--tinta-2) 92%, transparent);
     backdrop-filter: blur(3px);
     border: 1px solid var(--tinta-3);
-    border-top: 2px solid var(--ponto, var(--latao));
-    border-radius: 12px;
-    padding: 0.75rem 0.6rem 0.7rem;
-    box-shadow: 0 6px 18px -14px rgba(0, 0, 0, 0.8);
+    border-radius: 13px;
+    padding: 0.85rem 0.6rem 0.7rem;
+    box-shadow: 0 8px 20px -16px rgba(0, 0, 0, 0.75);
   }
+  /* Desenho solto, sem medalha: como na maqueta, é o traço que conta. */
   .metodo .icone {
-    width: 34px; height: 34px;
-    display: grid;
-    place-items: center;
-    border-radius: 50%;
-    background: color-mix(in srgb, var(--ponto, var(--latao)) 12%, transparent);
-    border: 1px solid color-mix(in srgb, var(--ponto, var(--latao)) 30%, transparent);
+    display: block;
+    margin: 0 auto 0.6rem;
+    width: 28px; height: 28px;
   }
-  .metodo .icone svg { stroke: var(--ponto, var(--latao)); }
+  .metodo .icone svg {
+    width: 28px; height: 28px;
+    stroke: var(--latao);
+    stroke-width: 1.4;
+    fill: none;
+    color: var(--latao);
+  }
   /* O rodapé é que desce até ao fundo. Com flex:1 no parágrafo, a base zero
      encolhia-o e o texto saía por cima do rodapé. */
-  .metodo .rodape {
+  /* Chama-se rodape-metodo e não rodape: .rodape é a barra de navegação da app,
+     que é fixa no fundo do ecrã — o rodapé do cartão saía do fluxo e desenhava-se
+     por cima do texto. */
+  .metodo .rodape-metodo {
     margin-top: 0.15rem;
     display: flex;
     align-items: center;
@@ -3852,8 +3863,9 @@
     border-top: 1px solid var(--tinta-3);
   }
   .metodo .quantos {
+    white-space: nowrap;
     font-family: var(--meta);
-    font-size: 0.44rem;
+    font-size: 0.42rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--papel-fosco);
@@ -3863,7 +3875,7 @@
   .metodo h4 {
     font-family: var(--display);
     font-weight: 600;
-    font-size: 0.82rem;
+    font-size: 0.76rem;
     line-height: 1.2;
     letter-spacing: 0;
     text-transform: none;
@@ -3878,13 +3890,18 @@
   .metodo p {
     flex: none;
     margin: 0 0 0.6rem;
-    font-size: 0.68rem;
+    font-size: 0.63rem;
     /* 1,4 era apertado para a Spectral: as caudas do p e do g saíam da caixa
        da linha e desenhavam-se por cima do filete do rodapé. */
     line-height: 1.55;
     color: var(--papel-fosco);
   }
-  .metodo .selo { color: var(--ponto, var(--latao)); font-size: 0.46rem; padding: 0.16rem 0.42rem; }
+  .metodo .selo {
+    color: var(--latao);
+    font-size: 0.42rem;
+    padding: 0.16rem 0.38rem;
+    white-space: nowrap;
+  }
   .metodo .icone svg { width: 21px; height: 21px; }
 
   .proxima-revisao { display: flex; align-items: center; gap: 0.85rem; padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--tinta-3); }
