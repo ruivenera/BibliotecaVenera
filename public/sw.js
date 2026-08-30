@@ -1,6 +1,6 @@
 /* Venera — offline. O que já leste continua a abrir sem rede. */
 
-const VERSAO = "venera-v64";
+const VERSAO = "venera-v65";
 const CASCA = ["/", "/index.html", "/app.js", "/manifest.json", "/icone.svg", "/mapa-mundo.jpg", "/jornal.jpg", "/leitura.jpg", "/notas.jpg", "/revisao.jpg", "/fundo-noticias.jpg"];
 
 self.addEventListener("install", (evento) => {
@@ -113,7 +113,11 @@ self.addEventListener("fetch", (evento) => {
       (guardado) =>
         guardado ||
         fetch(pedido).then((resposta) => {
-          if (resposta.ok) {
+          // Um ficheiro que ainda não existe é servido como index.html. Guardar
+          // isso aqui deixava a imagem partida para sempre, mesmo depois de o
+          // ficheiro ser acrescentado ao repositório.
+          const html = (resposta.headers.get("content-type") || "").includes("text/html");
+          if (resposta.ok && !html) {
             const copia = resposta.clone();
             caches.open(VERSAO).then((c) => c.put(pedido, copia));
           }

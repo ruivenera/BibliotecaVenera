@@ -3239,6 +3239,22 @@ const capaHTML = (l, classe = "capa") =>
         onerror="this.remove()"></span>`
     : `<span class="${classe}">${esc((l.titulo || "?").trim().charAt(0).toUpperCase())}</span>`;
 
+/**
+ * O ficheiro de arte do livro, em /public. O nome sai do título: sem acentos,
+ * em minúsculas, espaços por hífenes. "Dominar a Dopamina" procura
+ * "/fundo-livro-dominar-a-dopamina.jpg". Não havendo ficheiro, o onerror tira
+ * a imagem e o cartão volta ao fundo normal — nada a configurar.
+ */
+const nomeFundo = (titulo) =>
+  "/fundo-livro-" +
+  String(titulo || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") +
+  ".jpg";
+
 const percentagemLivro = (l) =>
   l.paginas > 0 ? Math.min(100, Math.round(((l.pagina || 0) / l.paginas) * 100)) : 0;
 
@@ -3253,6 +3269,37 @@ function desenharLivros() {
   const atual = aLer[0] || null;
 
   /* ------------------------------------------------------- a ler agora --- */
+  /* Um cartão grande por livro a meio: lê-se mais do que um livro ao mesmo
+     tempo e nenhum deles merece ficar reduzido a uma miniatura. A arte de
+     cada um entra como fundo; sem ficheiro, o cartão fica como estava. */
+  const cartaoALer = (l, primeiro) => {
+    const pct = percentagemLivro(l);
+    return `<article class="cartao-leitura atual com-fundo">
+      <img class="fundo-livro" src="${esc(nomeFundo(l.titulo))}" alt="" loading="lazy"
+        onerror="this.closest('.cartao-leitura').classList.remove('com-fundo'); this.remove()">
+      <span class="veu"></span>
+      <div class="cabeca">
+        <span class="rotulo">${primeiro ? "A ler agora" : "Também estás a ler"}</span>
+        ${l.genero ? `<span class="rotulo gen">${esc(l.genero)}</span>` : ""}
+      </div>
+      <div class="corpo">
+        ${capaHTML(l)}
+        <div class="quem">
+          <h3>${esc(l.titulo || "Sem título")}</h3>
+          ${l.autor ? `<p>${esc(l.autor)}</p>` : ""}
+        </div>
+        <b class="pct">${pct}%</b>
+      </div>
+      <span class="barra-progresso"><i style="width:${pct}%"></i></span>
+      <p class="paginas rotulo">${
+        l.paginas
+          ? `Página ${l.pagina || 0} de ${l.paginas}`
+          : "Sem número de páginas — abre o livro para o indicar"
+      }</p>
+      <button class="btn" data-tom="forte" data-livro="${esc(l.id)}">Continuar a ler →</button>
+    </article>`;
+  };
+
   const blocoAtual = () => {
     if (!atual) {
       return `<div class="cartao-leitura vazio-leitura">
@@ -3268,28 +3315,7 @@ function desenharLivros() {
         }</button>
       </div>`;
     }
-    const pct = percentagemLivro(atual);
-    return `<article class="cartao-leitura atual">
-      <div class="cabeca">
-        <span class="rotulo">A ler agora</span>
-        ${atual.genero ? `<span class="rotulo gen">${esc(atual.genero)}</span>` : ""}
-      </div>
-      <div class="corpo">
-        ${capaHTML(atual)}
-        <div class="quem">
-          <h3>${esc(atual.titulo || "Sem título")}</h3>
-          ${atual.autor ? `<p>${esc(atual.autor)}</p>` : ""}
-        </div>
-        <b class="pct">${pct}%</b>
-      </div>
-      <span class="barra-progresso"><i style="width:${pct}%"></i></span>
-      <p class="paginas rotulo">${
-        atual.paginas
-          ? `Página ${atual.pagina || 0} de ${atual.paginas}`
-          : "Sem número de páginas — abre o livro para o indicar"
-      }</p>
-      <button class="btn" data-tom="forte" data-livro="${esc(atual.id)}">Continuar a ler →</button>
-    </article>`;
+    return aLer.map((l, i) => cartaoALer(l, i === 0)).join("");
   };
 
   /* --------------------------------------------------------- objetivo --- */
@@ -3431,30 +3457,6 @@ function desenharLivros() {
         .join("")}</div>`;
   };
 
-  /* Os outros que estão a meio: o destaque mostra um, mas lê-se mais do que um
-     livro ao mesmo tempo. */
-  const blocoTambem = () => {
-    const outros = aLer.slice(1);
-    if (!outros.length) return "";
-    return `<div class="cabecalho-lista">
-        <span class="rotulo"><i class="emoji">📚</i>Também estás a ler</span>
-      </div>
-      <div class="proximas">${outros
-        .map((l) => {
-          const pct = percentagemLivro(l);
-          return `<button class="proxima a-meio" data-livro="${esc(l.id)}">
-            ${capaHTML(l)}
-            <b>${esc(l.titulo || "Sem título")}</b>
-            <span class="rotulo">${esc(l.autor || "")}</span>
-            <span class="barra-progresso"><i style="width:${pct}%"></i></span>
-            <span class="rotulo fino">${
-              l.paginas ? `${pct}% · página ${l.pagina || 0}` : "sem páginas indicadas"
-            }</span>
-          </button>`;
-        })
-        .join("")}</div>`;
-  };
-
   /* Coleção: a estante do que já foi lido, por capas. */
   const blocoColecao = () => {
     if (!lidos.length) return "";
@@ -3481,7 +3483,6 @@ function desenharLivros() {
 
   $("#painel-leitura").innerHTML =
     blocoAtual() +
-    blocoTambem() +
     `<div class="par-leitura">${blocoObjetivo()}${blocoRitmo()}</div>` +
     blocoIdeias() +
     blocoProximas() +

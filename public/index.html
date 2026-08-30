@@ -2705,6 +2705,52 @@
   .cartao-leitura .paginas { display: block; font-size: 0.52rem; }
   .cartao-leitura .btn { width: 100%; margin-top: 0.85rem; }
 
+  /* Arte do livro como fundo do cartão. A imagem fica por baixo, um véu em
+     gradiente cobre a metade de baixo e o texto assenta nesse escuro; o topo
+     da arte fica à vista. Sem ficheiro de arte, o JS tira a classe e o cartão
+     volta ao aspeto de sempre. */
+  .cartao-leitura.com-fundo {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 236px;
+    background: var(--tinta-2);
+  }
+  .cartao-leitura.com-fundo > * { position: relative; z-index: 1; }
+  .cartao-leitura.com-fundo > .fundo-livro,
+  .cartao-leitura.com-fundo > .veu {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .cartao-leitura.com-fundo > .fundo-livro { object-fit: cover; object-position: center; }
+  .cartao-leitura.com-fundo > .veu {
+    background: linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--tinta) 10%, transparent) 0%,
+      color-mix(in srgb, var(--tinta) 34%, transparent) 38%,
+      color-mix(in srgb, var(--tinta) 88%, transparent) 66%,
+      color-mix(in srgb, var(--tinta) 97%, transparent) 100%
+    );
+  }
+  /* A arte já mostra a capa: a miniatura ao lado do título passaria a ser
+     a mesma coisa duas vezes. */
+  .cartao-leitura.com-fundo .capa { display: none; }
+  /* O texto encosta ao fundo, onde o véu é opaco. */
+  .cartao-leitura.com-fundo .corpo { margin-top: auto; }
+  /* As etiquetas ficam em cima, sobre a arte, onde o véu é fino: levam
+     pastilha para não dependerem da cor que calhar por baixo. */
+  .cartao-leitura.com-fundo .cabeca .rotulo {
+    padding: 0.28rem 0.5rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--tinta) 62%, transparent);
+    backdrop-filter: blur(6px);
+  }
+
   /* Estado vazio: compacto, sem o bloco enorme de antes. */
   .vazio-leitura { text-align: center; padding: 1.2rem 1rem 1.3rem; }
   .vazio-leitura h3 { margin: 0.5rem 0 0.35rem; font-size: 1.05rem; }
