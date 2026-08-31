@@ -4327,8 +4327,152 @@
     }
   }
 
-  .rodape-folha { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; margin-top: 0.3rem; }
-  .rodape-folha #folha-para-cartao { margin-right: auto; }
+  /* ------------------------------------------------------ folha da nota --- */
+  /* Mesma ideia da ficha do livro: ecrã inteiro, meio a rolar. Aqui o guardar
+     sobe para o topo — uma nota longa empurrava o rodapé para fora da vista
+     enquanto se escrevia. */
+  #folha[open] {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: var(--tinta);
+    overflow: hidden;
+  }
+  .topo-folha {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    padding: calc(0.8rem + env(safe-area-inset-top, 0px)) var(--gap) 0.6rem;
+  }
+  .topo-folha svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .guardar-topo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 1rem;
+    border-radius: 9px;
+    border-color: var(--latao);
+    color: var(--latao);
+    font-weight: 600;
+  }
+  .guardar-topo svg { width: 15px; height: 15px; }
+  .corpo-folha { padding-top: 0.2rem; }
+  .titulo-folha {
+    margin: 0.4rem 0 0.2rem;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 1.85rem;
+    line-height: 1.1;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: var(--papel);
+  }
+  .titulo-folha i { font-style: normal; color: var(--latao); }
+  .sub-folha {
+    margin: 0 0 1rem;
+    font-family: var(--meta);
+    font-size: 0.68rem;
+    color: var(--papel-fosco);
+  }
+
+  /* De onde veio a nota: a edição e o dia em que foi lida. */
+  .origem-folha { display: flex; align-items: center; gap: 0.8rem; padding: 0.75rem 0.9rem; }
+  .emblema-ficha.redondo { border-radius: 50%; }
+  .dizeres-origem { min-width: 0; }
+  .dizeres-origem b {
+    display: block;
+    font-family: var(--meta);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--papel);
+  }
+  .dizeres-origem p { margin: 0.2rem 0 0; font-family: var(--meta); font-size: 0.62rem; color: var(--papel-fosco); }
+
+  /* O campo do título leva a pena à esquerda, dentro da mesma moldura. */
+  .campo-com-icone { position: relative; }
+  .campo-com-icone .icone-campo {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    border: 1px solid color-mix(in srgb, var(--latao) 30%, transparent);
+    color: var(--latao);
+    pointer-events: none;
+  }
+  .campo-com-icone .icone-campo svg {
+    width: 17px; height: 17px;
+    fill: none; stroke: currentColor; stroke-width: 1.5;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+  #folha .campo-com-icone .campo {
+    padding-left: 3.5rem;
+    padding-top: 0.9rem;
+    padding-bottom: 0.9rem;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+  }
+
+  #folha .rotulo-campo { margin-bottom: 0.45rem; font-size: 0.6rem; color: var(--latao); }
+  .etiquetas-folha { gap: 0.45rem; margin-bottom: 1rem; }
+  .etiquetas-folha .seg { font-size: 0.58rem; padding: 0.6rem 0.2rem; border-radius: 10px; }
+  .etiquetas-folha .seg svg { width: 17px; height: 17px; }
+
+  .caixa-texto {
+    border: 1px solid var(--tinta-3);
+    border-radius: 14px;
+    background: var(--tinta-2);
+    padding: 0.5rem 0.5rem 0.4rem;
+  }
+  #folha .caixa-texto .campo {
+    margin: 0;
+    min-height: 13rem;
+    border: 0;
+    background: none;
+    font-family: var(--leitura);
+    font-size: 1.02rem;
+    line-height: 1.6;
+  }
+  #folha .caixa-texto .conta-ficha { margin: 0 0.35rem 0.2rem 0; }
+
+  #folha .aviso { margin: 0.7rem 0 0; }
+
+  .rodape-folha { justify-content: space-between; }
+  .rodape-folha .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    flex: 1;
+  }
+  .rodape-folha .btn svg {
+    width: 15px; height: 15px;
+    flex: none;
+    fill: none; stroke: currentColor; stroke-width: 1.5;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  @media (min-width: 720px) {
+    #folha[open] {
+      width: min(46rem, 100%);
+      height: min(46rem, 100dvh);
+      border-radius: 18px;
+      border: 1px solid var(--tinta-3);
+      margin: auto;
+    }
+  }
 
   /* --------------------------------------------------------------- ecrã ↑ */
 
@@ -4886,24 +5030,71 @@
   </footer>
 </dialog>
 
-<dialog id="folha">
-  <p class="rotulo" id="folha-rotulo"></p>
-  <h3 id="folha-titulo"></h3>
-  <input class="campo" id="folha-frente" placeholder="Frente">
-  <div class="segmentado" id="folha-etiquetas" role="group" aria-label="Etiqueta da nota">
-    <button class="btn" data-etiqueta="Ideias">Ideias</button>
-    <button class="btn" data-etiqueta="Leituras">Leituras</button>
-    <button class="btn" data-etiqueta="Pessoais">Pessoais</button>
-    <button class="btn" data-etiqueta="Arquivo">Arquivo</button>
+<dialog id="folha" aria-label="Nota">
+  <div class="topo-folha">
+    <button class="fechar-ficha" id="folha-fechar" aria-label="Fechar">
+      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <button class="btn guardar-topo" id="folha-guardar">
+      <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Guardar
+    </button>
   </div>
-  <textarea class="campo" id="folha-verso" placeholder="Verso"></textarea>
-  <p class="aviso" id="folha-aviso"></p>
-  <div class="rodape-folha">
-    <button class="btn" id="folha-para-cartao" hidden>Fazer cartão</button>
-    <button class="btn" id="folha-apagar" data-tom="perigo" hidden>Apagar</button>
+
+  <div class="corpo-ficha corpo-folha">
+    <h2 class="titulo-folha" id="folha-titulo"></h2>
+    <p class="sub-folha" id="folha-sub"></p>
+
+    <section class="bloco-ficha origem-folha">
+      <span class="emblema-ficha redondo" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M5 4h9a2 2 0 0 1 2 2v14H7a2 2 0 0 1-2-2z"/><path d="M16 6h3v14h-3"/><path d="M8 8h5M8 11h5"/></svg>
+      </span>
+      <div class="dizeres-origem">
+        <b id="folha-rotulo"></b>
+        <p id="folha-origem-data"></p>
+      </div>
+    </section>
+
+    <label class="rotulo-campo" id="folha-rot-frente" for="folha-frente">Título</label>
+    <div class="campo-com-icone">
+      <span class="icone-campo" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M5 19c0-6 4-11 14-14-1 8-5 12-11 13"/><path d="M5 19l4-4"/></svg>
+      </span>
+      <input class="campo" id="folha-frente" placeholder="Título">
+    </div>
+
+    <p class="rotulo-campo" id="folha-rot-etiquetas">Categoria</p>
+    <div class="segmentado etiquetas-folha" id="folha-etiquetas" role="group" aria-label="Etiqueta da nota">
+      <button class="btn seg" data-etiqueta="Ideias">
+        <svg viewBox="0 0 24 24"><path d="M9.5 17h5"/><path d="M10 20h4"/><path d="M12 3a5.5 5.5 0 0 1 3.3 9.9c-.5.4-.8 1-.8 1.6h-5c0-.6-.3-1.2-.8-1.6A5.5 5.5 0 0 1 12 3z"/></svg>Ideias
+      </button>
+      <button class="btn seg" data-etiqueta="Leituras">
+        <svg viewBox="0 0 24 24"><path d="M4 5h5.5a2.5 2.5 0 0 1 2.5 1.4V19a2.4 2.4 0 0 0-2.5-1.4H4z"/><path d="M20 5h-5.5a2.5 2.5 0 0 0-2.5 1.4V19a2.4 2.4 0 0 1 2.5-1.4H20z"/></svg>Leituras
+      </button>
+      <button class="btn seg" data-etiqueta="Pessoais">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>Pessoais
+      </button>
+      <button class="btn seg" data-etiqueta="Arquivo">
+        <svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="4" rx="1"/><path d="M5 8.5v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-10"/><path d="M10 12h4"/></svg>Arquivo
+      </button>
+    </div>
+
+    <label class="rotulo-campo" id="folha-rot-verso" for="folha-verso">Conteúdo da nota</label>
+    <div class="caixa-texto">
+      <textarea class="campo" id="folha-verso" placeholder="O que queres guardar"></textarea>
+      <p class="conta-ficha" id="folha-conta">0 palavras</p>
+    </div>
+    <p class="aviso" id="folha-aviso"></p>
+  </div>
+
+  <footer class="rodape-ficha rodape-folha">
+    <button class="btn" id="folha-para-cartao" hidden>
+      <svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M8 10h8M8 14h5"/></svg>Fazer cartão
+    </button>
+    <button class="btn" id="folha-apagar" data-tom="perigo" hidden>
+      <svg viewBox="0 0 24 24"><path d="M4.5 7h15M9 7V5h6v2M7 7l1 13h8l1-13"/></svg>Apagar
+    </button>
     <button class="btn" id="folha-cancelar">Cancelar</button>
-    <button class="btn" data-tom="forte" id="folha-guardar">Guardar</button>
-  </div>
+  </footer>
 </dialog>
 
 <script src="/app.js" type="module"></script>

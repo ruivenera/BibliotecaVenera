@@ -2413,28 +2413,60 @@ let contexto = null;
 function abrirFolha(modo, dados = {}) {
   contexto = { modo, ...dados };
   const nota = modo.startsWith("nota");
-  $("#folha-rotulo").textContent = dados.origem
-    ? `${NOMES[dados.origem.rotina] || dados.origem.rotina} · ${dataCurta(dados.origem.data)}`
-    : "nota solta";
-  $("#folha-titulo").textContent = {
-    "nota-nova": "Nova nota",
-    "nota-editar": "Editar nota",
-    "cartao-novo": "Novo cartão",
-    "cartao-editar": "Editar cartão",
+  // Duas palavras, duas cores: a segunda é que diz de que peça se trata.
+  const [verbo, peca] = {
+    "nota-nova": ["Nova", "nota"],
+    "nota-editar": ["Editar", "nota"],
+    "cartao-novo": ["Novo", "cartão"],
+    "cartao-editar": ["Editar", "cartão"],
   }[modo];
-  $("#folha-frente").placeholder = nota ? "Título" : "Frente — a pergunta";
-  $("#folha-verso").placeholder = nota ? "O que queres guardar" : "Verso — a resposta";
+  $("#folha-titulo").innerHTML = `${verbo} <i>${peca}</i>`;
+  $("#folha-sub").textContent = nota
+    ? "Regista as tuas ideias, leituras e reflexões."
+    : "A frente pergunta, o verso responde.";
+  $("#folha-rotulo").textContent = dados.origem
+    ? NOMES[dados.origem.rotina] || dados.origem.rotina
+    : nota
+      ? "Nota solta"
+      : "Cartão solto";
+  $("#folha-origem-data").textContent = dados.origem
+    ? diaPorExtenso(dados.origem.data)
+    : "Sem ligação a uma edição";
+
+  $("#folha-rot-frente").textContent = nota ? "Título" : "Frente — a pergunta";
+  $("#folha-rot-verso").textContent = nota ? "Conteúdo da nota" : "Verso — a resposta";
+  $("#folha-frente").placeholder = nota ? "Título" : "A pergunta";
+  $("#folha-verso").placeholder = nota ? "O que queres guardar" : "A resposta";
   $("#folha-frente").value = dados.frente || "";
   $("#folha-verso").value = dados.verso || "";
   // A etiqueta só faz sentido nas notas; nos cartões a fila esconde-se.
   $("#folha-etiquetas").hidden = !nota;
+  $("#folha-rot-etiquetas").hidden = !nota;
   marcarEtiqueta(dados.etiqueta || (etiquetaEscolhida !== "Todas" ? etiquetaEscolhida : ""));
   $("#folha-aviso").textContent = "";
   $("#folha-apagar").hidden = !modo.endsWith("editar");
   $("#folha-para-cartao").hidden = modo !== "nota-editar";
+  pintarContaFolha();
   folha.showModal();
-  $("#folha-frente").focus();
+  $(".corpo-folha").scrollTop = 0;
+  // Só o que está vazio é que chama o teclado. A editar, o teclado a subir de
+  // imediato tapava metade do texto que se veio ler.
+  if (modo.endsWith("nova") || modo.endsWith("novo")) $("#folha-frente").focus();
 }
+
+/** O dia por extenso, quando a data vier no formato esperado. */
+function diaPorExtenso(iso) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(iso || "")) ? porExtenso(iso) : String(iso || "");
+}
+
+function pintarContaFolha() {
+  const texto = $("#folha-verso").value.trim();
+  const n = texto ? texto.split(/\s+/).length : 0;
+  $("#folha-conta").textContent = n === 1 ? "1 palavra" : `${n} palavras`;
+}
+
+$("#folha-verso").addEventListener("input", pintarContaFolha);
+$("#folha-fechar").addEventListener("click", () => folha.close());
 
 function marcarEtiqueta(valor) {
   contexto.etiqueta = valor || "";
