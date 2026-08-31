@@ -62,9 +62,16 @@ const estado = {
 for (const tipo of TIPOS) estado.biblioteca[tipo] ||= {};
 
 function gravarLocal() {
-  localStorage.setItem("venera:biblioteca", JSON.stringify(estado.biblioteca));
-  localStorage.setItem("venera:sujos", JSON.stringify([...estado.sujos]));
-  localStorage.setItem("venera:desde", JSON.stringify(estado.desde));
+  try {
+    localStorage.setItem("venera:biblioteca", JSON.stringify(estado.biblioteca));
+    localStorage.setItem("venera:sujos", JSON.stringify([...estado.sujos]));
+    localStorage.setItem("venera:desde", JSON.stringify(estado.desde));
+  } catch {
+    // Espaço esgotado — as fotografias das capas são o que mais pesa. O que
+    // está em memória continua a valer e a sincronização leva-o para o
+    // servidor; rebentar aqui deixava a app a meio de uma edição.
+    marcarEstado("sem espaço local", "offline");
+  }
 }
 
 /** Marca um item como alterado: carimba a hora, grava e agenda sincronização. */
@@ -3266,7 +3273,7 @@ async function buscarCapa(titulo, autor) {
 
 /** A procura em segundo plano, ao guardar: só para quem ainda não tem capa. */
 async function procurarCapa(livro) {
-  if (!livro.titulo || livro.capa) return;
+  if (!livro.titulo || livro.capa || livro.foto) return;
   const url = await buscarCapa(livro.titulo, livro.autor);
   if (!url) return;
   livro.capa = url;
@@ -3275,9 +3282,12 @@ async function procurarCapa(livro) {
 }
 
 /** A capa do livro, ou a inicial do título quando não há. */
+/** A fotografia tirada pelo dono manda sobre a capa vinda do catálogo. */
+const imagemLivro = (l) => l?.foto || l?.capa || "";
+
 const capaHTML = (l, classe = "capa") =>
-  l.capa
-    ? `<span class="${classe} com-capa"><img src="${esc(l.capa)}" alt="" loading="lazy"
+  imagemLivro(l)
+    ? `<span class="${classe} com-capa"><img src="${esc(imagemLivro(l))}" alt="" loading="lazy"
         onerror="this.remove()"></span>`
     : `<span class="${classe}">${esc((l.titulo || "?").trim().charAt(0).toUpperCase())}</span>`;
 
@@ -3614,6 +3624,7 @@ function abrirLivro(livro) {
     paginas: 0,
     pagina: 0,
     avaliacao: 0,
+    foto: "",
     resumo: "",
     criado_em: Date.now(),
     apagado: false,
@@ -3631,6 +3642,8 @@ function abrirLivro(livro) {
   $("#livro-apagar").style.display = livro ? "" : "none";
   $("#livro-capa-procurar").textContent = "Procurar capa";
   $("#livro-capa-procurar").disabled = false;
+  $("#livro-capa-aviso").textContent = "";
+  $("#livro-foto").value = "";
   capaRemovida = false;
   marcarEstrelas(livroAberto.avaliacao || 0);
   marcarEstadoLivro(livroAberto.estado);
@@ -3644,13 +3657,68 @@ function abrirLivro(livro) {
 
 /** A capa na ficha: a imagem quando existe, a inicial do título quando não. */
 function pintarCapaFicha() {
-  const url = livroAberto?.capa || "";
+  const url = imagemLivro(livroAberto);
   const inicial = (livroAberto?.titulo || $("#livro-titulo").value || "?").trim().charAt(0).toUpperCase();
   $("#livro-capa").innerHTML = url
     ? `<img src="${esc(url)}" alt="" onerror="this.remove()">`
     : esc(inicial || "?");
   $("#livro-capa-remover").disabled = !url;
 }
+
+/**
+ * Encolhe a fotografia antes de a guardar. O que sai da câmara do telefone
+ * tem megabytes; a biblioteca inteira viaja num pedido de 512 KB e vive num
+ * valor de 4 MB. Uma capa a 420px de largura chega para o quadrado da ficha e
+ * para os cartões, e a qualidade vai descendo até caber no orçamento.
+ */
+const LARGURA_CAPA = 420;
+const PESO_CAPA = 120 * 1024; // já em base64
+
+function encolherFoto(ficheiro) {
+  return new Promise((resolve, reject) => {
+    const leitor = new FileReader();
+    leitor.onerror = () => reject(new Error("leitura"));
+    leitor.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("imagem"));
+      img.onload = () => {
+        const escala = Math.min(1, LARGURA_CAPA / img.width);
+        const tela = document.createElement("canvas");
+        tela.width = Math.max(1, Math.round(img.width * escala));
+        tela.height = Math.max(1, Math.round(img.height * escala));
+        tela.getContext("2d").drawImage(img, 0, 0, tela.width, tela.height);
+        let dados = "";
+        for (const q of [0.72, 0.62, 0.52, 0.42, 0.32]) {
+          dados = tela.toDataURL("image/jpeg", q);
+          if (dados.length <= PESO_CAPA) break;
+        }
+        dados.length <= PESO_CAPA ? resolve(dados) : reject(new Error("grande"));
+      };
+      img.src = leitor.result;
+    };
+    leitor.readAsDataURL(ficheiro);
+  });
+}
+
+/* Tocar no quadrado da capa abre a galeria: é o gesto que se tenta primeiro. */
+$("#livro-capa").addEventListener("click", () => $("#livro-foto").click());
+$("#livro-capa-foto").addEventListener("click", () => $("#livro-foto").click());
+
+$("#livro-foto").addEventListener("change", async (e) => {
+  const ficheiro = e.target.files?.[0];
+  e.target.value = ""; // escolher a mesma fotografia outra vez tem de contar
+  if (!ficheiro || !livroAberto) return;
+  const aviso = $("#livro-capa-aviso");
+  aviso.textContent = "A preparar a fotografia…";
+  try {
+    livroAberto.foto = await encolherFoto(ficheiro);
+    capaRemovida = false;
+    aviso.textContent = "";
+    pintarCapaFicha();
+  } catch {
+    aviso.textContent = "Não deu para usar essa fotografia.";
+  }
+});
 
 /** O anel e a linha "de N páginas" seguem os campos enquanto se escreve. */
 function pintarProgressoFicha() {
@@ -3681,6 +3749,8 @@ $("#livro-capa-procurar").addEventListener("click", async (e) => {
   const titulo = $("#livro-titulo").value.trim();
   if (!titulo || !livroAberto) return;
   capaRemovida = false;
+  // A capa do catálogo não apaga uma fotografia escolhida à mão.
+  livroAberto.foto = "";
   b.disabled = true;
   b.textContent = "A procurar…";
   const url = await buscarCapa(titulo, $("#livro-autor").value.trim());
@@ -3697,7 +3767,9 @@ $("#livro-capa-procurar").addEventListener("click", async (e) => {
 $("#livro-capa-remover").addEventListener("click", () => {
   if (!livroAberto) return;
   livroAberto.capa = "";
+  livroAberto.foto = "";
   capaRemovida = true;
+  $("#livro-capa-aviso").textContent = "";
   pintarCapaFicha();
 });
 
