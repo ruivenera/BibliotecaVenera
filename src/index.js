@@ -620,6 +620,15 @@ function limparCartao(c) {
   };
 }
 
+const MAX_FOTO = 160 * 1024;
+
+/** Uma fotografia de capa é aceite ou deitada fora inteira — nada a meio. */
+function fotoLimpa(valor) {
+  const f = String(valor || "");
+  if (f.length > MAX_FOTO) return "";
+  return /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(f) ? f : "";
+}
+
 function limparLivro(l) {
   if (!l?.id || typeof l.id !== "string" || l.id.length > 64) return null;
   return {
@@ -636,6 +645,10 @@ function limparLivro(l) {
     // Endereço da capa. Só https e só de fontes de capas: o campo é preenchido
     // pela app a partir do catálogo aberto, não escrito à mão.
     capa: /^https:\/\/covers\.openlibrary\.org\//.test(String(l.capa || "")) ? String(l.capa).slice(0, 300) : "",
+    // Fotografia da capa tirada pelo dono, já encolhida pela app. Aceita-se só
+    // JPEG/PNG/WebP em base64 e com tamanho travado: o corpo do pedido tem
+    // 512 KB e a biblioteca inteira vive num valor de 4 MB.
+    foto: fotoLimpa(l.foto),
     resumo: String(l.resumo || "").slice(0, 40000),
     criado_em: Number(l.criado_em) || agora(),
     atualizado_em: Number(l.atualizado_em) || agora(),
