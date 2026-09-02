@@ -291,6 +291,8 @@ function marcarEstado(texto, tipo) {
   const alvo = $("#estado");
   alvo.textContent = texto;
   alvo.dataset.estado = tipo;
+  // O ponto vive agora no canto do botão de atualizar.
+  $("#btn-atualizar")?.setAttribute("data-rede", tipo);
 }
 
 async function api(caminho, opcoes = {}) {
@@ -2144,6 +2146,10 @@ async function abrirEdicao(rotina, data) {
   $("#btn-voltar-edicao").textContent =
     estado.moduloOrigem === "aprendizagem" ? "← Aprendizagem" : "← Notícias";
   const cor = COR[edicao.rotina];
+  /* Numa aula, "impacto alto" não quer dizer nada: os capítulos não competem
+     entre si, seguem-se. No lugar do selo vai a posição, e por cima um índice
+     que salta para qualquer capítulo. */
+  const eAula = estado.moduloOrigem === "aprendizagem";
 
   cabecalho.innerHTML = `
     <p class="rotulo" style="color:${cor};margin-top:1.4rem">${esc(NOMES[edicao.rotina] || edicao.rotina)}</p>
@@ -2151,7 +2157,22 @@ async function abrirEdicao(rotina, data) {
     <p class="linha-meta rotulo">${esc(porExtenso(edicao.data))} · ${edicao.itens.length} temas</p>
     ${desenharProgresso(edicao.progresso)}
     <p class="resumo">${esc(edicao.resumo)}</p>
-    <div style="--marcador:${cor}">${desenharPainel(edicao.painel)}</div>`;
+    <div style="--marcador:${cor}">${desenharPainel(edicao.painel)}</div>
+    ${
+      eAula && edicao.itens.length > 2
+        ? `<nav class="indice-aula" style="--marcador:${cor}">
+             <p class="rotulo">Nesta aula</p>
+             ${edicao.itens
+               .map(
+                 (it, i) => `<button data-verbete="${i}">
+                   <span class="n">${i + 1}</span>
+                   <span class="t">${esc(it.rubrica || it.titulo)}</span>
+                 </button>`
+               )
+               .join("")}
+           </nav>`
+        : ""
+    }`;
 
   itens.innerHTML = edicao.itens
     .map((item, i) => {
@@ -2163,12 +2184,16 @@ async function abrirEdicao(rotina, data) {
         tem(item.capitulo) ? `Cap. ${item.capitulo}` : "",
         item.rubrica ? esc(item.rubrica) : "",
       ].filter(Boolean);
-      return `<article class="verbete" style="--marcador:${cor}">
+      return `<article class="verbete" id="verbete-${i}" style="--marcador:${cor}">
         <div class="verbete-meta">
           ${marca.length ? `<span class="capitulo rotulo">${marca.join(" · ")}</span>` : ""}
-          <span class="impacto rotulo" data-nivel="${esc(item.impacto)}">
-            <i></i><i></i><i></i> impacto ${esc(item.impacto)}
-          </span>
+          ${
+            eAula
+              ? `<span class="passo-aula rotulo">${i + 1} de ${edicao.itens.length}</span>`
+              : `<span class="impacto rotulo" data-nivel="${esc(item.impacto)}">
+                   <i></i><i></i><i></i> impacto ${esc(item.impacto)}
+                 </span>`
+          }
         </div>
         <h3>${esc(item.titulo)}</h3>
         ${
@@ -2212,6 +2237,12 @@ async function abrirEdicao(rotina, data) {
     })
     .join("");
 }
+
+$("#edicao-cabecalho").addEventListener("click", (e) => {
+  const alvo = e.target.closest("[data-verbete]");
+  if (!alvo) return;
+  $(`#verbete-${alvo.dataset.verbete}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+});
 
 /* ----------------------------------------------------------------- notas --- */
 

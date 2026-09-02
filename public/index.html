@@ -148,8 +148,11 @@
     font-family: var(--display);
     font-weight: 700;
     font-variation-settings: "WONK" 1;
-    font-size: 0.95rem;
-    letter-spacing: 0.05em;
+    /* O nome inteiro numa linha, em qualquer telemóvel: em vez de saltos por
+       media query — que deixavam de fora larguras como as dos Pro Max e
+       cortavam o nome a meio — a letra acompanha a largura do ecrã. */
+    font-size: clamp(0.62rem, 3.3vw, 0.95rem);
+    letter-spacing: 0.02em;
     text-transform: uppercase;
     white-space: nowrap;
     overflow: hidden;
@@ -162,13 +165,6 @@
     cursor: pointer;
     text-align: left;
     line-height: 1.15;
-  }
-  /* Numa linha só, a 375px, ao lado do estado e dos dois botões. */
-  @media (max-width: 26rem) {
-    .marca { font-size: 0.72rem; letter-spacing: 0.01em; }
-  }
-  @media (max-width: 22rem) {
-    .marca { font-size: 0.66rem; }
   }
 
   .topo-accoes { display: flex; align-items: center; gap: 0.55rem; }
@@ -211,6 +207,23 @@
   #btn-atualizar[data-fase="gira"] .i-seta { animation: girar 0.9s linear infinite; }
   @keyframes girar { to { transform: rotate(360deg); } }
 
+  /* O ponto do estado da rede mudou-se para o canto do botão de atualizar: o
+     nome da biblioteca precisava daquele espaço, e a informação é a mesma. */
+  #btn-atualizar::before {
+    content: "";
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--papel-fosco);
+    border: 1.5px solid var(--tinta);
+  }
+  #btn-atualizar[data-rede="ligado"]::before { background: var(--latao); }
+  #btn-atualizar[data-rede="offline"]::before { background: var(--rust); }
+  #btn-atualizar[data-rede="a-sincronizar"]::before { animation: pulsar 1.1s ease-in-out infinite; }
+
   /* O botão de repor está sempre lá, à esquerda dos outros dois. Sem nada para
      repor fica apagado e não responde; quando há, acende-se. */
   #btn-desfazer[data-vazio="sim"] { opacity: 0.32; }
@@ -219,12 +232,15 @@
   /* Com três botões, a barra fica justa a 375px: aperta-se o intervalo. */
   @media (max-width: 26rem) { .topo-accoes { gap: 0.38rem; } }
 
+  /* O ponto saiu do cabeçalho para o nome caber numa linha. O elemento fica de
+     pé e continua a receber o estado — há código que lê este data-estado —, só
+     não se desenha; quem mostra a cor é o canto do botão de atualizar. */
   .estado {
+    display: none;
     font-family: var(--meta);
     font-size: 0.66rem;
     letter-spacing: 0.08em;
     color: var(--papel-fosco);
-    display: flex;
     align-items: center;
     gap: 0.4rem;
     flex: none;
@@ -770,6 +786,42 @@
   }
 
   /* Muito ar entre temas, e o traço de separação quase invisível. */
+  /* Índice da aula: os capítulos à vista antes de se começar a ler, e cada um
+     leva lá. Numa aula de dez capítulos, rolar às cegas não é navegar. */
+  .indice-aula {
+    margin: 1.6rem 0 0.5rem;
+    padding: 1rem 1.1rem 0.6rem;
+    border: 1px solid var(--tinta-2);
+    border-left: 3px solid var(--marcador, var(--latao));
+    border-radius: 10px;
+  }
+  .indice-aula .rotulo { color: var(--marcador, var(--latao)); margin: 0 0 0.6rem; }
+  .indice-aula button {
+    display: flex;
+    align-items: baseline;
+    gap: 0.65rem;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: 0;
+    border-top: 1px solid var(--tinta-3);
+    padding: 0.6rem 0;
+    color: var(--papel);
+    cursor: pointer;
+    font: inherit;
+  }
+  .indice-aula button:first-of-type { border-top: 0; }
+  .indice-aula .n {
+    font-family: var(--meta);
+    font-size: 0.6rem;
+    color: var(--marcador, var(--latao));
+    min-width: 1.1rem;
+    flex: none;
+  }
+  .indice-aula .t { font-size: 0.92rem; line-height: 1.3; }
+
+  .passo-aula { color: var(--papel-fosco); }
+
   .verbete { border-top: 1px solid var(--tinta-2); padding: 3rem 0 2rem; }
 
   .verbete h3 {
