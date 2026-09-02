@@ -430,6 +430,7 @@ const VISTAS = [
   "definicoes",
   "edicao",
   "artigo",
+  "curso",
 ];
 
 /** Cada rotina tem o seu módulo: as edições deixaram de partilhar uma estante. */
@@ -487,6 +488,7 @@ function mostrar(vista, args = [], restaurar = false) {
   if (vista === "notas") { desenharQuote(); desenharNotas(); }
   if (vista === "revisao") comecarRevisao();
   if (vista === "definicoes") desenharDefinicoes();
+  if (vista === "curso") desenharCurso(...args);
   if (vista === "edicao") abrirEdicao(...args);
   if (vista === "artigo") abrirArtigo(...args);
 
@@ -3486,6 +3488,103 @@ function desenharAprendizagem() {
 
 
 
+/**
+ * O cartaz do curso: o percurso inteiro numa página, em vez da folha de
+ * seleção. Em cima o que já se andou, ao meio o trilho dos temas, em baixo as
+ * aulas que a rotina já publicou — da mais recente para a primeira.
+ */
+function desenharCurso(areaId) {
+  const area = estado.biblioteca.areas?.[areaId];
+  if (!area) return irPara("aprendizagem");
+  cursoAberto = areaId;
+
+  const aulas = (estado.lombadas || [])
+    .filter((l) => l.rotina === area.rotina)
+    .sort((a, b) => (a.data < b.data ? 1 : -1));
+  const ultima = (estado.cursos || []).find((c) => c.rotina === area.rotina);
+  const dia = ultima?.progresso?.dia || aulas.length;
+  const pct = Math.round((dia / TOTAL_AULAS) * 100);
+  const feitos = area.temas.filter((t) => t.feito).length;
+  const diaSem = diaDoCurso(area.rotina);
+
+  $("#curso-cabecalho").innerHTML = `
+    <div class="cartaz-topo">
+      <p class="selo">Curso completo</p>
+      <h1>${esc(area.nome)}</h1>
+      <p class="subtitulo">${
+        diaSem >= 0 ? `Uma aula por semana · ${esc(DIAS_NOME[diaSem])}` : "Percurso livre"
+      }</p>
+      <p class="friso">❧</p>
+    </div>
+    <div class="cartaz-numeros">
+      <div><b>${dia}</b><span>de ${TOTAL_AULAS} aulas</span></div>
+      <div><b>${pct}%</b><span>do percurso</span></div>
+      <div><b>${area.temas.length}</b><span>temas</span></div>
+      <div><b>${feitos}</b><span>temas feitos</span></div>
+    </div>`;
+
+  $("#curso-percurso").innerHTML = area.temas.length
+    ? `<p class="cartaz-seccao">O que vais percorrer</p>
+       <div class="trilho">${area.temas
+         .map(
+           (t, i) => `<div class="etapa" data-feito="${t.feito ? "sim" : "nao"}">
+             <span class="n">${i + 1}</span>
+             <button class="caixa" data-tema-curso="${i}">
+               <span class="emoji">${emojiDoTema(t.nome, area.rotina)}</span>
+               <span>
+                 <h4>${esc(t.nome)}</h4>
+                 <span class="nota">${t.feito ? "Concluído" : "Por fazer"}</span>
+               </span>
+             </button>
+           </div>`
+         )
+         .join("")}</div>`
+    : "";
+
+  $("#curso-aulas").innerHTML = aulas.length
+    ? `<p class="cartaz-seccao">Aulas publicadas · ${aulas.length}</p>
+       ${aulas
+         .map(
+           (l, i) => `<button class="aula-linha" data-curso="${esc(l.rotina)}" data-data="${esc(l.data)}">
+             <span class="dia">Aula ${aulas.length - i}</span>
+             <span class="t">${esc(l.titulo)}</span>
+             <span class="q">${esc(dataCurta(l.data))}</span>
+           </button>`
+         )
+         .join("")}`
+    : `<p class="cartaz-seccao">Aulas publicadas</p>
+       <p class="aula-linha"><span class="t">Ainda nenhuma. A rotina publica a primeira no próximo ${
+         diaSem >= 0 ? esc(DIAS_NOME[diaSem]) : "dia agendado"
+       }.</span></p>`;
+
+  $("#curso-rodape").innerHTML = `<button class="btn" data-editar-curso="${esc(areaId)}">Editar temas do percurso</button>`;
+}
+
+/* Qual o curso aberto, para o toque num tema saber onde o marcar. */
+let cursoAberto = null;
+
+$("#v-curso").addEventListener("click", (e) => {
+  const aula = e.target.closest("[data-curso]");
+  if (aula) return irPara("edicao", aula.dataset.curso, aula.dataset.data);
+
+  const editar = e.target.closest("[data-editar-curso]");
+  if (editar) return abrirArea(estado.biblioteca.areas[editar.dataset.editarCurso]);
+
+  const tema = e.target.closest("[data-tema-curso]");
+  if (tema) {
+    const area = estado.biblioteca.areas?.[cursoAberto];
+    const t = area?.temas[Number(tema.dataset.temaCurso)];
+    if (!t) return;
+    t.feito = !t.feito;
+    alterar("areas", area);
+    desenharCurso(cursoAberto);
+    return;
+  }
+
+  const ir = e.target.closest("[data-ir]");
+  if (ir) irPara(ir.dataset.ir);
+});
+
 let areaAberta = null;
 
 function mostrarEdicaoArea(sim) {
@@ -3634,7 +3733,7 @@ function cliqueAprender(e) {
   if (desfazer) return concluirAulaDoDia(desfazer.dataset.desconcluir, false);
 
   const area = e.target.closest("[data-area]");
-  if (area) return abrirArea(estado.biblioteca.areas[area.dataset.area]);
+  if (area) return irPara("curso", area.dataset.area);
 
   const aula = e.target.closest("[data-curso]");
   if (aula) return irPara("edicao", aula.dataset.curso, aula.dataset.data);
