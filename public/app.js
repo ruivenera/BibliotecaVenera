@@ -238,8 +238,12 @@ function mostrarBotaoDesfazer() {
   const botao = $("#btn-desfazer");
   if (!botao) return;
   const ultimo = pilhaDesfazer[pilhaDesfazer.length - 1];
-  botao.hidden = !ultimo;
-  if (!ultimo) return;
+  botao.dataset.vazio = ultimo ? "nao" : "sim";
+  botao.disabled = !ultimo;
+  if (!ultimo) {
+    botao.title = "Nada para repor";
+    return botao.setAttribute("aria-label", "Nada para repor");
+  }
   const nome = `${NOME_TIPO[ultimo.tipo] || "item"}${ultimo.rotulo ? `: ${ultimo.rotulo}` : ""}`;
   botao.title = `Repor ${nome}`;
   botao.setAttribute("aria-label", `Repor ${nome}`);

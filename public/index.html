@@ -211,11 +211,10 @@
   #btn-atualizar[data-fase="gira"] .i-seta { animation: girar 0.9s linear infinite; }
   @keyframes girar { to { transform: rotate(360deg); } }
 
-  /* O botão de repor só aparece quando há alguma coisa para repor, e entra
-     pela esquerda para não empurrar os outros dois de sítio. */
-  #btn-desfazer[hidden] { display: none; }
-  #btn-desfazer { animation: entrar-desfazer 0.22s ease-out; }
-  @keyframes entrar-desfazer { from { opacity: 0; transform: translateX(6px); } }
+  /* O botão de repor está sempre lá, à esquerda dos outros dois. Sem nada para
+     repor fica apagado e não responde; quando há, acende-se. */
+  #btn-desfazer[data-vazio="sim"] { opacity: 0.32; }
+  #btn-desfazer:not([data-vazio="sim"]) { color: var(--latao); border-color: var(--latao); }
 
   /* Com três botões, a barra fica justa a 375px: aperta-se o intervalo. */
   @media (max-width: 26rem) { .topo-accoes { gap: 0.38rem; } }
@@ -4561,7 +4560,7 @@
   <button class="marca" data-ir="noticias">Biblioteca de R.Venera</button>
   <div class="topo-accoes">
     <button class="estado" id="estado" data-estado="parado" title="Sincronizar agora">a arrancar</button>
-    <button class="acao-topo" id="btn-desfazer" hidden aria-label="Repor o que foi apagado" title="Repor o que foi apagado">
+    <button class="acao-topo" id="btn-desfazer" data-vazio="sim" disabled aria-label="Repor o que foi apagado" title="Nada para repor">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5 3 10l5 5"/><path d="M3 10h10a6 6 0 0 1 0 12h-3"/></svg>
     </button>
     <button class="acao-topo" id="btn-atualizar" data-fase="" aria-label="Atualizar" title="Atualizar agora">
