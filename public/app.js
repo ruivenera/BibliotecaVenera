@@ -2169,7 +2169,32 @@ async function abrirEdicao(rotina, data) {
           </span>
         </div>
         <h3>${esc(item.titulo)}</h3>
-        <p>${esc(corpo)}</p>
+        ${
+          /* A imagem faz parte da aula, não é enfeite: a rotina pede-a por termo,
+             o Worker vai buscá-la ao Commons e até agora ela chegava aqui e não
+             era desenhada. O mesmo valia para os pontos de retenção. */
+          item.imagem
+            ? `<figure class="foto-artigo">
+                 <img src="${esc(item.imagem.url)}" alt="" loading="lazy" decoding="async">
+                 <figcaption>${esc(item.imagem.credito)}</figcaption>
+               </figure>`
+            : ""
+        }
+        ${corpo
+          .split(/\n{2,}/)
+          .map((par) => `<p>${esc(par.trim())}</p>`)
+          .join("")}
+        ${
+          item.pontos?.length
+            ? `<section class="resumo-rapido">
+                 <p class="cabeca rotulo">
+                   <svg viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/></svg>
+                   Resumo rápido
+                 </p>
+                 <ol>${item.pontos.map((pt) => `<li>${esc(pt)}</li>`).join("")}</ol>
+               </section>`
+            : ""
+        }
         ${porque ? `<div class="porque"><b>Porque interessa</b>${esc(porque)}</div>` : ""}
         <div class="fontes">${item.fontes
           .map(
