@@ -22,7 +22,15 @@ const ROTINAS = {
 const CHAVES = Object.keys(ROTINAS);
 
 const MAX_ITENS = 20;
-const HISTORICO = 90; // dias de edições guardados por rotina
+
+/* Quantas edições ficam guardadas por rotina. A imprensa diária vive do que é
+   recente; um curso não — são 150 aulas, e a aula 1 tem de continuar a abrir
+   quando se publicar a 150. Com 90, a partir da aula 91 as primeiras caíam da
+   estante. */
+const CURSOS = new Set(["inteligencia-artificial", "curso-uteis", "curso-historia", "curso-linguas"]);
+const HISTORICO = 90; // edições guardadas nas rotinas de imprensa
+const HISTORICO_CURSO = 150; // o curso inteiro, do primeiro dia ao último
+const guardadas = (rotina) => (CURSOS.has(rotina) ? HISTORICO_CURSO : HISTORICO);
 const MAX_BODY = 512 * 1024;
 const MAX_BIBLIOTECA = 4 * 1024 * 1024; // travão de segurança do valor em KV
 
@@ -490,10 +498,19 @@ async function ingerir(request, env) {
   // Mesma rotina + mesmo dia sobrepõe: um re-run não duplica a edição.
   await env.VENERA.put(`edicao:${payload.rotina}:${payload.data}`, JSON.stringify(edicao));
 
+  const cap = guardadas(payload.rotina);
   const chaveIndice = `indice:${payload.rotina}`;
   const anterior = JSON.parse((await env.VENERA.get(chaveIndice)) || "[]");
-  const datas = [...new Set([payload.data, ...anterior])].sort().reverse().slice(0, HISTORICO);
+  const datas = [...new Set([payload.data, ...anterior])].sort().reverse().slice(0, cap);
   await env.VENERA.put(chaveIndice, JSON.stringify(datas));
+
+  // A linha da estante escreve-se aqui, junto com a edição: assim a capa lê uma
+  // chave por rotina em vez de abrir 150 edições de cada vez que a app arranca.
+  const resumo = (await lerResumo(env, payload.rotina)).filter((l) => l.data !== payload.data);
+  const linhas = [linhaEstante(payload.rotina, edicao), ...resumo]
+    .sort((a, b) => (a.data < b.data ? 1 : -1))
+    .slice(0, cap);
+  await env.VENERA.put(`resumo:${payload.rotina}`, JSON.stringify(linhas));
 
   return resposta({
     ok: true,
@@ -505,6 +522,31 @@ async function ingerir(request, env) {
 
 const lerIndice = async (env, rotina) =>
   JSON.parse((await env.VENERA.get(`indice:${rotina}`)) || "[]");
+
+/* ------------------------------------------------------- resumo da estante --- */
+
+/**
+ * Uma linha por edição, com o pouco que a lombada mostra. Escreve-se na
+ * ingestão; se faltar — KV limpo, edições anteriores a este código — remonta-se
+ * a partir das edições e fica gravado para a próxima.
+ */
+const lerResumo = async (env, rotina) =>
+  JSON.parse((await env.VENERA.get(`resumo:${rotina}`)) || "[]");
+
+const linhaEstante = (rotina, edicao) => ({
+  rotina,
+  data: edicao.data,
+  titulo: edicao.titulo,
+  itens: edicao.itens.length,
+});
+
+async function remontarResumo(env, rotina) {
+  const datas = (await lerIndice(env, rotina)).slice(0, guardadas(rotina));
+  const edicoes = await Promise.all(datas.map((d) => lerEdicao(env, rotina, d)));
+  const linhas = edicoes.filter(Boolean).map((e) => linhaEstante(rotina, e));
+  await env.VENERA.put(`resumo:${rotina}`, JSON.stringify(linhas));
+  return linhas;
+}
 
 async function lerEdicao(env, rotina, data) {
   if (!CHAVES.includes(rotina)) return null;
@@ -518,6 +560,26 @@ async function lerEdicao(env, rotina, data) {
   return bruto ? JSON.parse(bruto) : null;
 }
 
+/**
+ * Em que aula vai o curso — e mais nada. A rotina precisa deste número para
+ * saber o que escrever a seguir, mas dar-lhe o APP_TOKEN abria-lhe a biblioteca
+ * toda e punha as duas chaves no mesmo sítio. Esta porta abre com o token de
+ * ingestão, que a rotina já tem, e devolve só a data, o título e o dia da
+ * última edição. Nunca o texto de uma aula.
+ */
+async function ultima(env, rotina) {
+  if (!CHAVES.includes(rotina)) return resposta({ erro: "rotina_desconhecida" }, 404);
+  const edicao = await lerEdicao(env, rotina, "ultima");
+  if (!edicao) return resposta({ rotina, vazia: true, dia: 0 });
+  return resposta({
+    rotina,
+    vazia: false,
+    data: edicao.data,
+    titulo: edicao.titulo,
+    dia: edicao.progresso?.dia ?? null,
+  });
+}
+
 async function feed(env) {
   const edicoes = await Promise.all(CHAVES.map((r) => lerEdicao(env, r, "ultima")));
   return resposta({
@@ -529,17 +591,13 @@ async function feed(env) {
 }
 
 /** Lombadas da estante: uma por edição, só com o que a capa precisa de mostrar. */
-async function estante(env, limite = 40) {
+async function estante(env) {
   const porRotina = await Promise.all(
     CHAVES.map(async (rotina) => {
-      const datas = (await lerIndice(env, rotina)).slice(0, limite);
-      const edicoes = await Promise.all(
-        datas.map(async (data) => {
-          const e = await lerEdicao(env, rotina, data);
-          return e && { rotina, data, titulo: e.titulo, itens: e.itens.length };
-        })
-      );
-      return edicoes.filter(Boolean);
+      const datas = await lerIndice(env, rotina);
+      const linhas = await lerResumo(env, rotina);
+      // Fora de passo com o índice quer dizer resumo antigo ou em falta.
+      return linhas.length === datas.length ? linhas : remontarResumo(env, rotina);
     })
   );
   const lombadas = porRotina.flat().sort((a, b) => (a.data < b.data ? 1 : -1));
@@ -747,7 +805,15 @@ export default {
     if (request.method === "POST" && caminho === "/api/sync") return sincronizar(request, env);
 
     if (request.method === "GET") {
-      // Tudo o que a app lê passa pelo APP_TOKEN, incluindo o teste da chave.
+      // Exceção única: saber em que aula vai o curso abre também com o token de
+      // ingestão, para a rotina não ter de andar com a chave da biblioteca.
+      if (partes[1] === "ultima" && partes.length === 3) {
+        if (!confere(request, env.APP_TOKEN) && !confere(request, env.INGEST_TOKEN))
+          return resposta({ erro: "nao_autorizado" }, 401);
+        return ultima(env, partes[2]);
+      }
+
+      // Todo o resto do que a app lê passa pelo APP_TOKEN, incluindo o teste da chave.
       if (!confere(request, env.APP_TOKEN)) return resposta({ erro: "nao_autorizado" }, 401);
 
       if (caminho === "/api/chave") return resposta({ ok: true, rotinas: ROTINAS });
