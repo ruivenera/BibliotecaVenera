@@ -69,6 +69,10 @@ const CURSOS = [
 ];
 const DIAS_SIGLA = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM"];
 
+/* Cada curso são 150 aulas, uma por semana. É o percurso a sério — os temas
+   escritos à mão são só o índice do que se quer apanhar pelo caminho. */
+const TOTAL_AULAS = 150;
+
 /* Emoji de cada curso, para quando o tema não disser nada de especial. */
 const EMOJI_CURSO = {
   "curso-historia": "🏛️",
@@ -531,6 +535,9 @@ async function carregarModulo(rotina) {
     if (modulo === "aprendizagem") {
       // A aula mais recente de cada curso, pela ordem em que os cursos vivem.
       estado.cursos = CURSOS.map((r) => feed.edicoes.find((e) => e.rotina === r)).filter(Boolean);
+      // Todas as aulas publicadas, não só a última: é daqui que sai o "aula N
+      // de 150" de cada cartão.
+      estado.lombadas = estanteDados.lombadas;
       estado.edicaoCurso = feed.edicoes.find((e) => e.rotina === rotina) || null;
       // O cabeçalho é a data de hoje, não a da última aula: a página é de hoje,
       // a aula é que pode ser velha — e isso já se diz no cartão dela.
@@ -3402,6 +3409,13 @@ function desenharAprendizagem() {
           const aula = cursos.find((c) => c.rotina === a.rotina);
           const d = aula ? diasDesde(aula.data) : null;
           const idade = d === 0 ? "hoje" : d === 1 ? "ontem" : `há ${d} dias`;
+
+          /* O percurso do curso são as 150 aulas. O número da aula vem do
+             progresso que a rotina publica; se faltar, conta-se o que está na
+             estante. Os temas ficam para quem ainda não tem aulas nenhumas. */
+          const publicadas = (estado.lombadas || []).filter((l) => l.rotina === a.rotina).length;
+          const dia = aula?.progresso?.dia || publicadas;
+          const pctAulas = Math.round((dia / TOTAL_AULAS) * 100);
           return `<button class="cartao-curso-grande" data-area="${esc(a.id)}"
               data-foto="${esc(a.rotina || "")}" style="--marcador:${CORES_AREA[a.cor]}">
             <span class="veu"></span>
@@ -3422,11 +3436,19 @@ function desenharAprendizagem() {
               <span class="baixo">
                 <h4>${esc(a.nome)}</h4>
                 <span class="rotulo">${
-                  a.temas.length
-                    ? `${feitos} de ${a.temas.length} temas · ${pct}%`
-                    : "percurso pelas aulas"
+                  dia
+                    ? `Aula ${dia} de ${TOTAL_AULAS} · ${pctAulas}%`
+                    : a.temas.length
+                      ? `${feitos} de ${a.temas.length} temas · ${pct}%`
+                      : "percurso pelas aulas"
                 }</span>
-                ${a.temas.length ? `<span class="barra-progresso"><i style="width:${pct}%"></i></span>` : ""}
+                ${
+                  dia
+                    ? `<span class="barra-progresso"><i style="width:${Math.max(pctAulas, 1)}%"></i></span>`
+                    : a.temas.length
+                      ? `<span class="barra-progresso"><i style="width:${pct}%"></i></span>`
+                      : ""
+                }
               </span>
             </span>
           </button>`;
