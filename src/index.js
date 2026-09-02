@@ -15,11 +15,19 @@ const ROTINAS = {
   "inteligencia-artificial": "Inteligência Artificial",
   // Um curso por área: cada rotina publica a sua aula do dia, com o mesmo
   // formato da de IA. A app junta-as todas na aba Aprender.
-  "curso-uteis": "Melhoria Pessoal",
   "curso-historia": "História",
+  "curso-psicologia": "Psicologia",
+  "curso-cultura": "Cultura Geral",
   "curso-linguas": "Línguas",
+  "curso-ciencia": "Ciência",
+  "curso-uteis": "Melhoria Pessoal",
 };
 const CHAVES = Object.keys(ROTINAS);
+
+/* Os sete cursos da semana. A app tem-nos há mais tempo do que o Worker: até
+   aqui, três deles não constavam do ROTINAS e as suas rotinas apanhavam 422 ao
+   publicar — a aula era escrita e deitada fora à porta. */
+const CURSOS = new Set(CHAVES.filter((r) => r !== "financas-geopolitica"));
 
 const MAX_ITENS = 20;
 
@@ -27,7 +35,6 @@ const MAX_ITENS = 20;
    recente; um curso não — são 150 aulas, e a aula 1 tem de continuar a abrir
    quando se publicar a 150. Com 90, a partir da aula 91 as primeiras caíam da
    estante. */
-const CURSOS = new Set(["inteligencia-artificial", "curso-uteis", "curso-historia", "curso-linguas"]);
 const HISTORICO = 90; // edições guardadas nas rotinas de imprensa
 const HISTORICO_CURSO = 150; // o curso inteiro, do primeiro dia ao último
 const guardadas = (rotina) => (CURSOS.has(rotina) ? HISTORICO_CURSO : HISTORICO);
