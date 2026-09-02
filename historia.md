@@ -102,7 +102,8 @@ restantes são sempre obrigatórias.
 5. IMAGENS
 ===============================================================================
 
-As imagens ensinam, não decoram. 2 a 5 por aula.
+As imagens ensinam, não decoram. 4 a 6 por aula — mais de metade dos capítulos
+leva uma.
 
 Como funciona nesta app: cada item da edição leva no máximo uma imagem, e o
 Worker é que a vai buscar ao Wikimedia Commons a partir de um termo de
@@ -232,22 +233,31 @@ Regras do formato que interessam a esta rotina:
   itens            1 a 20
 
   itens[].titulo   3 a 200 caracteres
+  itens            8 a 12 por aula. Cada item é um capítulo com o seu título,
+                   a sua imagem e as suas fontes — é assim que a app desenha o
+                   índice no topo da aula e deixa saltar de capítulo em
+                   capítulo. Menos de 8 dá blocos longos de rolar às cegas.
   itens[].texto    40 a 4000 CARACTERES. É o limite duro e é por item, não por
-                   aula. Uma aula de 1800 palavras não cabe num item: divide-a
-                   em 7 a 10 itens, um por secção da estrutura. Separa
-                   parágrafos com uma linha em branco.
+                   aula. Separa parágrafos com uma linha em branco — a app
+                   respeita-os.
   itens[].texto    termina em "Porque interessa: …" — a app desenha essa frase
                    numa caixa própria.
-  itens[].impacto  "alto", "medio" ou "baixo" — usa-o para hierarquia: alto no
-                   acontecimento central, medio no contexto e consequências,
-                   baixo nas curiosidades.
+  itens[].impacto  obrigatório pelo formato, mas a app já não o mostra nas
+                   aulas: capítulos não competem entre si, seguem-se. Põe
+                   "medio" e não penses mais nisso.
   itens[].fontes   pelo menos uma, com titulo e url em https
-  itens[].capitulo o número da aula (1 a 99 — a partir da aula 100 omite este
-                   campo, o número fica no título e no progresso)
+  itens[].capitulo o número do CAPÍTULO dentro da aula (1, 2, 3…), não o número
+                   da aula. É o que aparece no cabeçalho de cada bloco:
+                   "Cap. 3 · Como era a vida". O número da aula já vai no
+                   título e no progresso.
   itens[].rubrica  até 40 caracteres: "Contexto", "O período", "Como era a
                    vida", "Poder e sociedade", "Guerra e economia",
                    "Consequências", "Hoje", "Curiosidades", "Reter", "Desafio"
-  itens[].pontos   até 6 linhas — usa no item "O que deves reter"
+  itens[].pontos   até 6 linhas. A app desenha-as como "Resumo rápido", numa
+                   caixa destacada. Usa-as no capítulo "O que deves reter" e
+                   também em qualquer capítulo dado a listas — cronologias,
+                   comparações entre impérios, cadeias de causa e efeito. Bem
+                   usadas, são o que torna a aula folheável.
   itens[].imagem   { "procurar": "…" }, uma por item, 2 a 5 por aula
 
   progresso        { "dia": N, "nivel": "Iniciante|Intermédio|Avançado",
