@@ -2414,6 +2414,11 @@
     background: color-mix(in srgb, var(--tinta) 80%, transparent);
     backdrop-filter: blur(3px);
   }
+  /* Ar entre a chapa da secção e o bloco que ela anuncia: sem isto, "Hoje"
+     ficava colado ao cartão dos conceitos e a chapa da estratégia à grelha
+     dos métodos. */
+  #v-revisao .rotulo-seccao + .grupo,
+  #v-revisao .rotulo-seccao + .metodos { margin-top: 10px; }
   /* Mesma presença do cabeçalho da Leitura: 168px, para a fotografia do quadro
      de revisão se ver e não ficar uma tira. */
   /* Sem sticky: colado ao topo, o cabeçalho tapava as metades e as etiquetas de
