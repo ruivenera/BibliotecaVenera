@@ -210,6 +210,73 @@ function alterar(tipo, item) {
 
 const vivos = (tipo) => Object.values(estado.biblioteca[tipo]).filter((i) => !i.apagado);
 
+/* -------------------------------------------------------------- desfazer ---
+
+   Apagar nunca deitou nada fora: o item fica com `apagado: true` e continua no
+   servidor. Faltava a porta de saída. Guarda-se a pilha das últimas remoções e
+   o botão do topo devolve-as, da mais recente para a mais antiga. A pilha vive
+   no aparelho, para sobreviver a fechar e reabrir a app. */
+
+const DESFAZER_MAX = 12;
+const DESFAZER_VALIDADE = 24 * 60 * 60 * 1000; // passado um dia já não é engano
+const NOME_TIPO = { notas: "nota", cartoes: "cartão", livros: "livro", areas: "área" };
+
+let pilhaDesfazer = guardado("venera:desfazer", []).filter(
+  (m) => m && Date.now() - (m.quando || 0) < DESFAZER_VALIDADE
+);
+
+function gravarDesfazer() {
+  try {
+    localStorage.setItem("venera:desfazer", JSON.stringify(pilhaDesfazer));
+  } catch {
+    // sem espaço: a pilha em memória continua a servir esta sessão
+  }
+  mostrarBotaoDesfazer();
+}
+
+function mostrarBotaoDesfazer() {
+  const botao = $("#btn-desfazer");
+  if (!botao) return;
+  const ultimo = pilhaDesfazer[pilhaDesfazer.length - 1];
+  botao.hidden = !ultimo;
+  if (!ultimo) return;
+  const nome = `${NOME_TIPO[ultimo.tipo] || "item"}${ultimo.rotulo ? `: ${ultimo.rotulo}` : ""}`;
+  botao.title = `Repor ${nome}`;
+  botao.setAttribute("aria-label", `Repor ${nome}`);
+}
+
+/** Todo o apagar feito à mão passa por aqui, para deixar rasto. */
+function apagarItem(tipo, item, rotulo) {
+  item.apagado = true;
+  alterar(tipo, item);
+  pilhaDesfazer.push({
+    tipo,
+    id: item.id,
+    quando: Date.now(),
+    rotulo: String(rotulo || "").trim().slice(0, 48),
+  });
+  if (pilhaDesfazer.length > DESFAZER_MAX) pilhaDesfazer.shift();
+  gravarDesfazer();
+}
+
+function desfazerApagar() {
+  const marca = pilhaDesfazer.pop();
+  gravarDesfazer();
+  if (!marca) return;
+  const item = estado.biblioteca[marca.tipo]?.[marca.id];
+  if (!item) return marcarEstado("já não existe", "offline");
+  item.apagado = false;
+  alterar(marca.tipo, item);
+  marcarEstado("reposto", "ligado");
+  if (marca.tipo === "notas") desenharNotas();
+  if (marca.tipo === "cartoes") {
+    contarRevisao();
+    if (estado.vista === "revisao") desenharRevisao();
+  }
+  if (marca.tipo === "livros") desenharLivros();
+  if (marca.tipo === "areas") desenharAprendizagem();
+}
+
 /* ------------------------------------------------------------------ rede --- */
 
 function marcarEstado(texto, tipo) {
@@ -245,17 +312,65 @@ function agendarSync() {
 
 /**
  * O botão do topo: sincroniza e volta a pedir a edição, em vez de esperar pelo
- * temporizador. A seta roda enquanto isso acontece, senão ninguém sabe se pegou.
+ * temporizador. A seta roda enquanto isso acontece e, no fim, fica um visto ou
+ * um alerta durante um segundo e meio — girar e voltar ao normal não dizia se
+ * tinha corrido bem. Dois toques seguidos não fazem dois pedidos.
  */
-async function atualizarTudo() {
+let aAtualizar = false;
+
+function faseAtualizar(fase, segundos = 1.6) {
   const botao = $("#btn-atualizar");
-  botao.dataset.girar = "sim";
+  if (!botao) return;
+  botao.dataset.fase = fase;
+  clearTimeout(botao._voltar);
+  if (fase === "feito" || fase === "falhou") {
+    botao._voltar = setTimeout(() => { botao.dataset.fase = ""; }, segundos * 1000);
+  }
+}
+
+/** Põe no botão a hora da última atualização, para quem carrega saber se vale. */
+function tituloAtualizar() {
+  const botao = $("#btn-atualizar");
+  if (!botao) return;
+  const ultima = Number(localStorage.getItem("venera:ultima-atualizacao")) || 0;
+  if (!ultima) {
+    botao.title = "Atualizar agora";
+    return botao.setAttribute("aria-label", "Atualizar");
+  }
+  const min = Math.round((Date.now() - ultima) / 60000);
+  const quando =
+    min < 1 ? "agora mesmo" : min < 60 ? `há ${min} min` : min < 1440 ? `há ${Math.round(min / 60)} h` : `há ${Math.round(min / 1440)} dias`;
+  botao.title = `Atualizar agora — última ${quando}`;
+  botao.setAttribute("aria-label", `Atualizar. Última atualização ${quando}`);
+}
+
+async function atualizarTudo() {
+  if (aAtualizar) return; // já vai a caminho: o segundo toque não repete o pedido
+  const botao = $("#btn-atualizar");
+  if (!navigator.onLine) {
+    marcarEstado("offline", "offline");
+    return faseAtualizar("falhou");
+  }
+  aAtualizar = true;
+  botao.disabled = true;
+  botao.setAttribute("aria-busy", "true");
+  faseAtualizar("gira");
+  let correu = true;
   try {
     cacheEstante = { quando: 0, dados: null }; // força ir buscar de novo
     await sincronizar();
+    // sincronizar() engole os próprios erros; o estado é que diz como acabou.
+    correu = $("#estado").dataset.estado === "ligado";
     if (ROTINA_DO_MODULO[estado.vista]) await carregarModulo(ROTINA_DO_MODULO[estado.vista]);
+  } catch {
+    correu = false;
   } finally {
-    botao.dataset.girar = "nao";
+    aAtualizar = false;
+    botao.disabled = false;
+    botao.removeAttribute("aria-busy");
+    if (correu) localStorage.setItem("venera:ultima-atualizacao", Date.now());
+    tituloAtualizar();
+    faseAtualizar(correu ? "feito" : "falhou");
   }
 }
 
@@ -1724,10 +1839,7 @@ $("#noticias-corpo").addEventListener(
 function alternarNota(item, edicao) {
   const chave = chaveItem(item);
   const jaLa = vivos("notas").find((n) => n.origem?.chave === chave);
-  if (jaLa) {
-    jaLa.apagado = true;
-    return alterar("notas", jaLa);
-  }
+  if (jaLa) return apagarItem("notas", jaLa, jaLa.titulo);
   alterar("notas", {
     id: id(),
     titulo: item.titulo,
@@ -2655,7 +2767,7 @@ function guardarFolha() {
 function apagarFolha() {
   const tipo = contexto.modo.startsWith("nota") ? "notas" : "cartoes";
   const item = estado.biblioteca[tipo][contexto.id];
-  if (item) alterar(tipo, { ...item, apagado: true });
+  if (item) apagarItem(tipo, { ...item }, item.titulo || item.frente);
   folha.close();
   if (tipo === "notas") desenharNotas();
   else {
@@ -2668,7 +2780,7 @@ function apagarFolha() {
 /* ---------------------------------------------------------------- eventos --- */
 
 document.addEventListener("click", (evento) => {
-  const alvo = evento.target.closest("[data-ir], [data-rotina], [data-acao], [data-nota], [data-nota-sm2], [data-editar-cartao], #btn-ver, #btn-nota-nova, #btn-chave, #folha-guardar, #folha-cancelar, #folha-apagar, #folha-para-cartao, #estado");
+  const alvo = evento.target.closest("[data-ir], [data-rotina], [data-acao], [data-nota], [data-nota-sm2], [data-editar-cartao], #btn-ver, #btn-nota-nova, #btn-chave, #btn-desfazer, #folha-guardar, #folha-cancelar, #folha-apagar, #folha-para-cartao, #estado");
   if (!alvo) return;
 
   if (alvo.dataset.ir) return irPara(alvo.dataset.ir);
@@ -2731,8 +2843,13 @@ document.addEventListener("click", (evento) => {
       return sincronizar();
     case "btn-atualizar":
       return atualizarTudo();
+    case "btn-desfazer":
+      return desfazerApagar();
   }
 });
+
+mostrarBotaoDesfazer();
+tituloAtualizar();
 
 $("#procura").addEventListener("input", desenharNotas);
 $("#campo-chave").addEventListener("keydown", (e) => e.key === "Enter" && ligar());
@@ -3423,8 +3540,7 @@ $("#area-guardar").addEventListener("click", () => {
 });
 
 $("#area-apagar").addEventListener("click", () => {
-  areaAberta.apagado = true;
-  alterar("areas", areaAberta);
+  apagarItem("areas", areaAberta, areaAberta.nome);
   $("#folha-area").close();
   desenharAprendizagem();
 });
@@ -4136,8 +4252,7 @@ $("#livro-guardar")?.addEventListener("click", () => {
 });
 
 $("#livro-apagar")?.addEventListener("click", () => {
-  livroAberto.apagado = true;
-  alterar("livros", livroAberto);
+  apagarItem("livros", livroAberto, livroAberto.titulo);
   $("#folha-livro").close();
   desenharLivros();
 });

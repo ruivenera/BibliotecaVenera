@@ -188,10 +188,37 @@
   }
   .acao-topo svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.5; }
   .acao-topo:active { color: var(--latao); border-color: var(--latao); }
-  /* Enquanto sincroniza, a seta roda. É a única confirmação de que carregou. */
-  .acao-topo[data-girar="sim"] { color: var(--latao); border-color: var(--latao); }
-  .acao-topo[data-girar="sim"] svg { animation: girar 0.9s linear infinite; }
+  /* Alvo de toque de 44px sem engordar o desenho: o quadrado continua com 34px,
+     mas a área que responde ao dedo passa por fora dele. */
+  .acao-topo::after {
+    content: "";
+    position: absolute;
+    inset: -5px;
+  }
+  .acao-topo { position: relative; -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: color 0.18s ease, border-color 0.18s ease; }
+  .acao-topo:disabled { cursor: default; }
+
+  /* O botão de atualizar tem quatro caras: parado, a girar, feito e falhado.
+     Antes só girava — quem carregasse ficava sem saber se tinha corrido bem. */
+  #btn-atualizar .i-visto, #btn-atualizar .i-falha { display: none; }
+  #btn-atualizar[data-fase="feito"] .i-seta,
+  #btn-atualizar[data-fase="falhou"] .i-seta { display: none; }
+  #btn-atualizar[data-fase="feito"] .i-visto { display: block; }
+  #btn-atualizar[data-fase="falhou"] .i-falha { display: block; }
+  .acao-topo[data-fase="gira"],
+  .acao-topo[data-fase="feito"] { color: var(--latao); border-color: var(--latao); }
+  .acao-topo[data-fase="falhou"] { color: var(--rust); border-color: var(--rust); }
+  #btn-atualizar[data-fase="gira"] .i-seta { animation: girar 0.9s linear infinite; }
   @keyframes girar { to { transform: rotate(360deg); } }
+
+  /* O botão de repor só aparece quando há alguma coisa para repor, e entra
+     pela esquerda para não empurrar os outros dois de sítio. */
+  #btn-desfazer[hidden] { display: none; }
+  #btn-desfazer { animation: entrar-desfazer 0.22s ease-out; }
+  @keyframes entrar-desfazer { from { opacity: 0; transform: translateX(6px); } }
+
+  /* Com três botões, a barra fica justa a 375px: aperta-se o intervalo. */
+  @media (max-width: 26rem) { .topo-accoes { gap: 0.38rem; } }
 
   .estado {
     font-family: var(--meta);
@@ -4534,8 +4561,13 @@
   <button class="marca" data-ir="noticias">Biblioteca de R.Venera</button>
   <div class="topo-accoes">
     <button class="estado" id="estado" data-estado="parado" title="Sincronizar agora">a arrancar</button>
-    <button class="acao-topo" id="btn-atualizar" aria-label="Atualizar" title="Atualizar agora">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v4h-4"/></svg>
+    <button class="acao-topo" id="btn-desfazer" hidden aria-label="Repor o que foi apagado" title="Repor o que foi apagado">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5 3 10l5 5"/><path d="M3 10h10a6 6 0 0 1 0 12h-3"/></svg>
+    </button>
+    <button class="acao-topo" id="btn-atualizar" data-fase="" aria-label="Atualizar" title="Atualizar agora">
+      <svg class="i-seta" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v4h-4"/></svg>
+      <svg class="i-visto" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 13 4 4 10-10"/></svg>
+      <svg class="i-falha" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7v6"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
     </button>
     <button class="acao-topo" data-ir="definicoes" aria-label="Definições" title="Definições">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
