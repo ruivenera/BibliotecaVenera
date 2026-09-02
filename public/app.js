@@ -9,6 +9,21 @@ const primeiraFrase = (texto) => {
   return fim > 0 ? limpo.slice(0, fim + 1) : limpo;
 };
 
+/**
+ * Escrever num elemento que pode não existir. As folhas do livro e da nota
+ * ganharam campos novos: se o app.js chegar antes do index.html — coisa que
+ * acontece quando se carregam os ficheiros um a um — o que falta fica por
+ * preencher em vez de rebentar a abertura do livro.
+ */
+const porTexto = (sel, valor) => {
+  const el = document.querySelector(sel);
+  if (el) el.textContent = valor;
+};
+const porValor = (sel, valor) => {
+  const el = document.querySelector(sel);
+  if (el) el.value = valor;
+};
+
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
@@ -19,21 +34,43 @@ const TIPOS = ["notas", "cartoes", "livros", "areas"];
 
 const COR = {
   "financas-geopolitica": "var(--latao)",
-  "inteligencia-artificial": "var(--indigo)",
-  "curso-uteis": "var(--sobe)",
   "curso-historia": "var(--rust)",
+  "curso-psicologia": "var(--latao)",
+  "curso-cultura": "var(--rust)",
+  "inteligencia-artificial": "var(--indigo)",
   "curso-linguas": "var(--indigo)",
+  "curso-ciencia": "var(--indigo)",
+  "curso-uteis": "var(--sobe)",
 };
 let NOMES = {
   "financas-geopolitica": "Finanças & Geopolítica",
-  "inteligencia-artificial": "Inteligência Artificial",
-  "curso-uteis": "Melhoria Pessoal",
   "curso-historia": "História",
+  "curso-psicologia": "Psicologia",
+  "curso-cultura": "Cultura Geral",
+  "inteligencia-artificial": "Inteligência Artificial",
   "curso-linguas": "Línguas",
+  "curso-ciencia": "Ciência",
+  "curso-uteis": "Melhoria Pessoal",
 };
 
-/* Todos os cursos vivem na aba Aprender. A de IA à cabeça, por ser a mais antiga. */
-const CURSOS = ["inteligencia-artificial", "curso-historia", "curso-linguas", "curso-uteis"];
+/**
+ * A semana tem sete dias e os cursos passaram a ser sete: um por dia, sempre o
+ * mesmo. A ordem desta lista é a ordem da semana — índice 0 é segunda — e é ela
+ * que manda no curso do dia, na sigla de cada cartão e na ordem da estante.
+ */
+const CURSOS = [
+  "curso-historia",
+  "curso-psicologia",
+  "curso-cultura",
+  "inteligencia-artificial",
+  "curso-linguas",
+  "curso-ciencia",
+  "curso-uteis",
+];
+const DIAS_SIGLA = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM"];
+const DIAS_NOME = ["segunda", "terça", "quarta", "quinta", "sexta", "sábado", "domingo"];
+/** O dia da semana de um curso, ou -1 se a rotina não for de curso. */
+const diaDoCurso = (rotina) => CURSOS.indexOf(rotina);
 
 /* --------------------------------------------------------------- estado --- */
 
@@ -62,9 +99,16 @@ const estado = {
 for (const tipo of TIPOS) estado.biblioteca[tipo] ||= {};
 
 function gravarLocal() {
-  localStorage.setItem("venera:biblioteca", JSON.stringify(estado.biblioteca));
-  localStorage.setItem("venera:sujos", JSON.stringify([...estado.sujos]));
-  localStorage.setItem("venera:desde", JSON.stringify(estado.desde));
+  try {
+    localStorage.setItem("venera:biblioteca", JSON.stringify(estado.biblioteca));
+    localStorage.setItem("venera:sujos", JSON.stringify([...estado.sujos]));
+    localStorage.setItem("venera:desde", JSON.stringify(estado.desde));
+  } catch {
+    // Espaço esgotado — as fotografias das capas são o que mais pesa. O que
+    // está em memória continua a valer e a sincronização leva-o para o
+    // servidor; rebentar aqui deixava a app a meio de uma edição.
+    marcarEstado("sem espaço local", "offline");
+  }
 }
 
 /** Marca um item como alterado: carimba a hora, grava e agenda sincronização. */
@@ -180,10 +224,7 @@ const VISTAS = [
 /** Cada rotina tem o seu módulo: as edições deixaram de partilhar uma estante. */
 const MODULO = {
   "financas-geopolitica": "noticias",
-  "inteligencia-artificial": "aprendizagem",
-  "curso-uteis": "aprendizagem",
-  "curso-historia": "aprendizagem",
-  "curso-linguas": "aprendizagem",
+  ...Object.fromEntries(CURSOS.map((r) => [r, "aprendizagem"])),
 };
 const ROTINA_DO_MODULO = { noticias: "financas-geopolitica", aprendizagem: "inteligencia-artificial" };
 
@@ -2420,35 +2461,41 @@ function abrirFolha(modo, dados = {}) {
     "cartao-novo": ["Novo", "cartão"],
     "cartao-editar": ["Editar", "cartão"],
   }[modo];
-  $("#folha-titulo").innerHTML = `${verbo} <i>${peca}</i>`;
-  $("#folha-sub").textContent = nota
-    ? "Regista as tuas ideias, leituras e reflexões."
-    : "A frente pergunta, o verso responde.";
-  $("#folha-rotulo").textContent = dados.origem
+  const alvoTitulo = $("#folha-titulo");
+  if (alvoTitulo) alvoTitulo.innerHTML = `${verbo} <i>${peca}</i>`;
+  porTexto(
+    "#folha-sub",
+    nota ? "Regista as tuas ideias, leituras e reflexões." : "A frente pergunta, o verso responde."
+  );
+  porTexto("#folha-rotulo", dados.origem
     ? NOMES[dados.origem.rotina] || dados.origem.rotina
     : nota
       ? "Nota solta"
-      : "Cartão solto";
-  $("#folha-origem-data").textContent = dados.origem
-    ? diaPorExtenso(dados.origem.data)
-    : "Sem ligação a uma edição";
+      : "Cartão solto"
+  );
+  porTexto(
+    "#folha-origem-data",
+    dados.origem ? diaPorExtenso(dados.origem.data) : "Sem ligação a uma edição"
+  );
 
-  $("#folha-rot-frente").textContent = nota ? "Título" : "Frente — a pergunta";
-  $("#folha-rot-verso").textContent = nota ? "Conteúdo da nota" : "Verso — a resposta";
+  porTexto("#folha-rot-frente", nota ? "Título" : "Frente — a pergunta");
+  porTexto("#folha-rot-verso", nota ? "Conteúdo da nota" : "Verso — a resposta");
   $("#folha-frente").placeholder = nota ? "Título" : "A pergunta";
   $("#folha-verso").placeholder = nota ? "O que queres guardar" : "A resposta";
   $("#folha-frente").value = dados.frente || "";
   $("#folha-verso").value = dados.verso || "";
   // A etiqueta só faz sentido nas notas; nos cartões a fila esconde-se.
   $("#folha-etiquetas").hidden = !nota;
-  $("#folha-rot-etiquetas").hidden = !nota;
+  const rotEtiquetas = $("#folha-rot-etiquetas");
+  if (rotEtiquetas) rotEtiquetas.hidden = !nota;
   marcarEtiqueta(dados.etiqueta || (etiquetaEscolhida !== "Todas" ? etiquetaEscolhida : ""));
   $("#folha-aviso").textContent = "";
   $("#folha-apagar").hidden = !modo.endsWith("editar");
   $("#folha-para-cartao").hidden = modo !== "nota-editar";
   pintarContaFolha();
   folha.showModal();
-  $(".corpo-folha").scrollTop = 0;
+  const corpo = $(".corpo-folha");
+  if (corpo) corpo.scrollTop = 0;
   // Só o que está vazio é que chama o teclado. A editar, o teclado a subir de
   // imediato tapava metade do texto que se veio ler.
   if (modo.endsWith("nova") || modo.endsWith("novo")) $("#folha-frente").focus();
@@ -2460,13 +2507,15 @@ function diaPorExtenso(iso) {
 }
 
 function pintarContaFolha() {
-  const texto = $("#folha-verso").value.trim();
+  const conta = $("#folha-conta");
+  if (!conta) return;
+  const texto = $("#folha-verso")?.value.trim() || "";
   const n = texto ? texto.split(/\s+/).length : 0;
-  $("#folha-conta").textContent = n === 1 ? "1 palavra" : `${n} palavras`;
+  conta.textContent = n === 1 ? "1 palavra" : `${n} palavras`;
 }
 
-$("#folha-verso").addEventListener("input", pintarContaFolha);
-$("#folha-fechar").addEventListener("click", () => folha.close());
+$("#folha-verso")?.addEventListener("input", pintarContaFolha);
+$("#folha-fechar")?.addEventListener("click", () => folha.close());
 
 function marcarEtiqueta(valor) {
   contexto.etiqueta = valor || "";
@@ -2478,7 +2527,7 @@ function marcarEtiqueta(valor) {
 }
 
 // Tocar na etiqueta já escolhida tira-a: uma nota pode não ter nenhuma.
-$("#folha-etiquetas").addEventListener("click", (e) => {
+$("#folha-etiquetas")?.addEventListener("click", (e) => {
   const b = e.target.closest("[data-etiqueta]");
   if (b) marcarEtiqueta(contexto.etiqueta === b.dataset.etiqueta ? "" : b.dataset.etiqueta);
 });
@@ -2704,14 +2753,14 @@ const anel = (pct) => `<svg class="anel" viewBox="0 0 40 40">
 const AREAS_SEMENTE = [
   {
     nome: "Inteligência Artificial",
-    sigla: "IA",
+    sigla: "QUI",
     cor: "indigo",
     rotina: "inteligencia-artificial",
     temas: [], // esta área é o curso: o percurso vem das aulas publicadas
   },
   {
     nome: "Melhoria Pessoal",
-    sigla: "MP",
+    sigla: "DOM",
     cor: "sobe",
     rotina: "curso-uteis",
     temas: [
@@ -2743,7 +2792,7 @@ const AREAS_SEMENTE = [
   },
   {
     nome: "História",
-    sigla: "HI",
+    sigla: "SEG",
     cor: "rust",
     rotina: "curso-historia",
     temas: [
@@ -2764,7 +2813,7 @@ const AREAS_SEMENTE = [
   },
   {
     nome: "Línguas",
-    sigla: "LN",
+    sigla: "SEX",
     cor: "indigo",
     rotina: "curso-linguas",
     temas: [
@@ -2781,6 +2830,72 @@ const AREAS_SEMENTE = [
       "Vocabulário do dia a dia: casa, comida, transportes, trabalho",
       "Subjuntivo presente: quando e porquê",
       "Ler um jornal francês e ouvir rádio sem legendas",
+    ],
+  },
+  {
+    nome: "Psicologia",
+    sigla: "TER",
+    cor: "latao",
+    rotina: "curso-psicologia",
+    temas: [
+      "Processos mentais: perceção, atenção e consciência",
+      "Memória: como se forma, como se perde, como se treina",
+      "Linguagem e pensamento",
+      "Tomada de decisão e os vieses que a torcem",
+      "Inteligência emocional e regulação das emoções",
+      "Motivação intrínseca contra recompensa externa",
+      "Stress, ansiedade e o que o corpo faz com eles",
+      "Aprendizagem e condicionamento",
+      "Hábitos: como se instalam e como se mudam",
+      "Personalidade: os modelos e o que explicam",
+      "Comunicação eficaz e escuta ativa",
+      "Conflitos, influência e persuasão",
+      "Psicopatologias e as principais abordagens terapêuticas",
+      "Resiliência, bem-estar e psicologia positiva",
+    ],
+  },
+  {
+    nome: "Cultura Geral",
+    sigla: "QUA",
+    cor: "rust",
+    rotina: "curso-cultura",
+    temas: [
+      "Geografia física: relevo, climas e oceanos",
+      "Países, capitais e como se lê um mapa político",
+      "Geopolítica: quem manda onde e porquê",
+      "Grandes civilizações antigas e o que nos deixaram",
+      "Pintura e escultura: das cavernas ao contemporâneo",
+      "Arquitetura: os estilos e o que os distingue",
+      "Música: erudita, popular e as suas revoluções",
+      "Cinema: os filmes que mudaram a linguagem",
+      "Obras clássicas da literatura mundial",
+      "Filosofia antiga: os gregos e as perguntas que ficaram",
+      "Religiões do mundo e as suas mitologias",
+      "Ética e moral no dia a dia",
+      "Economia global em termos simples",
+      "Direitos humanos e sustentabilidade",
+    ],
+  },
+  {
+    nome: "Ciência",
+    sigla: "SAB",
+    cor: "indigo",
+    rotina: "curso-ciencia",
+    temas: [
+      "O método científico: observar, questionar, testar",
+      "Mecânica: forças, movimento e energia",
+      "Termodinâmica e o que é o calor",
+      "Ótica e eletromagnetismo",
+      "Relatividade e física quântica em linguagem clara",
+      "Estrutura da matéria e ligações químicas",
+      "Reações químicas e química orgânica",
+      "Biologia celular e genética",
+      "Evolução e a origem das espécies",
+      "Sistema solar, estrelas e galáxias",
+      "Cosmologia, buracos negros e matéria escura",
+      "Geologia, meteorologia e mudanças climáticas",
+      "Sistema nervoso, cognição e memória",
+      "Estatística e probabilidade: ler números sem cair em armadilhas",
     ],
   },
 ];
@@ -2885,6 +3000,42 @@ function migrarCursos() {
   }
 }
 
+/**
+ * Versão 4: um curso por dia da semana. Nascem a Psicologia, a Cultura Geral e
+ * a Ciência, e a sigla de cada área deixa de ser as iniciais do nome — passa a
+ * ser o dia em que esse curso acontece, que é o que o cartão mostra ao canto.
+ */
+function migrarSemana() {
+  if (localStorage.getItem("venera:areas-versao") === "4") return;
+  localStorage.setItem("venera:areas-versao", "4");
+
+  const porRotina = (r) => vivos("areas").find((a) => a.rotina === r);
+  const porNome = (n) => vivos("areas").find((a) => a.nome.toLowerCase() === n);
+
+  for (const base of AREAS_SEMENTE) {
+    const dia = diaDoCurso(base.rotina);
+    if (dia < 0) continue;
+    const existente = porRotina(base.rotina) || porNome(base.nome.toLowerCase());
+    if (existente) {
+      // Quem já tinha a área fica com os temas dela; só a sigla muda.
+      existente.rotina = base.rotina;
+      existente.sigla = DIAS_SIGLA[dia];
+      alterar("areas", existente);
+    } else {
+      alterar("areas", {
+        id: id(),
+        nome: base.nome,
+        sigla: DIAS_SIGLA[dia],
+        cor: base.cor,
+        rotina: base.rotina,
+        temas: base.temas.map((nome) => ({ nome, feito: false })),
+        criado_em: Date.now(),
+        apagado: false,
+      });
+    }
+  }
+}
+
 /** O primeiro tema por fazer de uma área — o que vem a seguir. */
 const proximoTema = (area) => area.temas.find((t) => !t.feito)?.nome || "";
 
@@ -2892,7 +3043,14 @@ function desenharAprendizagem() {
   semearAreas();
   migrarAreas();
   migrarCursos();
-  const areas = vivos("areas");
+  migrarSemana();
+  // A estante segue a semana: segunda em cima, domingo em baixo. As áreas sem
+  // curso — criadas à mão — ficam no fim, pela ordem em que foram feitas.
+  const areas = vivos("areas").sort((a, b) => {
+    const da = diaDoCurso(a.rotina);
+    const db = diaDoCurso(b.rotina);
+    return (da < 0 ? 99 : da) - (db < 0 ? 99 : db);
+  });
   const curso = estado.edicaoCurso;
 
   const temasTotais = areas.reduce((n, a) => n + a.temas.length, 0);
@@ -2932,13 +3090,12 @@ function desenharAprendizagem() {
           : `<span class="selo velho">há ${atraso} dias</span>`;
 
   /* ------------------------------------------------------------- lição --- */
-  /* As rotinas alternam por dia da semana: segunda IA, terça História, quarta
-     Francês, quinta Melhoria Pessoal, sexta outra vez IA — o ciclo tem quatro
-     e a semana tem sete, por isso vai rodando sozinho. */
+  /* Cada dia da semana tem o seu curso, sempre o mesmo: segunda História, terça
+     Psicologia, quarta Cultura Geral, quinta IA, sexta Línguas, sábado Ciência,
+     domingo Melhoria Pessoal. A ordem está no CURSOS. */
   const cursos = estado.cursos || [];
-  const ROTACAO = ["inteligencia-artificial", "curso-historia", "curso-linguas", "curso-uteis"];
   const diaSemana = (new Date().getDay() + 6) % 7; // 0 = segunda
-  const rotinaDoDia = ROTACAO[diaSemana % ROTACAO.length];
+  const rotinaDoDia = CURSOS[diaSemana];
 
   const areaDoDia = areas.find((a) => a.rotina === rotinaDoDia);
   const aulaDoDia = cursos.find((c) => c.rotina === rotinaDoDia && diasDesde(c.data) === 0);
@@ -3266,7 +3423,7 @@ async function buscarCapa(titulo, autor) {
 
 /** A procura em segundo plano, ao guardar: só para quem ainda não tem capa. */
 async function procurarCapa(livro) {
-  if (!livro.titulo || livro.capa) return;
+  if (!livro.titulo || livro.capa || livro.foto) return;
   const url = await buscarCapa(livro.titulo, livro.autor);
   if (!url) return;
   livro.capa = url;
@@ -3275,9 +3432,12 @@ async function procurarCapa(livro) {
 }
 
 /** A capa do livro, ou a inicial do título quando não há. */
+/** A fotografia tirada pelo dono manda sobre a capa vinda do catálogo. */
+const imagemLivro = (l) => l?.foto || l?.capa || "";
+
 const capaHTML = (l, classe = "capa") =>
-  l.capa
-    ? `<span class="${classe} com-capa"><img src="${esc(l.capa)}" alt="" loading="lazy"
+  imagemLivro(l)
+    ? `<span class="${classe} com-capa"><img src="${esc(imagemLivro(l))}" alt="" loading="lazy"
         onerror="this.remove()"></span>`
     : `<span class="${classe}">${esc((l.titulo || "?").trim().charAt(0).toUpperCase())}</span>`;
 
@@ -3614,23 +3774,31 @@ function abrirLivro(livro) {
     paginas: 0,
     pagina: 0,
     avaliacao: 0,
+    foto: "",
     resumo: "",
     criado_em: Date.now(),
     apagado: false,
   };
-  $("#livro-rotulo").textContent = livro ? "Editar livro" : "Novo livro";
-  $("#livro-sub").textContent = livro
-    ? "Atualiza o que mudou desde a última sessão."
-    : "Cada livro conta uma história.";
-  $("#livro-titulo").value = livroAberto.titulo;
-  $("#livro-autor").value = livroAberto.autor;
-  $("#livro-genero").value = livroAberto.genero || "";
-  $("#livro-pagina").value = livroAberto.pagina || "";
-  $("#livro-paginas").value = livroAberto.paginas || "";
-  $("#livro-resumo").value = livroAberto.resumo;
-  $("#livro-apagar").style.display = livro ? "" : "none";
-  $("#livro-capa-procurar").textContent = "Procurar capa";
-  $("#livro-capa-procurar").disabled = false;
+  porTexto("#livro-rotulo", livro ? "Editar livro" : "Novo livro");
+  porTexto(
+    "#livro-sub",
+    livro ? "Atualiza o que mudou desde a última sessão." : "Cada livro conta uma história."
+  );
+  porValor("#livro-titulo", livroAberto.titulo);
+  porValor("#livro-autor", livroAberto.autor);
+  porValor("#livro-genero", livroAberto.genero || "");
+  porValor("#livro-pagina", livroAberto.pagina || "");
+  porValor("#livro-paginas", livroAberto.paginas || "");
+  porValor("#livro-resumo", livroAberto.resumo);
+  porValor("#livro-foto", "");
+  porTexto("#livro-capa-aviso", "");
+  const apagar = $("#livro-apagar");
+  if (apagar) apagar.style.display = livro ? "" : "none";
+  const procurar = $("#livro-capa-procurar");
+  if (procurar) {
+    procurar.textContent = "Procurar capa";
+    procurar.disabled = false;
+  }
   capaRemovida = false;
   marcarEstrelas(livroAberto.avaliacao || 0);
   marcarEstadoLivro(livroAberto.estado);
@@ -3639,48 +3807,113 @@ function abrirLivro(livro) {
   pintarContaFicha();
   $("#folha-livro").showModal();
   // O corpo pode ficar rolado da vez anterior.
-  $(".corpo-ficha").scrollTop = 0;
+  const corpo = $(".corpo-ficha");
+  if (corpo) corpo.scrollTop = 0;
 }
 
 /** A capa na ficha: a imagem quando existe, a inicial do título quando não. */
 function pintarCapaFicha() {
-  const url = livroAberto?.capa || "";
+  const caixa = $("#livro-capa");
+  if (!caixa) return;
+  const url = imagemLivro(livroAberto);
   const inicial = (livroAberto?.titulo || $("#livro-titulo").value || "?").trim().charAt(0).toUpperCase();
-  $("#livro-capa").innerHTML = url
+  caixa.innerHTML = url
     ? `<img src="${esc(url)}" alt="" onerror="this.remove()">`
     : esc(inicial || "?");
-  $("#livro-capa-remover").disabled = !url;
+  const remover = $("#livro-capa-remover");
+  if (remover) remover.disabled = !url;
 }
+
+/**
+ * Encolhe a fotografia antes de a guardar. O que sai da câmara do telefone
+ * tem megabytes; a biblioteca inteira viaja num pedido de 512 KB e vive num
+ * valor de 4 MB. Uma capa a 420px de largura chega para o quadrado da ficha e
+ * para os cartões, e a qualidade vai descendo até caber no orçamento.
+ */
+const LARGURA_CAPA = 420;
+const PESO_CAPA = 120 * 1024; // já em base64
+
+function encolherFoto(ficheiro) {
+  return new Promise((resolve, reject) => {
+    const leitor = new FileReader();
+    leitor.onerror = () => reject(new Error("leitura"));
+    leitor.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("imagem"));
+      img.onload = () => {
+        const escala = Math.min(1, LARGURA_CAPA / img.width);
+        const tela = document.createElement("canvas");
+        tela.width = Math.max(1, Math.round(img.width * escala));
+        tela.height = Math.max(1, Math.round(img.height * escala));
+        tela.getContext("2d").drawImage(img, 0, 0, tela.width, tela.height);
+        let dados = "";
+        for (const q of [0.72, 0.62, 0.52, 0.42, 0.32]) {
+          dados = tela.toDataURL("image/jpeg", q);
+          if (dados.length <= PESO_CAPA) break;
+        }
+        dados.length <= PESO_CAPA ? resolve(dados) : reject(new Error("grande"));
+      };
+      img.src = leitor.result;
+    };
+    leitor.readAsDataURL(ficheiro);
+  });
+}
+
+/* Tocar no quadrado da capa abre a galeria: é o gesto que se tenta primeiro. */
+$("#livro-capa")?.addEventListener("click", () => $("#livro-foto").click());
+$("#livro-capa-foto")?.addEventListener("click", () => $("#livro-foto").click());
+
+$("#livro-foto")?.addEventListener("change", async (e) => {
+  const ficheiro = e.target.files?.[0];
+  e.target.value = ""; // escolher a mesma fotografia outra vez tem de contar
+  if (!ficheiro || !livroAberto) return;
+  const aviso = $("#livro-capa-aviso");
+  aviso.textContent = "A preparar a fotografia…";
+  try {
+    livroAberto.foto = await encolherFoto(ficheiro);
+    capaRemovida = false;
+    aviso.textContent = "";
+    pintarCapaFicha();
+  } catch {
+    aviso.textContent = "Não deu para usar essa fotografia.";
+  }
+});
 
 /** O anel e a linha "de N páginas" seguem os campos enquanto se escreve. */
 function pintarProgressoFicha() {
-  const pagina = Math.max(0, Number($("#livro-pagina").value) || 0);
-  const paginas = Math.max(0, Number($("#livro-paginas").value) || 0);
+  const anel = $("#livro-anel");
+  if (!anel) return;
+  const pagina = Math.max(0, Number($("#livro-pagina")?.value) || 0);
+  const paginas = Math.max(0, Number($("#livro-paginas")?.value) || 0);
   const pct = paginas > 0 ? Math.min(100, Math.round((pagina / paginas) * 100)) : 0;
-  $("#livro-pct").textContent = `${pct}%`;
   // 263.9 é o perímetro do círculo de raio 42 desenhado no HTML.
-  $("#livro-anel").style.strokeDashoffset = String(263.9 * (1 - pct / 100));
-  $("#livro-de").textContent = paginas
-    ? `de ${paginas} páginas`
-    : "total de páginas por indicar";
+  anel.style.strokeDashoffset = String(263.9 * (1 - pct / 100));
+  const pctAlvo = $("#livro-pct");
+  if (pctAlvo) pctAlvo.textContent = `${pct}%`;
+  const de = $("#livro-de");
+  if (de) de.textContent = paginas ? `de ${paginas} páginas` : "total de páginas por indicar";
 }
 
 function pintarContaFicha() {
-  const n = $("#livro-resumo").value.length;
-  $("#livro-conta").textContent = n === 1 ? "1 caráter" : `${n} carateres`;
+  const conta = $("#livro-conta");
+  if (!conta) return;
+  const n = $("#livro-resumo")?.value.length || 0;
+  conta.textContent = n === 1 ? "1 caráter" : `${n} carateres`;
 }
 
-$("#livro-pagina").addEventListener("input", pintarProgressoFicha);
-$("#livro-paginas").addEventListener("input", pintarProgressoFicha);
-$("#livro-resumo").addEventListener("input", pintarContaFicha);
-$("#livro-fechar").addEventListener("click", () => $("#folha-livro").close());
+$("#livro-pagina")?.addEventListener("input", pintarProgressoFicha);
+$("#livro-paginas")?.addEventListener("input", pintarProgressoFicha);
+$("#livro-resumo")?.addEventListener("input", pintarContaFicha);
+$("#livro-fechar")?.addEventListener("click", () => $("#folha-livro").close());
 
 /* A capa não se escreve à mão: procura-se, ou tira-se. */
-$("#livro-capa-procurar").addEventListener("click", async (e) => {
+$("#livro-capa-procurar")?.addEventListener("click", async (e) => {
   const b = e.currentTarget;
   const titulo = $("#livro-titulo").value.trim();
   if (!titulo || !livroAberto) return;
   capaRemovida = false;
+  // A capa do catálogo não apaga uma fotografia escolhida à mão.
+  livroAberto.foto = "";
   b.disabled = true;
   b.textContent = "A procurar…";
   const url = await buscarCapa(titulo, $("#livro-autor").value.trim());
@@ -3694,10 +3927,12 @@ $("#livro-capa-procurar").addEventListener("click", async (e) => {
   }
 });
 
-$("#livro-capa-remover").addEventListener("click", () => {
+$("#livro-capa-remover")?.addEventListener("click", () => {
   if (!livroAberto) return;
   livroAberto.capa = "";
+  livroAberto.foto = "";
   capaRemovida = true;
+  $("#livro-capa-aviso").textContent = "";
   pintarCapaFicha();
 });
 
@@ -3720,7 +3955,7 @@ function marcarEstrelas(valor) {
 }
 
 // Tocar na estrela já marcada tira a avaliação.
-$("#livro-avaliacao").addEventListener("click", (e) => {
+$("#livro-avaliacao")?.addEventListener("click", (e) => {
   const b = e.target.closest("[data-estrela]");
   if (!b) return;
   const n = Number(b.dataset.estrela);
@@ -3731,9 +3966,9 @@ $("#btn-livro-novo").addEventListener("click", () => abrirLivro(null));
 $("#procura-livros").addEventListener("input", desenharLivros);
 
 
-$("#livro-cancelar").addEventListener("click", () => $("#folha-livro").close());
+$("#livro-cancelar")?.addEventListener("click", () => $("#folha-livro").close());
 
-$("#livro-guardar").addEventListener("click", () => {
+$("#livro-guardar")?.addEventListener("click", () => {
   livroAberto.titulo = $("#livro-titulo").value.trim();
   livroAberto.autor = $("#livro-autor").value.trim();
   livroAberto.genero = $("#livro-genero").value.trim();
@@ -3751,7 +3986,7 @@ $("#livro-guardar").addEventListener("click", () => {
   desenharLivros();
 });
 
-$("#livro-apagar").addEventListener("click", () => {
+$("#livro-apagar")?.addEventListener("click", () => {
   livroAberto.apagado = true;
   alterar("livros", livroAberto);
   $("#folha-livro").close();
