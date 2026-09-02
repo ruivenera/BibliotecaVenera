@@ -620,6 +620,15 @@ function limparCartao(c) {
   };
 }
 
+const MAX_FOTO = 160 * 1024;
+
+/** Uma fotografia de capa é aceite ou deitada fora inteira — nada a meio. */
+function fotoLimpa(valor) {
+  const f = String(valor || "");
+  if (f.length > MAX_FOTO) return "";
+  return /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(f) ? f : "";
+}
+
 function limparLivro(l) {
   if (!l?.id || typeof l.id !== "string" || l.id.length > 64) return null;
   return {
@@ -636,6 +645,10 @@ function limparLivro(l) {
     // Endereço da capa. Só https e só de fontes de capas: o campo é preenchido
     // pela app a partir do catálogo aberto, não escrito à mão.
     capa: /^https:\/\/covers\.openlibrary\.org\//.test(String(l.capa || "")) ? String(l.capa).slice(0, 300) : "",
+    // Fotografia da capa tirada pelo dono, já encolhida pela app. Aceita-se só
+    // JPEG/PNG/WebP em base64 e com tamanho travado: o corpo do pedido tem
+    // 512 KB e a biblioteca inteira vive num valor de 4 MB.
+    foto: fotoLimpa(l.foto),
     resumo: String(l.resumo || "").slice(0, 40000),
     criado_em: Number(l.criado_em) || agora(),
     atualizado_em: Number(l.atualizado_em) || agora(),
@@ -654,6 +667,9 @@ function limparArea(a) {
     nome: String(a.nome || "").slice(0, 80),
     sigla: String(a.sigla || "").slice(0, 4).toUpperCase(),
     cor: ["latao", "indigo", "sobe", "rust"].includes(a.cor) ? a.cor : "latao",
+    // A rotina do curso ficava de fora e perdia-se na sincronização: sem ela a
+    // área volta do servidor sem fotografia, sem dia da semana e fora de ordem.
+    rotina: String(a.rotina || "").slice(0, 40),
     temas: (Array.isArray(a.temas) ? a.temas : [])
       .map((t) => ({ nome: String(t?.nome || "").slice(0, 120), feito: !!t?.feito }))
       .filter((t) => t.nome)
