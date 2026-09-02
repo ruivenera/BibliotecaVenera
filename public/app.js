@@ -68,6 +68,94 @@ const CURSOS = [
   "curso-uteis",
 ];
 const DIAS_SIGLA = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM"];
+
+/* Emoji de cada curso, para quando o tema não disser nada de especial. */
+const EMOJI_CURSO = {
+  "curso-historia": "🏛️",
+  "curso-psicologia": "🧠",
+  "curso-cultura": "🌍",
+  "inteligencia-artificial": "🤖",
+  "curso-linguas": "🗣️",
+  "curso-ciencia": "🔬",
+  "curso-uteis": "🎯",
+};
+
+/**
+ * O emoji sai do texto do tema, não de um campo à parte. O sincronizador só
+ * guarda o nome e o feito de cada tema, e assim os temas que escreveres à mão
+ * também ficam com o seu — sem migração nem mexer no servidor.
+ */
+const EMOJI_TEMA = [
+  // Melhoria Pessoal: o que se faz com as mãos vem primeiro, senão palavras
+  // como "medir" ou "corrente" eram apanhadas pelas regras de estudo.
+  [/cozinha|receita|refogado|carne|peixe|sopa|caldo|arroz|massa|ovos/i, "🍳"],
+  [/motor|travão|pneu|óleo|alternador|obd2|automóvel|roda/i, "🚗"],
+  [/elétric|circuito|interruptor|disjuntor|multímetro|lei de ohm/i, "💡"],
+  [/canaliza|torneira|sifão|tubagem|desentupir|fuga de água/i, "🔧"],
+  [/furar|parede|broca|bucha|martelo|serra|madeira|carpintaria/i, "🔨"],
+  [/pintar|tinta|primário|acabamento/i, "🖌️"],
+  [/socorros|extintor|fogo|emergênc/i, "🚨"],
+  [/\birs\b|imposto|dedução|contrato|seguro/i, "📄"],
+  [/palavras?-passe|dois fatores|segurança digital/i, "🔐"],
+  [/\bnós\b|nó de|volta do fiel/i, "🪢"],
+  [/manutenção de casa|estação do ano/i, "🏠"],
+
+  // História e mundo
+  [/guerra|batalha|conflito armado|militar|holocausto/i, "⚔️"],
+  [/idade média|feudal|castelo|cruzada/i, "🏰"],
+  [/impér|\broma\b|grécia|civilizaç|antiguidade|pré-históri|mesopotâmia|egito/i, "🏺"],
+  [/marítim|expansão|descobri|navega/i, "⛵"],
+  [/religi|igreja|cren|espiritual|mitolog/i, "🕊️"],
+
+  [/geopolít|direitos humanos|sustentab|europeia|\bonu\b/i, "🌍"],
+
+  // Mente
+  [/memória|cérebro|cogni|neuro|atenção|linguagem e pensamento|aprendizagem|condicionamento/i, "🧠"],
+  [/decisão|decidir|vieses/i, "🤔"],
+  [/emoç|ansiedade|stress|bem-estar|felicidade|motivaç|resiliênc/i, "💗"],
+  [/comunica|escuta|persuas|relaciona|influênc/i, "💬"],
+  [/hábito|disciplina|rotina/i, "🔁"],
+  [/dinheiro|finanç|investi|orçament|economia|poupar/i, "💶"],
+
+  // Cultura e línguas
+  [/mapa|geografi|país|capital|oceano|relevo/i, "🗺️"],
+  [/pintura|escultura|\barte\b|arquitetura|música|cinema|\bdança\b|teatro/i, "🎨"],
+  [/revoluç|reforma|liberal|constitucional|independênc|república|descoloniza/i, "🏴"],
+  [/literatura|obras clássicas|poesia|\blivro/i, "📚"],
+  [/filosofi|(^|[\s(])ética|moral|pensadores/i, "🏛️"],
+  [/gramátic|verbo|vocabulár|pronome|alfabeto|conjug|subjuntivo|artigos/i, "✍️"],
+  [/ouvir|rádio|áudio|pronúnc|falar|conversa|cumpriment|perguntar/i, "🎧"],
+
+
+  // Ciência
+  [/físic|mecânica|energia|força|relatividade|quântic|termodinâmic|ótica|ópti|eletromagnet/i, "⚛️"],
+  [/químic|molécul|reaç/i, "🧪"],
+  [/biolog|célula|celular|genétic|evoluç|espécies|fisiolog/i, "🧬"],
+  [/astronom|estrela|galáxi|planeta|cosmolog|buraco negro|universo|sistema solar/i, "🌌"],
+  [/geolog|meteorolog|clima|\bterra\b|oceanograf|paleontolog/i, "🌋"],
+  [/estatístic|probabilidad|cálculo|álgebra|matemátic|geometria|lógica/i, "📐"],
+  [/números|horas|datas|calendário/i, "🔢"],
+  [/rede neural|machine learning|deep learning|algoritmo|programaç|\bdados\b/i, "🤖"],
+  [/treino|corpo|alimentaç|\bsono\b|recupera/i, "💪"],
+  [/tempo|planeamento|prioridade|produtiv|execução/i, "⏱️"],
+];
+const emojiDoTema = (nome, rotina) =>
+  EMOJI_TEMA.find(([re]) => re.test(nome || ""))?.[1] || EMOJI_CURSO[rotina] || "📘";
+
+/**
+ * Que aula foi dada por concluída em que dia. Fica só neste telefone: o
+ * servidor guarda o percurso — que temas estão feitos — e isto é apenas a
+ * marca de "já dei a de hoje", que não vale a pena sincronizar.
+ */
+const AULAS_FEITAS = "venera:aulas-feitas";
+const aulasFeitas = () => {
+  try {
+    return JSON.parse(localStorage.getItem(AULAS_FEITAS) || "{}");
+  } catch {
+    return {};
+  }
+};
+const diaDeHoje = () => new Date().toLocaleDateString("sv");
 const DIAS_NOME = ["segunda", "terça", "quarta", "quinta", "sexta", "sábado", "domingo"];
 /** O dia da semana de um curso, ou -1 se a rotina não for de curso. */
 const diaDoCurso = (rotina) => CURSOS.indexOf(rotina);
@@ -3106,33 +3194,60 @@ function desenharAprendizagem() {
   const corDoDia = COR[rotinaDoDia] || "var(--latao)";
   const dias = ultimaDaArea ? diasDesde(ultimaDaArea.data) : null;
 
+  /*
+   * A aula do dia repete-se enquanto não for dada por concluída. Não é preciso
+   * agendar nada: o tema do dia é sempre o primeiro por fazer do percurso, por
+   * isso se a segunda passar sem se carregar em Concluído, na segunda seguinte
+   * aparece o mesmo. Carregar marca o tema como feito e é o seguinte que passa
+   * a ser o primeiro por fazer.
+   */
   const cartaoLicao = () => {
-    // Com aula publicada hoje, é ela; sem ela, é o tema que vem a seguir no
-    // percurso da área — o estudo do dia não fica à espera da rotina.
+    const feitaHoje = aulasFeitas()[rotinaDoDia] === diaDeHoje();
     const titulo = aulaDoDia?.titulo || temaDoDia || `Sem tema por fazer em ${nomeDoDia}`;
-    const meta = aulaDoDia
-      ? `Aula de hoje${aulaDoDia.progresso?.dia ? ` · Dia ${aulaDoDia.progresso.dia}` : ""}${
-          aulaDoDia.progresso?.leitura_min ? ` · ${aulaDoDia.progresso.leitura_min} min` : ""
-        }`
-      : ultimaDaArea
-        ? `Tema a seguir · última aula há ${dias} ${dias === 1 ? "dia" : "dias"}`
-        : "Tema a seguir · rotina ainda sem aulas";
-    const accao = aulaDoDia
+    const emoji = emojiDoTema(titulo, rotinaDoDia);
+    const diaNome = DIAS_NOME[diaSemana];
+
+    const meta = feitaHoje
+      ? temaDoDia
+        ? `A seguir, na próxima ${diaNome}: ${temaDoDia}`
+        : "Percurso terminado — não há mais temas por fazer"
+      : aulaDoDia
+        ? `Aula de hoje${aulaDoDia.progresso?.dia ? ` · Dia ${aulaDoDia.progresso.dia}` : ""}${
+            aulaDoDia.progresso?.leitura_min ? ` · ${aulaDoDia.progresso.leitura_min} min` : ""
+          }`
+        : temaDoDia
+          ? `Sem o Concluído, volta na próxima ${diaNome}`
+          : ultimaDaArea
+            ? `Última aula há ${dias} ${dias === 1 ? "dia" : "dias"}`
+            : "Rotina ainda sem aulas";
+
+    const abrir = aulaDoDia
       ? `data-curso="${esc(aulaDoDia.rotina)}" data-data="${esc(aulaDoDia.data)}"`
       : areaDoDia
         ? `data-area="${esc(areaDoDia.id)}"`
         : "";
 
-    return `<button class="cartao-licao" data-rotina="${esc(rotinaDoDia)}"
-        style="--marcador:${corDoDia}" ${accao}>
+    return `<div class="cartao-licao" data-foto="${esc(rotinaDoDia)}"
+        data-feita="${feitaHoje ? "sim" : "nao"}" style="--marcador:${corDoDia}">
       <span class="veu"></span>
-      <span class="dentro">
-        <span class="rotulo nome-area">${esc(nomeDoDia)}</span>
-        <b>${esc(titulo)}</b>
+      <div class="dentro">
+        <span class="rotulo nome-area">${esc(nomeDoDia)} · ${esc(diaNome)}</span>
+        <b><span class="emoji">${feitaHoje ? "✅" : emoji}</span>${esc(
+          feitaHoje ? "Aula de hoje concluída" : titulo
+        )}</b>
         <span class="rotulo meta">${esc(meta)}</span>
-      </span>
-      <span class="seta">›</span>
-    </button>`;
+        <div class="accoes-licao">
+          ${abrir ? `<button class="btn" ${abrir}>Abrir</button>` : ""}
+          ${
+            temaDoDia && !feitaHoje
+              ? `<button class="btn" data-tom="forte" data-concluir="${esc(rotinaDoDia)}">✓ Concluído</button>`
+              : feitaHoje
+                ? `<button class="btn" data-desconcluir="${esc(rotinaDoDia)}">Afinal não</button>`
+                : ""
+          }
+        </div>
+      </div>
+    </div>`;
   };
 
   const cartoesDevidos = devidos().length;
@@ -3167,7 +3282,7 @@ function desenharAprendizagem() {
           const d = aula ? diasDesde(aula.data) : null;
           const idade = d === 0 ? "hoje" : d === 1 ? "ontem" : `há ${d} dias`;
           return `<button class="cartao-curso-grande" data-area="${esc(a.id)}"
-              data-rotina="${esc(a.rotina || "")}" style="--marcador:${CORES_AREA[a.cor]}">
+              data-foto="${esc(a.rotina || "")}" style="--marcador:${CORES_AREA[a.cor]}">
             <span class="veu"></span>
             <span class="dentro">
               <span class="alto">
@@ -3225,7 +3340,7 @@ function desenharPercursoArea() {
       (t, i) => `<li>
         <button data-tema="${i}" data-feito="${t.feito ? "sim" : "nao"}">
           <span class="caixa">${t.feito ? "✓" : ""}</span>
-          <span class="num">${String(i + 1).padStart(2, "0")}</span>
+          <span class="emoji">${emojiDoTema(t.nome, areaAberta.rotina)}</span>
           <span class="nome">${esc(t.nome)}</span>
         </button>
       </li>`
@@ -3314,9 +3429,43 @@ $("#area-apagar").addEventListener("click", () => {
   desenharAprendizagem();
 });
 
+/**
+ * Dar a aula do dia por concluída: marca o tema no percurso e guarda o dia, que
+ * é o que faz o cartão mudar de cara até amanhã. Desfazer devolve as duas
+ * coisas ao que estavam — enganar-se no botão não custa um tema.
+ */
+function concluirAulaDoDia(rotina, sim) {
+  const area = vivos("areas").find((a) => a.rotina === rotina);
+  if (!area) return;
+  const registo = aulasFeitas();
+
+  if (sim) {
+    const tema = area.temas.find((t) => !t.feito);
+    if (!tema) return;
+    tema.feito = true;
+    registo[rotina] = diaDeHoje();
+  } else {
+    // O último por fazer voltou a ser o de hoje: desmarca-se esse.
+    const feitos = area.temas.filter((t) => t.feito);
+    const ultimo = feitos[feitos.length - 1];
+    if (ultimo) ultimo.feito = false;
+    delete registo[rotina];
+  }
+
+  localStorage.setItem(AULAS_FEITAS, JSON.stringify(registo));
+  alterar("areas", area);
+  desenharAprendizagem();
+}
+
 /* O plano é desenhado a cada pintura: os seus botões vão por delegação, senão
    ficavam sem dono e o toque não fazia nada. */
 function cliqueAprender(e) {
+  const concluir = e.target.closest("[data-concluir]");
+  if (concluir) return concluirAulaDoDia(concluir.dataset.concluir, true);
+
+  const desfazer = e.target.closest("[data-desconcluir]");
+  if (desfazer) return concluirAulaDoDia(desfazer.dataset.desconcluir, false);
+
   const area = e.target.closest("[data-area]");
   if (area) return abrirArea(estado.biblioteca.areas[area.dataset.area]);
 
