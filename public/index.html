@@ -3631,6 +3631,22 @@
   }
   .cartao-licao .estado-aula[data-lida="sim"] { color: var(--sobe); }
   .cartao-licao .estado-aula[data-lida="nao"] { color: var(--marcador, var(--latao)); }
+  /* A dívida do curso: discreta, mas clicável — leva ao percurso. */
+  .cartao-licao .atrasadas {
+    position: relative;
+    justify-self: start;
+    background: none;
+    border: 0;
+    padding: 0.3rem 0 0;
+    font-family: var(--meta);
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    color: var(--papel-fosco);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+
   .cartao-licao .seta { position: relative; align-self: center; color: var(--papel-fosco); font-size: 1.2rem; }
 
   /* ------------------------------------------------------ plano do dia --- */
