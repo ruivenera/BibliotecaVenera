@@ -196,10 +196,14 @@ const diaDoCurso = (rotina) => CURSOS.indexOf(rotina);
    há 21 dias" — que é verdade e não ajuda nada. Passa a dizer que a aula vem a
    caminho. */
 const HORA_PUBLICACAO = 13;
-const aSairHoje = (rotina) =>
-  diaDoCurso(rotina) === (new Date().getDay() + 6) % 7 &&
-  new Date().getHours() < HORA_PUBLICACAO &&
-  !(estado.cursos || []).some((c) => c.rotina === rotina && diasDesde(c.data) === 0);
+const aSairHoje = (rotina) => {
+  const agora = new Date();
+  if (diaDoCurso(rotina) !== (agora.getDay() + 6) % 7) return false;
+  if (agora.getHours() >= HORA_PUBLICACAO) return false;
+  // As edições são datadas em UTC, como o publicar.sh as grava.
+  const hoje = agora.toISOString().slice(0, 10);
+  return !(estado.cursos || []).some((c) => c.rotina === rotina && c.data === hoje);
+};
 
 /* --------------------------------------------------------------- estado --- */
 
