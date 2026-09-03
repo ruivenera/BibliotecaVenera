@@ -85,6 +85,11 @@ const CAPA = {
   "curso-uteis": "/capa-uteis.jpg",
 };
 
+/* Cursos que recomeçaram do zero: as aulas publicadas antes desta data são da
+   numeração antiga e não pertencem ao percurso atual. Ficam de fora das contas
+   e da lista, com um botão para as apagar de vez. */
+const RECOMECO = { "inteligencia-artificial": "2026-09-03" };
+
 /* O currículo completo dos sete cursos — as 150 aulas de cada um, mesmo as que
    ainda não saíram. Vive num ficheiro à parte porque são 30 kB que só a página
    do curso precisa; carrega-se uma vez e fica. */
@@ -3636,8 +3641,13 @@ async function desenharCurso(areaId) {
   if (!area) return irPara("aprendizagem");
   cursoAberto = areaId;
 
-  const publicadas = (estado.lombadas || []).filter((l) => l.rotina === area.rotina);
-  const ultima = (estado.cursos || []).find((c) => c.rotina === area.rotina);
+  const todasDaRotina = (estado.lombadas || []).filter((l) => l.rotina === area.rotina);
+  const recomeco = RECOMECO[area.rotina];
+  const antigas = recomeco ? todasDaRotina.filter((l) => l.data < recomeco) : [];
+  const publicadas = recomeco ? todasDaRotina.filter((l) => l.data >= recomeco) : todasDaRotina;
+  const ultima = (estado.cursos || []).find(
+    (c) => c.rotina === area.rotina && (!recomeco || c.data >= recomeco)
+  );
   const dia =
     ultima?.progresso?.dia ||
     Math.max(0, ...publicadas.map((l) => numeroAula(l.titulo) || 0)) ||
@@ -3719,7 +3729,14 @@ async function desenharCurso(areaId) {
     }</p>`;
 
   $("#curso-aulas").innerHTML = "";
-  $("#curso-rodape").innerHTML = "";
+  $("#curso-rodape").innerHTML = antigas.length
+    ? `<p class="cartaz-nota">${antigas.length} ${
+        antigas.length === 1 ? "aula da numeração antiga" : "aulas da numeração antiga"
+      }, de antes do recomeço.</p>
+       <button class="btn" data-purgar="${esc(area.rotina)}" data-antes="${esc(recomeco)}">
+         Apagar as aulas antigas
+       </button>`
+    : "";
 }
 
 /* Qual o curso aberto, para o toque num tema saber onde o marcar. */
@@ -3729,9 +3746,33 @@ $("#v-curso").addEventListener("click", (e) => {
   const aula = e.target.closest("[data-curso]");
   if (aula) return irPara("edicao", aula.dataset.curso, aula.dataset.data);
 
+  const purgar = e.target.closest("[data-purgar]");
+  if (purgar) return apagarAulasAntigas(purgar.dataset.purgar, purgar.dataset.antes, purgar);
+
   const ir = e.target.closest("[data-ir]");
   if (ir) irPara(ir.dataset.ir);
 });
+
+/** Apaga do servidor as aulas anteriores ao recomeço do curso. Não tem volta. */
+async function apagarAulasAntigas(rotina, antes, botao) {
+  if (!confirm("Apagar as aulas antigas deste curso? Não há forma de as recuperar.")) return;
+  botao.disabled = true;
+  botao.textContent = "a apagar…";
+  try {
+    const r = await api("/api/purgar", {
+      method: "POST",
+      body: JSON.stringify({ rotina, antes }),
+    });
+    marcarEstado(`${r.apagadas} apagadas`, "ligado");
+    cacheEstante = { quando: 0, dados: null };
+    await carregarModulo(rotina);
+    desenharCurso(cursoAberto);
+  } catch (erro) {
+    botao.disabled = false;
+    botao.textContent = "Apagar as aulas antigas";
+    marcarEstado("não deu", "offline");
+  }
+}
 
 let areaAberta = null;
 
