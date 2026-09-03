@@ -3554,13 +3554,14 @@
   .cartao-licao .veu {
     position: absolute;
     inset: 0;
-    backdrop-filter: blur(0.6px);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
     background: linear-gradient(
       0deg,
-      color-mix(in srgb, var(--tinta) 94%, transparent) 0%,
-      color-mix(in srgb, var(--tinta) 80%, transparent) 38%,
-      color-mix(in srgb, var(--tinta) 26%, transparent) 66%,
-      color-mix(in srgb, var(--tinta) 6%, transparent) 100%
+      var(--tinta) 0%,
+      color-mix(in srgb, var(--tinta) 96%, transparent) 45%,
+      color-mix(in srgb, var(--tinta) 82%, transparent) 78%,
+      color-mix(in srgb, var(--tinta) 60%, transparent) 100%
     );
   }
   .cartao-licao .dentro { position: relative; flex: 1; min-width: 0; display: grid; gap: 0.3rem; }
@@ -3576,6 +3577,36 @@
     text-wrap: balance;
   }
   .cartao-licao .meta { font-size: 0.5rem; color: var(--papel-fosco); }
+  /* O resumo da aula, cortado a três linhas: chega para decidir se se abre. */
+  .cartao-licao .sinopse {
+    position: relative;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: var(--papel-fosco);
+    margin: 0.15rem 0 0.1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  /* Lida ou por ler: é isto que diz se a aula precisa de voltar para a semana. */
+  .cartao-licao .estado-aula {
+    position: relative;
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--meta);
+    font-size: 0.52rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid currentColor;
+    margin-top: 0.2rem;
+  }
+  .cartao-licao .estado-aula[data-lida="sim"] { color: var(--sobe); }
+  .cartao-licao .estado-aula[data-lida="nao"] { color: var(--marcador, var(--latao)); }
   .cartao-licao .seta { position: relative; align-self: center; color: var(--papel-fosco); font-size: 1.2rem; }
 
   /* ------------------------------------------------------ plano do dia --- */
