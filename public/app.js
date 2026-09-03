@@ -3268,7 +3268,7 @@ function migrarAreas() {
   if (localStorage.getItem("venera:areas-versao") === "2") return;
   localStorage.setItem("venera:areas-versao", "2");
 
-  const porNome = (n) => vivos("areas").find((a) => a.nome.toLowerCase() === n);
+  const porNome = (n) => vivos("areas").find((a) => (a.nome || "").toLowerCase() === n);
   const uteis = porNome("coisas úteis") || porNome("melhoria pessoal");
   if (uteis) {
     const juntar = [porNome("mecânica"), porNome("eletricidade")].filter(Boolean);
@@ -3317,7 +3317,7 @@ function migrarCursos() {
   if (localStorage.getItem("venera:areas-versao") === "3") return;
   localStorage.setItem("venera:areas-versao", "3");
 
-  const porNome = (n) => vivos("areas").find((a) => a.nome.toLowerCase() === n);
+  const porNome = (n) => vivos("areas").find((a) => (a.nome || "").toLowerCase() === n);
 
   const frances = porNome("francês");
   if (frances) {
@@ -3350,7 +3350,7 @@ function migrarSemana() {
   localStorage.setItem("venera:areas-versao", "4");
 
   const porRotina = (r) => vivos("areas").find((a) => a.rotina === r);
-  const porNome = (n) => vivos("areas").find((a) => a.nome.toLowerCase() === n);
+  const porNome = (n) => vivos("areas").find((a) => (a.nome || "").toLowerCase() === n);
 
   for (const base of AREAS_SEMENTE) {
     const dia = diaDoCurso(base.rotina);
@@ -3380,6 +3380,29 @@ function migrarSemana() {
 const proximoTema = (area) => area.temas.find((t) => !t.feito)?.nome || "";
 
 function desenharAprendizagem() {
+  try {
+    desenharAprendizagemInterno();
+  } catch (erro) {
+    /* Uma área malformada não pode levar a vista inteira à frente. Antes, um
+       campo em falta esvaziava o ecrã todo e não dizia porquê — e no telemóvel
+       não há consola para descobrir. */
+    console.error("aprendizagem:", erro);
+    $("#aprender-plano").innerHTML =
+      `<p class="rotulo" style="padding:1rem 0">Não foi possível desenhar esta vista: ${esc(
+        erro.message
+      )}</p>`;
+  }
+}
+
+function desenharAprendizagemInterno() {
+  /* Antes de tudo o resto: uma área a que falte o nome ou os temas não pode
+     levar a vista à frente. Acontece com áreas criadas à mão e com as que
+     sobraram de migrações antigas. */
+  vivos("areas").forEach((a) => {
+    if (!Array.isArray(a.temas)) a.temas = [];
+    if (!a.nome) a.nome = NOMES[a.rotina] || "Sem nome";
+  });
+
   semearAreas();
   migrarAreas();
   migrarCursos();

@@ -3730,23 +3730,39 @@
   }
   .cartaz-curso .btn-voltar { color: var(--letra-fosca); border-color: rgba(201, 162, 39, 0.35); }
 
-  /* A capa entra inteira, sem corte: é um cartaz e foi desenhado para se ler
-     de uma vez. Sangra até às margens do ecrã. */
-  .capa-curso {
-    position: relative;
-    margin: 0 calc(var(--gap) * -1) 1.6rem;
+  /* A capa é o ambiente da página, não um banner no topo: fica fixa por trás
+     de tudo, com o escuro por cima. Duas camadas fixas em vez de
+     background-attachment, que no iOS engasga ao rolar. */
+  #v-curso { position: relative; background: #0d1626; }
+  #v-curso::before,
+  #v-curso::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
   }
-  .capa-curso img { width: 100%; display: block; }
-  /* Só a de História não tem letras pintadas; nessa, o título vai por cima,
-     com um véu para as letras se lerem por cima do que estiver por baixo. */
-  .capa-curso.com-titulo figcaption {
-    position: absolute;
-    inset: auto 0 0;
-    padding: 4.5rem var(--gap) 1.8rem;
-    text-align: center;
-    background: linear-gradient(to bottom, transparent, rgba(13, 22, 38, 0.92) 62%, #0d1626);
+  #v-curso::before {
+    background-image: var(--capa, none);
+    background-size: cover;
+    background-position: center top;
   }
-  .capa-curso .selo,
+  /* O véu é mais denso onde assentam as letras — o topo do título e o corpo da
+     lista — e alivia nas margens, para a capa ainda se ver. */
+  #v-curso::after {
+    background:
+      radial-gradient(120% 55% at 50% 0%, rgba(13, 22, 38, 0.55), transparent 70%),
+      linear-gradient(
+        to bottom,
+        rgba(13, 22, 38, 0.78) 0%,
+        rgba(13, 22, 38, 0.9) 22%,
+        rgba(13, 22, 38, 0.94) 55%,
+        rgba(13, 22, 38, 0.97) 100%
+      );
+  }
+  .cartaz-curso { position: relative; z-index: 1; }
+
+  .cartaz-topo { text-align: center; padding: 1.6rem 0 2rem; }
   .cartaz-topo .selo {
     display: block;
     font-family: var(--meta);
@@ -3755,15 +3771,15 @@
     color: var(--ouro);
     text-transform: uppercase;
   }
-  .capa-curso h1 {
+  .cartaz-topo h1 {
     font-size: clamp(2rem, 10vw, 3.2rem);
     letter-spacing: 0.12em;
-    margin: 0.55rem 0 0.5rem;
+    margin: 0.6rem 0 0.5rem;
     text-transform: uppercase;
     color: var(--letra);
     line-height: 1.05;
+    text-shadow: 0 2px 18px rgba(13, 22, 38, 0.9);
   }
-  .capa-curso .subtitulo,
   .cartaz-topo .subtitulo {
     font-family: var(--meta);
     font-size: 0.6rem;
@@ -3772,9 +3788,6 @@
     text-transform: uppercase;
     margin: 0;
   }
-  /* Nas capas com o nome pintado, sobra só a cadência, numa linha discreta. */
-  .cartaz-topo { text-align: center; padding: 0 0 1.6rem; }
-  .cartaz-topo .selo { margin-bottom: 0.35rem; }
 
   .cartaz-numeros {
     display: grid;
@@ -3787,7 +3800,9 @@
   }
   @media (min-width: 30rem) { .cartaz-numeros { grid-template-columns: repeat(4, 1fr); } }
   .cartaz-numeros div {
-    background: var(--carvao);
+    background: rgba(22, 33, 58, 0.86);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
     padding: 1rem 0.6rem;
     text-align: center;
   }
@@ -3841,7 +3856,9 @@
   .etapa .caixa {
     width: 100%;
     text-align: left;
-    background: var(--carvao);
+    background: rgba(22, 33, 58, 0.82);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 12px;
     padding: 0.95rem 1.05rem;
@@ -3850,6 +3867,15 @@
     cursor: pointer;
   }
   .etapa[data-feito="sim"] .caixa { border-color: rgba(201, 162, 39, 0.28); }
+  /* As que ainda não saíram: o nome está lá, mas não se abre nem se acende. */
+  .etapa[data-feito="porsair"] .caixa {
+    background: rgba(22, 33, 58, 0.42);
+    border-style: dashed;
+    border-color: rgba(255, 255, 255, 0.08);
+    cursor: default;
+  }
+  .etapa[data-feito="porsair"] h4 { color: var(--letra-fosca); font-weight: 500; }
+  .etapa[data-feito="porsair"] .n { color: var(--letra-fosca); border-color: rgba(255, 255, 255, 0.14); }
   .etapa .dentro { display: block; }
   .etapa h4 {
     margin: 0 0 0.45rem;
