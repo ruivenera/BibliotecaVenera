@@ -85,9 +85,20 @@ const CAPA = {
   "curso-uteis": "/capa-uteis.jpg",
 };
 
-/* Só a capa de História não traz o nome pintado; nessa, o título vai por cima.
-   Nas outras, escrever o nome outra vez era escrevê-lo duas vezes. */
-const CAPA_SEM_LETRAS = new Set(["curso-historia"]);
+/* O currículo completo dos sete cursos — as 150 aulas de cada um, mesmo as que
+   ainda não saíram. Vive num ficheiro à parte porque são 30 kB que só a página
+   do curso precisa; carrega-se uma vez e fica. */
+let curriculos = null;
+async function carregarCurriculos() {
+  if (curriculos) return curriculos;
+  try {
+    const r = await fetch("/curriculos.json");
+    curriculos = r.ok ? await r.json() : {};
+  } catch {
+    curriculos = {};
+  }
+  return curriculos;
+}
 
 /* "Dia 12 — Uruk e o nascimento da cidade" → 12. */
 const numeroAula = (titulo) => {
@@ -3620,67 +3631,70 @@ function desenharAprendizagemInterno() {
  * seleção. Em cima o que já se andou, ao meio o trilho dos temas, em baixo as
  * aulas que a rotina já publicou — da mais recente para a primeira.
  */
-function desenharCurso(areaId) {
+async function desenharCurso(areaId) {
   const area = estado.biblioteca.areas?.[areaId];
   if (!area) return irPara("aprendizagem");
   cursoAberto = areaId;
 
-  const aulas = (estado.lombadas || [])
-    .filter((l) => l.rotina === area.rotina)
-    .sort((a, b) => (a.data < b.data ? 1 : -1));
+  const publicadas = (estado.lombadas || []).filter((l) => l.rotina === area.rotina);
   const ultima = (estado.cursos || []).find((c) => c.rotina === area.rotina);
-  const dia = ultima?.progresso?.dia || numeroAula(aulas[0]?.titulo) || aulas.length;
+  const dia =
+    ultima?.progresso?.dia ||
+    Math.max(0, ...publicadas.map((l) => numeroAula(l.titulo) || 0)) ||
+    publicadas.length;
   const pct = Math.round((dia / TOTAL_AULAS) * 100);
-  const concluidas = aulas.filter((l) => estado.lidas[chaveAula(l.rotina, l.data)]).length;
+  const concluidas = publicadas.filter((l) => estado.lidas[chaveAula(l.rotina, l.data)]).length;
   const diaSem = diaDoCurso(area.rotina);
   const cadencia = diaSem >= 0 ? `Uma aula por semana · ${DIAS_NOME[diaSem]}` : "Percurso livre";
+
+  /* A capa fica por trás de tudo, fixa, com o escuro por cima: o cartaz é o
+     ambiente da página, não um banner no topo. */
   const capa = CAPA[area.rotina];
-  const titulado = CAPA_SEM_LETRAS.has(area.rotina);
+  $("#v-curso").style.setProperty("--capa", capa ? `url("${capa}")` : "none");
 
   $("#curso-cabecalho").innerHTML = `
-    ${
-      capa
-        ? `<figure class="capa-curso${titulado ? " com-titulo" : ""}">
-             <img src="${esc(capa)}" alt="" decoding="async">
-             ${
-               titulado
-                 ? `<figcaption>
-                      <span class="selo">Curso completo</span>
-                      <h1>${esc(area.nome)}</h1>
-                      <span class="subtitulo">${esc(cadencia)}</span>
-                    </figcaption>`
-                 : ""
-             }
-           </figure>`
-        : ""
-    }
-    ${
-      titulado
-        ? ""
-        : `<div class="cartaz-topo">
-             <p class="selo">Curso completo</p>
-             <p class="subtitulo">${esc(cadencia)}</p>
-           </div>`
-    }
+    <div class="cartaz-topo">
+      <p class="selo">Curso completo</p>
+      <h1>${esc(area.nome)}</h1>
+      <p class="subtitulo">${esc(cadencia)}</p>
+    </div>
     <div class="cartaz-numeros">
       <div><b>${dia}</b><span>de ${TOTAL_AULAS} aulas</span></div>
       <div><b>${pct}%</b><span>do percurso</span></div>
-      <div><b>${aulas.length}</b><span>publicadas</span></div>
+      <div><b>${publicadas.length}</b><span>publicadas</span></div>
       <div><b>${concluidas}</b><span>concluídas</span></div>
     </div>`;
 
-  /* O percurso são as aulas, da última para a primeira. Os temas escritos à
-     mão ficam para a folha de edição — não são o curso. */
-  $("#curso-percurso").innerHTML = aulas.length
-    ? `<p class="cartaz-seccao">As tuas aulas</p>
-       <div class="trilho">${aulas
-         .map((l, i) => {
-           const n = numeroAula(l.titulo) ?? aulas.length - i;
-           const lida = estado.lidas[chaveAula(l.rotina, l.data)];
-           const nome = String(l.titulo).replace(/^\s*Dia\s+\d+\s*[—–-]\s*/i, "");
-           return `<div class="etapa" data-feito="${lida ? "sim" : "nao"}">
-             <span class="n">${n}</span>
-             <button class="caixa" data-curso="${esc(l.rotina)}" data-data="${esc(l.data)}">
+  $("#curso-percurso").innerHTML = `<p class="cartaz-seccao">O percurso completo</p>
+    <p class="cartaz-nota">a carregar o currículo…</p>`;
+
+  const todos = await carregarCurriculos();
+  if (cursoAberto !== areaId) return; // saiu do curso enquanto isto chegava
+  const curriculo = todos[area.rotina] || [];
+
+  /* Cada aula publicada encontra o seu lugar pelo número do "Dia N" do título;
+     as que ainda não saíram ficam com o nome do currículo, apagadas. */
+  const porNumero = new Map();
+  publicadas.forEach((l, i) => {
+    const n = numeroAula(l.titulo) ?? i + 1;
+    porNumero.set(n, l);
+  });
+
+  const total = Math.max(curriculo.length, ...porNumero.keys(), 0) || TOTAL_AULAS;
+  const linhas = [];
+  for (let n = 1; n <= total; n++) {
+    const l = porNumero.get(n);
+    const nome = l
+      ? String(l.titulo).replace(/^\s*Dia\s+\d+\s*[—–-]\s*/i, "")
+      : curriculo[n - 1] || "";
+    if (!nome) continue;
+    const lida = l && estado.lidas[chaveAula(l.rotina, l.data)];
+    const estadoLinha = l ? (lida ? "sim" : "publicada") : "porsair";
+    linhas.push(`<div class="etapa" data-feito="${estadoLinha}">
+      <span class="n">${n}</span>
+      ${
+        l
+          ? `<button class="caixa" data-curso="${esc(l.rotina)}" data-data="${esc(l.data)}">
                <span class="dentro">
                  <h4>${esc(nome)}</h4>
                  <span class="meta">
@@ -3688,22 +3702,24 @@ function desenharCurso(areaId) {
                    ${lida ? `<span class="feito">Concluído</span>` : ""}
                  </span>
                </span>
-             </button>
-           </div>`;
-         })
-         .join("")}</div>
-       <p class="cartaz-nota">${
-         dia >= TOTAL_AULAS
-           ? "Percurso completo."
-           : `Faltam ${TOTAL_AULAS - dia} aulas para fechar o percurso.`
-       }</p>`
-    : `<p class="cartaz-seccao">As tuas aulas</p>
-       <p class="cartaz-nota">Ainda nenhuma publicada. A primeira sai ${
-         diaSem >= 0 ? `na próxima ${esc(DIAS_NOME[diaSem].toLowerCase())}` : "no próximo dia agendado"
-       }.</p>`;
+             </button>`
+          : `<div class="caixa">
+               <span class="dentro"><h4>${esc(nome)}</h4></span>
+             </div>`
+      }
+    </div>`);
+  }
+
+  $("#curso-percurso").innerHTML = `<p class="cartaz-seccao">O percurso completo</p>
+    <div class="trilho">${linhas.join("")}</div>
+    <p class="cartaz-nota">${
+      dia >= TOTAL_AULAS
+        ? "Percurso completo."
+        : `Faltam ${TOTAL_AULAS - dia} aulas para fechar o percurso.`
+    }</p>`;
 
   $("#curso-aulas").innerHTML = "";
-  $("#curso-rodape").innerHTML = `<button class="btn" data-editar-curso="${esc(areaId)}">Editar temas do percurso</button>`;
+  $("#curso-rodape").innerHTML = "";
 }
 
 /* Qual o curso aberto, para o toque num tema saber onde o marcar. */
@@ -3712,9 +3728,6 @@ let cursoAberto = null;
 $("#v-curso").addEventListener("click", (e) => {
   const aula = e.target.closest("[data-curso]");
   if (aula) return irPara("edicao", aula.dataset.curso, aula.dataset.data);
-
-  const editar = e.target.closest("[data-editar-curso]");
-  if (editar) return abrirArea(estado.biblioteca.areas[editar.dataset.editarCurso]);
 
   const ir = e.target.closest("[data-ir]");
   if (ir) irPara(ir.dataset.ir);
