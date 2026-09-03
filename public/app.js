@@ -73,6 +73,33 @@ const DIAS_SIGLA = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM"];
    escritos à mão são só o índice do que se quer apanhar pelo caminho. */
 const TOTAL_AULAS = 150;
 
+/* A capa de cada curso. São cartazes altos: entram inteiros no topo da página
+   do curso, sem corte. */
+const CAPA = {
+  "curso-historia": "/capa-historia.jpg",
+  "curso-psicologia": "/capa-psicologia.jpg",
+  "curso-cultura": "/capa-cultura.jpg",
+  "inteligencia-artificial": "/capa-ia.jpg",
+  "curso-linguas": "/capa-linguas.jpg",
+  "curso-ciencia": "/capa-ciencia.jpg",
+  "curso-uteis": "/capa-uteis.jpg",
+};
+
+/* Só a capa de História não traz o nome pintado; nessa, o título vai por cima.
+   Nas outras, escrever o nome outra vez era escrevê-lo duas vezes. */
+const CAPA_SEM_LETRAS = new Set(["curso-historia"]);
+
+/* "Dia 12 — Uruk e o nascimento da cidade" → 12. */
+const numeroAula = (titulo) => {
+  const m = /^\s*Dia\s+(\d+)/i.exec(titulo || "");
+  return m ? Number(m[1]) : null;
+};
+
+/* Concluída quer dizer lida até ao fim, e é a app que o regista quando o
+   último capítulo aparece no ecrã. Não há botão para marcar à mão: um percurso
+   que se marca sozinho não diz nada a ninguém. */
+const chaveAula = (rotina, data) => `${rotina}:${data}`;
+
 /* Emoji de cada curso, para quando o tema não disser nada de especial. */
 const EMOJI_CURSO = {
   "curso-historia": "🏛️",
@@ -164,6 +191,16 @@ const DIAS_NOME = ["segunda", "terça", "quarta", "quinta", "sexta", "sábado", 
 /** O dia da semana de um curso, ou -1 se a rotina não for de curso. */
 const diaDoCurso = (rotina) => CURSOS.indexOf(rotina);
 
+/* As rotinas correm de manhã mas a edição só fica no ar às 13h00. Antes disso,
+   no próprio dia do curso, o cartão dizia "sem tema por fazer" ou "última aula
+   há 21 dias" — que é verdade e não ajuda nada. Passa a dizer que a aula vem a
+   caminho. */
+const HORA_PUBLICACAO = 13;
+const aSairHoje = (rotina) =>
+  diaDoCurso(rotina) === (new Date().getDay() + 6) % 7 &&
+  new Date().getHours() < HORA_PUBLICACAO &&
+  !(estado.cursos || []).some((c) => c.rotina === rotina && diasDesde(c.data) === 0);
+
 /* --------------------------------------------------------------- estado --- */
 
 const guardado = (chave, valorInicial) => {
@@ -175,6 +212,7 @@ const guardado = (chave, valorInicial) => {
 };
 
 const estado = {
+  lidas: guardado("venera:aulas-lidas", {}),
   chave: localStorage.getItem("venera:chave") || "",
   biblioteca: guardado("venera:biblioteca", { notas: {}, cartoes: {}, livros: {}, areas: {} }),
   sujos: new Set(guardado("venera:sujos", [])),
@@ -2236,6 +2274,30 @@ async function abrirEdicao(rotina, data) {
       </article>`;
     })
     .join("");
+
+  vigiarFim(rotina, data, edicao.itens.length);
+}
+
+/**
+ * Marca a aula como concluída quando o último capítulo entra no ecrã. É o que
+ * mais se aproxima de "li isto até ao fim" sem pedir nada ao leitor.
+ */
+function vigiarFim(rotina, data, total) {
+  const ultimo = $(`#verbete-${total - 1}`);
+  if (!ultimo || !("IntersectionObserver" in window)) return;
+  const chave = chaveAula(rotina, data);
+  if (estado.lidas[chave]) return;
+  const olho = new IntersectionObserver((entradas) => {
+    if (!entradas.some((e) => e.isIntersecting)) return;
+    olho.disconnect();
+    estado.lidas[chave] = Date.now();
+    try {
+      localStorage.setItem("venera:aulas-lidas", JSON.stringify(estado.lidas));
+    } catch {
+      // sem espaço: fica marcada só nesta sessão
+    }
+  });
+  olho.observe(ultimo);
 }
 
 $("#edicao-cabecalho").addEventListener("click", (e) => {
@@ -3389,11 +3451,16 @@ function desenharAprendizagem() {
    */
   const cartaoLicao = () => {
     const feitaHoje = aulasFeitas()[rotinaDoDia] === diaDeHoje();
-    const titulo = aulaDoDia?.titulo || temaDoDia || `Sem tema por fazer em ${nomeDoDia}`;
+    const vemAi = aSairHoje(rotinaDoDia);
+    const titulo = vemAi
+      ? `A aula de hoje sai às ${HORA_PUBLICACAO}h00`
+      : aulaDoDia?.titulo || temaDoDia || `Sem tema por fazer em ${nomeDoDia}`;
     const emoji = emojiDoTema(titulo, rotinaDoDia);
     const diaNome = DIAS_NOME[diaSemana];
 
-    const meta = feitaHoje
+    const meta = vemAi
+      ? `${nomeDoDia} publica uma aula por semana, às ${HORA_PUBLICACAO}h00`
+      : feitaHoje
       ? temaDoDia
         ? `A seguir, na próxima ${diaNome}: ${temaDoDia}`
         : "Percurso terminado — não há mais temas por fazer"
@@ -3418,7 +3485,7 @@ function desenharAprendizagem() {
       <span class="veu"></span>
       <div class="dentro">
         <span class="rotulo nome-area">${esc(nomeDoDia)} · ${esc(diaNome)}</span>
-        <b><span class="emoji">${feitaHoje ? "✅" : emoji}</span>${esc(
+        <b><span class="emoji">${vemAi ? "⏳" : feitaHoje ? "✅" : emoji}</span>${esc(
           feitaHoje ? "Aula de hoje concluída" : titulo
         )}</b>
         <span class="rotulo meta">${esc(meta)}</span>
@@ -3484,11 +3551,13 @@ function desenharAprendizagem() {
                   ${a.rotina === rotinaDoDia ? `<span class="hoje">hoje</span>` : ""}
                 </span>
                 ${
-                  aula
-                    ? `<span class="aula" data-curso="${esc(aula.rotina)}" data-data="${esc(aula.data)}">
-                        <i class="rotulo">Última aula</i><b>${idade}</b>
-                      </span>`
-                    : `<span class="aula sem"><i class="rotulo">Sem aulas ainda</i></span>`
+                  aSairHoje(a.rotina)
+                    ? `<span class="aula sem"><i class="rotulo">Sai hoje</i><b>${HORA_PUBLICACAO}h00</b></span>`
+                    : aula
+                      ? `<span class="aula" data-curso="${esc(aula.rotina)}" data-data="${esc(aula.data)}">
+                          <i class="rotulo">Última aula</i><b>${idade}</b>
+                        </span>`
+                      : `<span class="aula sem"><i class="rotulo">Sem aulas ainda</i></span>`
                 }
               </span>
               <span class="baixo">
@@ -3533,61 +3602,80 @@ function desenharCurso(areaId) {
     .filter((l) => l.rotina === area.rotina)
     .sort((a, b) => (a.data < b.data ? 1 : -1));
   const ultima = (estado.cursos || []).find((c) => c.rotina === area.rotina);
-  const dia = ultima?.progresso?.dia || aulas.length;
+  const dia = ultima?.progresso?.dia || numeroAula(aulas[0]?.titulo) || aulas.length;
   const pct = Math.round((dia / TOTAL_AULAS) * 100);
-  const feitos = area.temas.filter((t) => t.feito).length;
+  const concluidas = aulas.filter((l) => estado.lidas[chaveAula(l.rotina, l.data)]).length;
   const diaSem = diaDoCurso(area.rotina);
+  const cadencia = diaSem >= 0 ? `Uma aula por semana · ${DIAS_NOME[diaSem]}` : "Percurso livre";
+  const capa = CAPA[area.rotina];
+  const titulado = CAPA_SEM_LETRAS.has(area.rotina);
 
   $("#curso-cabecalho").innerHTML = `
-    <div class="cartaz-topo">
-      <p class="selo">Curso completo</p>
-      <h1>${esc(area.nome)}</h1>
-      <p class="subtitulo">${
-        diaSem >= 0 ? `Uma aula por semana · ${esc(DIAS_NOME[diaSem])}` : "Percurso livre"
-      }</p>
-      <p class="friso">❧</p>
-    </div>
+    ${
+      capa
+        ? `<figure class="capa-curso${titulado ? " com-titulo" : ""}">
+             <img src="${esc(capa)}" alt="" decoding="async">
+             ${
+               titulado
+                 ? `<figcaption>
+                      <span class="selo">Curso completo</span>
+                      <h1>${esc(area.nome)}</h1>
+                      <span class="subtitulo">${esc(cadencia)}</span>
+                    </figcaption>`
+                 : ""
+             }
+           </figure>`
+        : ""
+    }
+    ${
+      titulado
+        ? ""
+        : `<div class="cartaz-topo">
+             <p class="selo">Curso completo</p>
+             <p class="subtitulo">${esc(cadencia)}</p>
+           </div>`
+    }
     <div class="cartaz-numeros">
       <div><b>${dia}</b><span>de ${TOTAL_AULAS} aulas</span></div>
       <div><b>${pct}%</b><span>do percurso</span></div>
-      <div><b>${area.temas.length}</b><span>temas</span></div>
-      <div><b>${feitos}</b><span>temas feitos</span></div>
+      <div><b>${aulas.length}</b><span>publicadas</span></div>
+      <div><b>${concluidas}</b><span>concluídas</span></div>
     </div>`;
 
-  $("#curso-percurso").innerHTML = area.temas.length
-    ? `<p class="cartaz-seccao">O que vais percorrer</p>
-       <div class="trilho">${area.temas
-         .map(
-           (t, i) => `<div class="etapa" data-feito="${t.feito ? "sim" : "nao"}">
-             <span class="n">${i + 1}</span>
-             <button class="caixa" data-tema-curso="${i}">
-               <span class="emoji">${emojiDoTema(t.nome, area.rotina)}</span>
-               <span>
-                 <h4>${esc(t.nome)}</h4>
-                 <span class="nota">${t.feito ? "Concluído" : "Por fazer"}</span>
+  /* O percurso são as aulas, da última para a primeira. Os temas escritos à
+     mão ficam para a folha de edição — não são o curso. */
+  $("#curso-percurso").innerHTML = aulas.length
+    ? `<p class="cartaz-seccao">As tuas aulas</p>
+       <div class="trilho">${aulas
+         .map((l, i) => {
+           const n = numeroAula(l.titulo) ?? aulas.length - i;
+           const lida = estado.lidas[chaveAula(l.rotina, l.data)];
+           const nome = String(l.titulo).replace(/^\s*Dia\s+\d+\s*[—–-]\s*/i, "");
+           return `<div class="etapa" data-feito="${lida ? "sim" : "nao"}">
+             <span class="n">${n}</span>
+             <button class="caixa" data-curso="${esc(l.rotina)}" data-data="${esc(l.data)}">
+               <span class="dentro">
+                 <h4>${esc(nome)}</h4>
+                 <span class="meta">
+                   <span class="quando">${esc(dataCurta(l.data))}</span>
+                   ${lida ? `<span class="feito">Concluído</span>` : ""}
+                 </span>
                </span>
              </button>
-           </div>`
-         )
-         .join("")}</div>`
-    : "";
+           </div>`;
+         })
+         .join("")}</div>
+       <p class="cartaz-nota">${
+         dia >= TOTAL_AULAS
+           ? "Percurso completo."
+           : `Faltam ${TOTAL_AULAS - dia} aulas para fechar o percurso.`
+       }</p>`
+    : `<p class="cartaz-seccao">As tuas aulas</p>
+       <p class="cartaz-nota">Ainda nenhuma publicada. A primeira sai ${
+         diaSem >= 0 ? `na próxima ${esc(DIAS_NOME[diaSem].toLowerCase())}` : "no próximo dia agendado"
+       }.</p>`;
 
-  $("#curso-aulas").innerHTML = aulas.length
-    ? `<p class="cartaz-seccao">Aulas publicadas · ${aulas.length}</p>
-       ${aulas
-         .map(
-           (l, i) => `<button class="aula-linha" data-curso="${esc(l.rotina)}" data-data="${esc(l.data)}">
-             <span class="dia">Aula ${aulas.length - i}</span>
-             <span class="t">${esc(l.titulo)}</span>
-             <span class="q">${esc(dataCurta(l.data))}</span>
-           </button>`
-         )
-         .join("")}`
-    : `<p class="cartaz-seccao">Aulas publicadas</p>
-       <p class="aula-linha"><span class="t">Ainda nenhuma. A rotina publica a primeira no próximo ${
-         diaSem >= 0 ? esc(DIAS_NOME[diaSem]) : "dia agendado"
-       }.</span></p>`;
-
+  $("#curso-aulas").innerHTML = "";
   $("#curso-rodape").innerHTML = `<button class="btn" data-editar-curso="${esc(areaId)}">Editar temas do percurso</button>`;
 }
 
@@ -3600,17 +3688,6 @@ $("#v-curso").addEventListener("click", (e) => {
 
   const editar = e.target.closest("[data-editar-curso]");
   if (editar) return abrirArea(estado.biblioteca.areas[editar.dataset.editarCurso]);
-
-  const tema = e.target.closest("[data-tema-curso]");
-  if (tema) {
-    const area = estado.biblioteca.areas?.[cursoAberto];
-    const t = area?.temas[Number(tema.dataset.temaCurso)];
-    if (!t) return;
-    t.feito = !t.feito;
-    alterar("areas", area);
-    desenharCurso(cursoAberto);
-    return;
-  }
 
   const ir = e.target.closest("[data-ir]");
   if (ir) irPara(ir.dataset.ir);
