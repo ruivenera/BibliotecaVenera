@@ -2295,29 +2295,39 @@ async function abrirEdicao(rotina, data) {
     })
     .join("");
 
-  vigiarFim(rotina, data, edicao.itens.length);
+  if (eAula) itens.insertAdjacentHTML("beforeend", fechoDaAula(rotina, data));
 }
 
-/**
- * Marca a aula como concluída quando o último capítulo entra no ecrã. É o que
- * mais se aproxima de "li isto até ao fim" sem pedir nada ao leitor.
- */
-function vigiarFim(rotina, data, total) {
-  const ultimo = $(`#verbete-${total - 1}`);
-  if (!ultimo || !("IntersectionObserver" in window)) return;
+/** Marcar e desmarcar uma aula como lida. É o leitor que decide. */
+function marcarLida(rotina, data, lida) {
   const chave = chaveAula(rotina, data);
-  if (estado.lidas[chave]) return;
-  const olho = new IntersectionObserver((entradas) => {
-    if (!entradas.some((e) => e.isIntersecting)) return;
-    olho.disconnect();
-    estado.lidas[chave] = Date.now();
-    try {
-      localStorage.setItem("venera:aulas-lidas", JSON.stringify(estado.lidas));
-    } catch {
-      // sem espaço: fica marcada só nesta sessão
-    }
-  });
-  olho.observe(ultimo);
+  if (lida) estado.lidas[chave] = Date.now();
+  else delete estado.lidas[chave];
+  try {
+    localStorage.setItem("venera:aulas-lidas", JSON.stringify(estado.lidas));
+  } catch {
+    // sem espaço: vale só nesta sessão
+  }
+  const rodape = $("#fecho-aula");
+  if (rodape) rodape.outerHTML = fechoDaAula(rotina, data);
+}
+
+/* O bloco do fim da aula. Ler por alto não é ler: quem decide se aquilo conta
+   é quem leu, não um contador de scroll. */
+function fechoDaAula(rotina, data) {
+  const lida = estado.lidas[chaveAula(rotina, data)];
+  return `<div class="fecho-aula" id="fecho-aula" data-lida="${lida ? "sim" : "nao"}">
+    <p class="titulo">${lida ? "Aula concluída" : "Leste esta aula até ao fim?"}</p>
+    <p class="nota">${
+      lida
+        ? `Marcada a ${esc(dataCurta(new Date(lida).toISOString().slice(0, 10)))}. Conta para o percurso do curso.`
+        : "Só marcada é que conta como feita. Enquanto não estiver, o curso continua a mostrá-la por ler."
+    }</p>
+    <button class="btn" ${lida ? "" : 'data-tom="forte"'} data-lida-aula="${esc(rotina)}"
+      data-data="${esc(data)}" data-valor="${lida ? "nao" : "sim"}">
+      ${lida ? "Afinal não li" : "✓ Li esta aula"}
+    </button>
+  </div>`;
 }
 
 $("#edicao-cabecalho").addEventListener("click", (e) => {
@@ -2931,11 +2941,15 @@ function apagarFolha() {
 /* ---------------------------------------------------------------- eventos --- */
 
 document.addEventListener("click", (evento) => {
-  const alvo = evento.target.closest("[data-ir], [data-rotina], [data-acao], [data-nota], [data-nota-sm2], [data-editar-cartao], #btn-ver, #btn-nota-nova, #btn-chave, #btn-desfazer, #folha-guardar, #folha-cancelar, #folha-apagar, #folha-para-cartao, #estado");
+  const alvo = evento.target.closest("[data-ir], [data-rotina], [data-acao], [data-nota], [data-nota-sm2], [data-editar-cartao], #btn-ver, #btn-nota-nova, #btn-chave, #btn-desfazer, [data-lida-aula], #folha-guardar, #folha-cancelar, #folha-apagar, #folha-para-cartao, #estado");
   if (!alvo) return;
 
   if (alvo.dataset.ir) return irPara(alvo.dataset.ir);
   if (alvo.dataset.rotina) return irPara("edicao", alvo.dataset.rotina, alvo.dataset.data);
+
+  if (alvo.dataset.lidaAula) {
+    return marcarLida(alvo.dataset.lidaAula, alvo.dataset.data, alvo.dataset.valor === "sim");
+  }
 
   if (alvo.dataset.acao) {
     const item = estado.edicaoAberta.itens[Number(alvo.dataset.item)];
@@ -3517,6 +3531,22 @@ function desenharAprendizagemInterno() {
             ? `Última aula há ${dias} ${dias === 1 ? "dia" : "dias"}`
             : "Rotina ainda sem aulas";
 
+    /* Lida quer dizer lida até ao fim, registado quando o último capítulo
+       aparece no ecrã. É o que responde a "já vi esta aula ou tenho de voltar
+       a ela?" — o Concluído dos temas é outra coisa e não serve para isto. */
+    const lida = aulaDoDia && estado.lidas[chaveAula(aulaDoDia.rotina, aulaDoDia.data)];
+    const capitulos = Array.isArray(aulaDoDia?.itens) ? aulaDoDia.itens.length : 0;
+    const detalhes = aulaDoDia
+      ? [
+          aulaDoDia.progresso?.dia ? `Dia ${aulaDoDia.progresso.dia} de ${TOTAL_AULAS}` : null,
+          capitulos ? `${capitulos} capítulos` : null,
+          aulaDoDia.progresso?.leitura_min ? `${aulaDoDia.progresso.leitura_min} min` : null,
+          aulaDoDia.progresso?.nivel || null,
+        ]
+          .filter(Boolean)
+          .join(" · ")
+      : "";
+
     const abrir = aulaDoDia
       ? `data-curso="${esc(aulaDoDia.rotina)}" data-data="${esc(aulaDoDia.data)}"`
       : areaDoDia
@@ -3528,10 +3558,24 @@ function desenharAprendizagemInterno() {
       <span class="veu"></span>
       <div class="dentro">
         <span class="rotulo nome-area">${esc(nomeDoDia)} · ${esc(diaNome)}</span>
-        <b><span class="emoji">${vemAi ? "⏳" : feitaHoje ? "✅" : emoji}</span>${esc(
-          feitaHoje ? "Aula de hoje concluída" : titulo
+        <b><span class="emoji">${vemAi ? "⏳" : lida || feitaHoje ? "✅" : emoji}</span>${esc(
+          titulo
         )}</b>
-        <span class="rotulo meta">${esc(meta)}</span>
+        <span class="rotulo meta">${esc(aulaDoDia ? detalhes : meta)}</span>
+        ${
+          aulaDoDia?.resumo
+            ? `<p class="sinopse">${esc(aulaDoDia.resumo)}</p>`
+            : ""
+        }
+        ${
+          aulaDoDia
+            ? `<span class="estado-aula" data-lida="${lida ? "sim" : "nao"}">${
+                lida
+                  ? `✓ Aula concluída`
+                  : `Por ler · volta na próxima ${esc(diaNome)}`
+              }</span>`
+            : ""
+        }
         <div class="accoes-licao">
           ${abrir ? `<button class="btn" ${abrir}>Abrir</button>` : ""}
           ${

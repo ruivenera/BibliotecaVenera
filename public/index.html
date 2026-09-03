@@ -822,6 +822,30 @@
 
   .passo-aula { color: var(--papel-fosco); }
 
+  /* O fim da aula: a pergunta e o botão que decide se ela conta como feita. */
+  .fecho-aula {
+    border-top: 1px solid var(--tinta-2);
+    margin-top: 1rem;
+    padding: 2.4rem 0 1rem;
+    text-align: center;
+  }
+  .fecho-aula .titulo {
+    font-family: var(--display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--papel);
+    margin: 0 0 0.4rem;
+  }
+  .fecho-aula .nota {
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--papel-fosco);
+    margin: 0 auto 1.1rem;
+    max-width: 26rem;
+  }
+  .fecho-aula[data-lida="sim"] .titulo { color: var(--sobe); }
+  .fecho-aula[data-lida="sim"] .titulo::before { content: "✓ "; }
+
   .verbete { border-top: 1px solid var(--tinta-2); padding: 3rem 0 2rem; }
 
   .verbete h3 {
