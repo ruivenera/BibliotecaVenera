@@ -587,6 +587,29 @@ async function ultima(env, rotina) {
   });
 }
 
+/**
+ * Apaga as edições de uma rotina anteriores a uma data. Serve para recomeçar um
+ * curso: as aulas da numeração antiga saem da estante em vez de ficarem a
+ * ocupar os lugares da nova. Pede o APP_TOKEN — apagar não é coisa que o token
+ * de publicação deva poder fazer.
+ */
+async function purgar(env, corpo) {
+  const rotina = frase(corpo?.rotina, 40);
+  const antes = frase(corpo?.antes, 10);
+  if (!CHAVES.includes(rotina)) return resposta({ erro: "rotina_desconhecida" }, 404);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(antes)) return resposta({ erro: "data_invalida" }, 422);
+
+  const datas = await lerIndice(env, rotina);
+  const fora = datas.filter((d) => d < antes);
+  await Promise.all(fora.map((d) => env.VENERA.delete(`edicao:${rotina}:${d}`)));
+
+  await env.VENERA.put(`indice:${rotina}`, JSON.stringify(datas.filter((d) => d >= antes)));
+  const resumo = (await lerResumo(env, rotina)).filter((l) => l.data >= antes);
+  await env.VENERA.put(`resumo:${rotina}`, JSON.stringify(resumo));
+
+  return resposta({ ok: true, rotina, apagadas: fora.length });
+}
+
 async function feed(env) {
   const edicoes = await Promise.all(CHAVES.map((r) => lerEdicao(env, r, "ultima")));
   return resposta({
@@ -810,6 +833,10 @@ export default {
 
     if (request.method === "POST" && caminho === "/api/ingest") return ingerir(request, env);
     if (request.method === "POST" && caminho === "/api/sync") return sincronizar(request, env);
+    if (request.method === "POST" && caminho === "/api/purgar") {
+      if (!confere(request, env.APP_TOKEN)) return resposta({ erro: "nao_autorizado" }, 401);
+      return purgar(env, await request.json().catch(() => null));
+    }
 
     if (request.method === "GET") {
       // Exceção única: saber em que aula vai o curso abre também com o token de
