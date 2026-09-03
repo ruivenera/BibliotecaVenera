@@ -3730,112 +3730,146 @@
   }
   .cartaz-curso .btn-voltar { color: var(--letra-fosca); border-color: rgba(201, 162, 39, 0.35); }
 
-  .cartaz-topo { text-align: center; padding: 1.2rem 0 1.8rem; }
+  /* A capa entra inteira, sem corte: é um cartaz e foi desenhado para se ler
+     de uma vez. Sangra até às margens do ecrã. */
+  .capa-curso {
+    position: relative;
+    margin: 0 calc(var(--gap) * -1) 1.6rem;
+  }
+  .capa-curso img { width: 100%; display: block; }
+  /* Só a de História não tem letras pintadas; nessa, o título vai por cima,
+     com um véu para as letras se lerem por cima do que estiver por baixo. */
+  .capa-curso.com-titulo figcaption {
+    position: absolute;
+    inset: auto 0 0;
+    padding: 4.5rem var(--gap) 1.8rem;
+    text-align: center;
+    background: linear-gradient(to bottom, transparent, rgba(13, 22, 38, 0.92) 62%, #0d1626);
+  }
+  .capa-curso .selo,
   .cartaz-topo .selo {
+    display: block;
     font-family: var(--meta);
-    font-size: 0.64rem;
+    font-size: 0.6rem;
     letter-spacing: 0.28em;
     color: var(--ouro);
     text-transform: uppercase;
   }
-  .cartaz-topo h1 {
-    font-size: clamp(2.1rem, 11vw, 3.4rem);
+  .capa-curso h1 {
+    font-size: clamp(2rem, 10vw, 3.2rem);
     letter-spacing: 0.12em;
-    margin: 0.5rem 0 0.4rem;
+    margin: 0.55rem 0 0.5rem;
     text-transform: uppercase;
     color: var(--letra);
     line-height: 1.05;
   }
+  .capa-curso .subtitulo,
   .cartaz-topo .subtitulo {
     font-family: var(--meta);
-    font-size: 0.62rem;
-    letter-spacing: 0.2em;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
     color: var(--letra-fosca);
     text-transform: uppercase;
+    margin: 0;
   }
-  .cartaz-topo .friso { color: var(--ouro); margin-top: 0.7rem; font-size: 0.8rem; }
+  /* Nas capas com o nome pintado, sobra só a cadência, numa linha discreta. */
+  .cartaz-topo { text-align: center; padding: 0 0 1.6rem; }
+  .cartaz-topo .selo { margin-bottom: 0.35rem; }
 
   .cartaz-numeros {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.1rem;
+    gap: 1px;
     border: 1px solid rgba(201, 162, 39, 0.3);
     border-radius: 12px;
     overflow: hidden;
-    margin-bottom: 2rem;
-    background: rgba(201, 162, 39, 0.12);
+    background: rgba(201, 162, 39, 0.25);
   }
   @media (min-width: 30rem) { .cartaz-numeros { grid-template-columns: repeat(4, 1fr); } }
   .cartaz-numeros div {
     background: var(--carvao);
-    padding: 0.9rem 0.6rem;
+    padding: 1rem 0.6rem;
     text-align: center;
   }
-  .cartaz-numeros b { display: block; font-size: 1.4rem; color: var(--ouro-claro); }
+  .cartaz-numeros b {
+    display: block;
+    font-size: 1.5rem;
+    line-height: 1.1;
+    color: var(--ouro-claro);
+    margin-bottom: 0.3rem;
+  }
   .cartaz-numeros span {
     font-family: var(--meta);
-    font-size: 0.55rem;
+    font-size: 0.54rem;
     letter-spacing: 0.14em;
     color: var(--letra-fosca);
     text-transform: uppercase;
   }
 
-  /* O trilho: uma linha a ouro com os números pendurados, como no cartaz. */
-  .trilho { position: relative; padding-left: 2.6rem; }
+  /* O trilho: uma linha a ouro com os números pendurados. */
+  .trilho { position: relative; padding-left: 2.9rem; }
   .trilho::before {
     content: "";
     position: absolute;
-    left: 1.05rem;
-    top: 0.6rem;
-    bottom: 0.6rem;
+    left: 1.15rem;
+    top: 1.2rem;
+    bottom: 1.2rem;
     width: 1px;
-    background: rgba(201, 162, 39, 0.4);
+    background: rgba(201, 162, 39, 0.35);
   }
-  .etapa { position: relative; margin-bottom: 0.7rem; }
+  .etapa { position: relative; margin-bottom: 0.6rem; }
   .etapa .n {
     position: absolute;
-    left: -2.6rem;
-    top: 0.85rem;
-    width: 2.1rem;
-    height: 2.1rem;
+    left: -2.9rem;
+    top: 0.9rem;
+    width: 2.3rem;
+    height: 2.3rem;
     border-radius: 50%;
-    border: 1px solid var(--ouro);
+    border: 1px solid rgba(201, 162, 39, 0.55);
     background: #0d1626;
     color: var(--ouro-claro);
     font-family: var(--meta);
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     display: grid;
     place-items: center;
   }
-  .etapa[data-feito="sim"] .n { background: var(--ouro); color: #0d1626; border-color: var(--ouro); }
+  .etapa[data-feito="sim"] .n {
+    background: var(--ouro);
+    color: #0d1626;
+    border-color: var(--ouro);
+  }
   .etapa .caixa {
     width: 100%;
     text-align: left;
     background: var(--carvao);
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 12px;
-    padding: 0.9rem 1rem;
-    display: flex;
-    gap: 0.8rem;
-    align-items: flex-start;
+    padding: 0.95rem 1.05rem;
     color: inherit;
+    font: inherit;
+    cursor: pointer;
   }
-  .etapa[data-feito="sim"] .caixa { background: var(--carvao-2); }
-  .etapa .caixa .emoji { font-size: 1.5rem; line-height: 1.4; flex: none; }
+  .etapa[data-feito="sim"] .caixa { border-color: rgba(201, 162, 39, 0.28); }
+  .etapa .dentro { display: block; }
   .etapa h4 {
-    margin: 0 0 0.25rem;
-    font-size: 1.02rem;
-    line-height: 1.25;
+    margin: 0 0 0.45rem;
+    font-size: 1rem;
+    line-height: 1.3;
     color: var(--letra);
+    font-weight: 600;
   }
-  .etapa .nota {
+  .etapa .meta {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
     font-family: var(--meta);
     font-size: 0.58rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--ouro);
   }
-  .etapa[data-feito="sim"] h4 { color: var(--letra-fosca); }
+  .etapa .quando { color: var(--letra-fosca); }
+  .etapa .feito { color: var(--ouro); }
+  .etapa .feito::before { content: "✓ "; }
 
   .cartaz-seccao {
     font-family: var(--meta);
@@ -3843,30 +3877,16 @@
     letter-spacing: 0.22em;
     text-transform: uppercase;
     color: var(--ouro);
-    margin: 2.4rem 0 1rem;
+    margin: 2.4rem 0 1.1rem;
   }
-  .aula-linha {
-    width: 100%;
-    text-align: left;
-    display: flex;
-    gap: 0.8rem;
-    align-items: baseline;
-    background: none;
-    border: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-    padding: 0.85rem 0;
-    color: var(--letra);
-  }
-  .aula-linha .dia {
+  .cartaz-nota {
     font-family: var(--meta);
-    font-size: 0.6rem;
-    color: var(--ouro);
-    flex: none;
-    min-width: 3.4rem;
-    letter-spacing: 0.1em;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    color: var(--letra-fosca);
+    margin: 1.4rem 0 0;
+    text-align: center;
   }
-  .aula-linha .t { flex: 1; font-size: 0.95rem; line-height: 1.3; }
-  .aula-linha .q { font-family: var(--meta); font-size: 0.55rem; color: var(--letra-fosca); flex: none; }
 
   #curso-rodape {
     margin-top: 2.4rem;
